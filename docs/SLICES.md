@@ -11,12 +11,7 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
-**Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P0]** `/slice governed-scaffold` — Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline. · touches `package.json`, `docs/`, `tools/`, `.github/`
-
-**Wave 2** — launch concurrently (disjoint files, deps satisfied):
-- **[P0]** `/slice private-overlay` — Seed the private repository from the public bootstrap and isolate confidential source material. · touches `docs/private/`, `config/private/`
-
+_No agent-runnable slices right now._
 **Held on a human:**
 - `/slice private-host-baseline` — gated on **private owner authorization and relay-security decision** — Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
 
@@ -24,15 +19,14 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 
 ## Roadmap — PIs → sprints
 
-### PHASE-0-GOVERNANCE — Governed public bootstrap · 🟢 Active · ~2 sessions remaining
-> Sprints: GOVERNED-SCAFFOLD 🟢 · PRIVATE-OVERLAY ⚪
-> Exec plan: GOVERNED-SCAFFOLD→PRIVATE-OVERLAY
+### PHASE-0-GOVERNANCE — Governed public bootstrap · ✅ Complete
+> Sprints: GOVERNED-SCAFFOLD ✅ · PRIVATE-OVERLAY ✅
 > Exit: Governance validation passes, bootstrap PR is scoped correctly, and private overlay is seeded separately.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| GOVERNED-SCAFFOLD | `/slice governed-scaffold` | 🟢 Active · **P0** | ~1 | — | Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline. |
-| PRIVATE-OVERLAY | `/slice private-overlay` | ⚪ Scheduled · **P0** | ~1 | GOVERNED-SCAFFOLD | Seed the private repository from the public bootstrap and isolate confidential source material. |
+| GOVERNED-SCAFFOLD | `/slice governed-scaffold` | ✅ Complete · **P0** | — | — | Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline. |
+| PRIVATE-OVERLAY | `/slice private-overlay` | ✅ Complete · **P0** | — | GOVERNED-SCAFFOLD | Seed the private repository from the public bootstrap and isolate confidential source material. |
 
 ### PHASE-1-PRIVATE-HOST-BASELINE — Private host baseline and RustDesk enrollment planning · 🔒 Gated · ~1 session remaining
 > Sprints: HOST-BASELINE 🔒
@@ -46,6 +40,13 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 
 ---
 
+**Recently completed:**
+
+| Slice | PI | PRs |
+|---|---|---|
+| GOVERNED-SCAFFOLD | PHASE-0-GOVERNANCE | — |
+| PRIVATE-OVERLAY | PHASE-0-GOVERNANCE | — |
+
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
 ```bash
@@ -55,28 +56,6 @@ pnpm validate
 ---
 
 ## Detail — `/slice <name>` reads these
-
-### `governed-scaffold`
-- **What:** Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline.
-- **Status:** 🟢 Active (PHASE-0-GOVERNANCE · GOVERNED-SCAFFOLD)
-- **Priority:** P0 · weight 100 — Establishes mandatory governance before runtime work.
-- **Read-order:**
-  1. docs/specs/catalog.yaml
-  2. docs/specs/BUILD-001-initial-implementation-prompt.md
-  3. docs/status/current.md
-- **Resume / next action:** Complete validation and publish the governed bootstrap pull request.
-- **Gate:** default verification gate
-
-### `private-overlay`
-- **What:** Seed the private repository from the public bootstrap and isolate confidential source material.
-- **Status:** ⚪ Scheduled (PHASE-0-GOVERNANCE · PRIVATE-OVERLAY)
-- **Priority:** P0 · weight 90 — Required before private implementation work.
-- **Deps:** GOVERNED-SCAFFOLD
-- **Read-order:**
-  1. docs/adr/ADR-0006-public-template-private-overlay.md
-  2. docs/status/current.md
-- **Resume / next action:** Verify private remote, upstream tracking, source-document exclusion from public history, and secret-safe overlay structure.
-- **Gate:** default verification gate
 
 ### `private-host-baseline`
 - **What:** Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
