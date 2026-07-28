@@ -1,0 +1,33 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@connorbritain/roadmap':
+        specifier: 0.4.0
+        version: 0.4.0
+
+packages:
+
+  '@connorbritain/roadmap@0.4.0':
+    resolution: {integrity: sha512-lxdNgKr7j/qapg+yAsaCFox7Mpivs1twf7ZcBI3AS3eTfRMCb0eN6MDkUPmn3IBWqnGyM0vZlBX8wNQlVH8N5g==}
+    engines: {node: '>=18.15'}
+    hasBin: true
+
+  yaml@2.9.0:
+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
+snapshots:
+
+  '@connorbritain/roadmap@0.4.0':
+    dependencies:
+      yaml: 2.9.0
+
+  yaml@2.9.0: {}
