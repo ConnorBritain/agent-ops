@@ -1,5 +1,5 @@
 slice: governed-scaffold
-status: in_progress
+status: complete
 requirements:
   - REQ-CATALOG-001
   - REQ-CATALOG-002
@@ -26,3 +26,7 @@ tests:
   - pnpm roadmap:validate
   - pnpm validate
 acceptance: ACC-GOV-001
+evidence:
+  public_pull_request: "#1 merged to main"
+  public_ci: Governance validation passed on main
+  private_overlay: Seeded from the merged public baseline and private validation passed

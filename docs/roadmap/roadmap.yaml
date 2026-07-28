@@ -20,7 +20,7 @@ meta:
 pis:
   - id: phase-0-governance
     title: Governed public bootstrap
-    status: active
+    status: complete
     summary: Create the public template, specifications, evidence gates, and private-overlay boundary without infrastructure changes.
     exit_criteria: Governance validation passes, bootstrap PR is scoped correctly, and private overlay is seeded separately.
     detail: docs/status/current.md
@@ -31,10 +31,10 @@ pis:
     sprints:
       - id: governed-scaffold
         title: Public governed scaffold
-        status: active
+        status: complete
         invoke: governed-scaffold
         what: Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline.
-        est_sessions: 1
+        est_sessions: 0
         weight: light
         touches:
           - package.json
@@ -42,6 +42,7 @@ pis:
           - tools/
           - .github/
         gate: default
+        completed_on: "2026-07-28"
         read_order:
           - docs/specs/catalog.yaml
           - docs/specs/BUILD-001-initial-implementation-prompt.md
@@ -54,16 +55,17 @@ pis:
         prompt: Keep the public template generalized and make no host, credential, deployment, or remote-access changes.
       - id: private-overlay
         title: Seed private implementation overlay
-        status: scheduled
+        status: complete
         invoke: private-overlay
         what: Seed the private repository from the public bootstrap and isolate confidential source material.
-        est_sessions: 1
+        est_sessions: 0
         weight: light
         deps: [governed-scaffold]
         touches:
           - docs/private/
           - config/private/
         gate: default
+        completed_on: "2026-07-28"
         read_order:
           - docs/adr/ADR-0006-public-template-private-overlay.md
           - docs/status/current.md
