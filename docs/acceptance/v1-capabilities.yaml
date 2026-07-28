@@ -1,0 +1,37 @@
+catalog_version: 1
+scenarios:
+  - id: ACC-GOV-001
+    title: Governed bootstrap
+    requirements: [REQ-CATALOG-001, REQ-CATALOG-002, REQ-BUILD-001, REQ-BUILD-002, REQ-BUILD-005]
+    evidence: pnpm validate
+    phase: 0
+  - id: ACC-CORE-001
+    title: Durable task, run, event, and health core
+    requirements: [REQ-V1-002, REQ-DATA-001, REQ-DATA-003, REQ-CONTRACT-003, REQ-CONTRACT-004]
+    evidence: future integration fixture
+    phase: 2
+  - id: ACC-WORKER-001
+    title: Worker preflight and reboot recovery
+    requirements: [REQ-V1-001, REQ-WORKER-001, REQ-WORKER-002, REQ-WORKER-005, REQ-SAFE-001]
+    evidence: future worker acceptance fixture
+    phase: 3
+  - id: ACC-PROVIDER-001
+    title: Provider conformance and dry-run planning
+    requirements: [REQ-PROVIDER-001, REQ-PROVIDER-003, REQ-PROVIDER-004, REQ-TEST-002]
+    evidence: future provider contract suite
+    phase: 4
+  - id: ACC-ATTENTION-001
+    title: Attention and verified draft delivery loop
+    requirements: [REQ-V1-004, REQ-V1-005, REQ-COORD-004, REQ-TEST-003, REQ-TEST-004]
+    evidence: future end-to-end fixture
+    phase: 6
+  - id: ACC-SECURITY-001
+    title: Domain, resource, and destructive-action refusal
+    requirements: [REQ-V1-006, REQ-V1-007, REQ-SEC-002, REQ-SEC-005, REQ-SAFE-003]
+    evidence: future negative scenario suite
+    phase: 6
+  - id: ACC-REMOTE-001
+    title: Managed remote-access boundary
+    requirements: [REQ-NET-005, REQ-TEST-005]
+    evidence: future RemoteAccessPortal contract suite
+    phase: 1

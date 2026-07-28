@@ -1,0 +1,107 @@
+meta:
+  schema_version: 1
+  program: AGENT-OPS
+  north_star: docs/specs/SPEC-000-program-charter.md
+  updated: "2026-07-28"
+  default_gate: pnpm validate
+  branch_convention: "{pi}/{sprint}"
+  terminal: print
+  default_concurrency: 1
+  worker_mode: plan
+  agent_cmd: "codex --permission-mode {mode} {prompt}"
+  base_branch: main
+  remote: origin
+  default_weight: light
+  links:
+    narrative: docs/specs/SPEC-000-program-charter.md
+    status: docs/status/current.md
+    tracker: docs/traceability/phase-0.yaml
+    bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
+pis:
+  - id: phase-0-governance
+    title: Governed public bootstrap
+    status: active
+    summary: Create the public template, specifications, evidence gates, and private-overlay boundary without infrastructure changes.
+    exit_criteria: Governance validation passes, bootstrap PR is scoped correctly, and private overlay is seeded separately.
+    detail: docs/status/current.md
+    priority:
+      tier: P0
+      weight: 100
+      reason: Required foundation for every later slice.
+    sprints:
+      - id: governed-scaffold
+        title: Public governed scaffold
+        status: active
+        invoke: governed-scaffold
+        what: Publish the public Phase 0 specification, acceptance, ADR, Roadmap, and validation baseline.
+        est_sessions: 1
+        weight: light
+        touches:
+          - package.json
+          - docs/
+          - tools/
+          - .github/
+        gate: default
+        read_order:
+          - docs/specs/catalog.yaml
+          - docs/specs/BUILD-001-initial-implementation-prompt.md
+          - docs/status/current.md
+        resume_action: Complete validation and publish the governed bootstrap pull request.
+        priority:
+          tier: P0
+          weight: 100
+          reason: Establishes mandatory governance before runtime work.
+        prompt: Keep the public template generalized and make no host, credential, deployment, or remote-access changes.
+      - id: private-overlay
+        title: Seed private implementation overlay
+        status: scheduled
+        invoke: private-overlay
+        what: Seed the private repository from the public bootstrap and isolate confidential source material.
+        est_sessions: 1
+        weight: light
+        deps: [governed-scaffold]
+        touches:
+          - docs/private/
+          - config/private/
+        gate: default
+        read_order:
+          - docs/adr/ADR-0006-public-template-private-overlay.md
+          - docs/status/current.md
+        resume_action: Verify private remote, upstream tracking, source-document exclusion from public history, and secret-safe overlay structure.
+        priority:
+          tier: P0
+          weight: 90
+          reason: Required before private implementation work.
+        prompt: Keep all real host, identity, network, relay, and secret-reference material private.
+  - id: phase-1-private-host-baseline
+    title: Private host baseline and RustDesk enrollment planning
+    status: gated
+    deps: [phase-0-governance]
+    summary: Collect owner authorization and private deployment facts before any host or relay change.
+    exit_criteria: Owner authorization, private inventory, security design, and a reversible approved bootstrap plan exist.
+    detail: docs/specs/SPEC-010-network-and-host-bootstrap.md
+    priority:
+      tier: P1
+      weight: 80
+      reason: Required before worker runtime installation.
+    sprints:
+      - id: host-baseline
+        title: Private host baseline
+        status: gated
+        invoke: private-host-baseline
+        what: Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
+        est_sessions: 1
+        weight: light
+        gated_on: private owner authorization and relay-security decision
+        gate: default
+        read_order:
+          - docs/specs/SPEC-003-trust-security-and-federation.md
+          - docs/specs/SPEC-010-network-and-host-bootstrap.md
+          - docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+          - docs/architecture/remote-access.md
+        resume_action: Wait for explicit owner authorization and finalized private relay topology.
+        priority:
+          tier: P1
+          weight: 80
+          reason: Protects owners, hosts, and security boundary.
+        prompt: Work only in the private overlay. Do not install, enroll, or configure any host or remote-access system without explicit authorization.

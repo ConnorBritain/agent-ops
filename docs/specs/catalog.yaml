@@ -1,0 +1,91 @@
+# Generated catalog; edit tools/specifications.mjs and regenerate.
+catalog_version: 1
+documents:
+  - id: CAT-001
+    path: docs/specs/CAT-001-specification-catalog.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-000
+    path: docs/specs/SPEC-000-program-charter.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-001
+    path: docs/specs/SPEC-001-v1-scope-and-acceptance.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-002
+    path: docs/specs/SPEC-002-system-context-and-authority.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-003
+    path: docs/specs/SPEC-003-trust-security-and-federation.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-004
+    path: docs/specs/SPEC-004-domain-data-and-identity.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-005
+    path: docs/specs/SPEC-005-commands-events-and-idempotency.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-006
+    path: docs/specs/SPEC-006-coordinator-runtime.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-007
+    path: docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-008
+    path: docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-009
+    path: docs/specs/SPEC-009-hooks-health-and-safeguards.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-010
+    path: docs/specs/SPEC-010-network-and-host-bootstrap.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-011
+    path: docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-012
+    path: docs/specs/SPEC-012-agent-skills-and-primitives.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-013
+    path: docs/specs/SPEC-013-estimation-finops-and-planning-feedback.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-014
+    path: docs/specs/SPEC-014-memory-adrs-and-graph.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-015
+    path: docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-016
+    path: docs/specs/SPEC-016-observability-operations-and-runbooks.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-017
+    path: docs/specs/SPEC-017-testing-verification-and-release-gates.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-018
+    path: docs/specs/SPEC-018-v1-rollout-and-milestones.md
+    status: draft
+    version: 0.1.0
+  - id: SPEC-019
+    path: docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+    status: draft
+    version: 0.1.0
+  - id: BUILD-001
+    path: docs/specs/BUILD-001-initial-implementation-prompt.md
+    status: draft
+    version: 0.1.0
