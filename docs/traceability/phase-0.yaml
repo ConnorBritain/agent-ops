@@ -1,0 +1,28 @@
+slice: governed-scaffold
+status: in_progress
+requirements:
+  - REQ-CATALOG-001
+  - REQ-CATALOG-002
+  - REQ-CATALOG-003
+  - REQ-BUILD-001
+  - REQ-BUILD-002
+  - REQ-BUILD-004
+  - REQ-BUILD-005
+  - REQ-ROLL-001
+  - REQ-ROLL-006
+  - REQ-TEST-001
+  - REQ-TEST-005
+  - REQ-TEST-006
+artifacts:
+  - docs/specs/catalog.yaml
+  - docs/specs/BUILD-001-initial-implementation-prompt.md
+  - docs/acceptance/v1-capabilities.yaml
+  - docs/roadmap/roadmap.yaml
+  - docs/adr
+  - tools/validate-governance.mjs
+tests:
+  - pnpm check:specs
+  - pnpm check:governance
+  - pnpm roadmap:validate
+  - pnpm validate
+acceptance: ACC-GOV-001
