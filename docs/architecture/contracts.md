@@ -65,6 +65,21 @@ type WorkerHeartbeat = {
   occurredAt: string;
 };
 
+type SafetyAuditRecord = {
+  version: string;
+  policyVersion: string;
+  decision: "allow" | "warn" | "block" | "require-approval" | "remediate" | "quarantine-worker";
+  workerTransition: "none" | "drain" | "quarantine";
+  findings: Array<{ code: string; severity: "info" | "warning" | "critical"; evidence: Record<string, unknown> }>;
+  remediation: {
+    kind: "none" | "cleanup-proposal";
+    mode: "none" | "dry-run";
+    targets: string[];
+    evidencePreserved: boolean;
+    outcome: "not-needed" | "proposed" | "not-executed";
+  };
+};
+
 type NormalizedEvent = {
   version: string;
   type: EventType;
@@ -108,5 +123,14 @@ fencing lease and its expiry, domain and path scope, compatible capabilities
 and skills, and bounded resource reservations. The worker principal is never
 treated as the Coordinator lease holder. Duplicate accepted envelopes return
 their prior admission without emitting a second lifecycle event.
+
+`WorkerSafetyMonitor` is a separately invocable monitor adapter: an approved
+external scheduler may call a sweep even while an agent is hung. The monitor
+only evaluates an injected snapshot, emits a secret-safe `SafetyAuditRecord`,
+and asks the supervisor to apply a drain or quarantine transition. It owns no
+timer, host command, deletion, process kill, service, or provider-launch port.
+Cleanup is a dry-run proposal only; broad or recursive deletion requires a
+recorded approval and a replacement set of explicit targets before any future
+execution adapter may act.
 
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

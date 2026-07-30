@@ -46,8 +46,8 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker core is complete; safety hooks are next** as of
-2026-07-30.
+Status: **Phase 3 worker core and safety hooks are complete; static service
+packaging is next** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -85,8 +85,29 @@ secrets are rejected, and supervisor startup restores no workload. The package
 intentionally has no inbound listener, provider launcher, service-manager
 definition, host identity, secret, or remote connection.
 
-Next slice: `worker-safety-hooks` adds independent resource/process/worktree
-collectors, unsafe-delete interception, dry-run cleanup, drain, quarantine, and
-hung-agent monitoring. `REQ-WORKER-001`, `REQ-WORKER-005`, real cryptographic
-verification, scoped runtime identity, and private canary evidence remain
-planned or gated rather than inferred from the local supervisor.
+## Phase 3 — worker safety hooks
+
+Status: **local safety implementation complete** on 2026-07-30; service
+packaging and private enrollment are not started.
+
+`packages/policy` now evaluates bounded resource, stale-session, orphaned
+process, cleanup, and unsafe-delete facts without host mutation. Its
+independently invocable `WorkerSafetyMonitor` records a versioned, secret-safe
+safety audit through the existing worker control-plane port. Critical resource
+findings drain or quarantine the supervisor before another admission; a failed
+audit write deliberately leaves that safe transition in place. Cleanup is only
+a dry-run proposal, and broad or recursive deletion is intercepted until a
+recorded approval supplies explicit replacement targets.
+
+Deterministic policy and worker fixtures prove the resource decision matrix,
+hung-agent monitoring without an admission/turn, stale-session and orphaned
+process evidence, no-execution cleanup, unsafe-delete refusal, and
+quarantine-before-later-admission. The slice creates no timer, host command,
+process termination, filesystem deletion, service definition, credential,
+provider launcher, or remote connection.
+
+Next slice: `worker-service-packaging` prepares generalized reviewed launchd,
+systemd, and Windows service definitions without installing any of them.
+`REQ-WORKER-001`, `REQ-WORKER-005`, real cryptographic verification, scoped
+runtime identity, durable actionable attention routing, and private canary
+evidence remain planned or gated rather than inferred from the local runtime.

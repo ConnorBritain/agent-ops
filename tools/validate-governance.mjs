@@ -42,6 +42,7 @@ const required = [
   "docs/traceability/phase-0.yaml",
   "docs/traceability/phase-2-durable-core.yaml",
   "docs/traceability/phase-3-worker-runtime-core.yaml",
+  "docs/traceability/phase-3-worker-safety-hooks.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -51,6 +52,7 @@ const required = [
   "docs/architecture/monorepo-boundaries.md",
   "docs/architecture/contracts.md",
   "docs/architecture/remote-access.md",
+  "docs/adr/ADR-0009-independent-safety-monitor-and-dry-run-remediation.md",
   ".github/workflows/ci.yml"
 ];
 for (const file of required) await requireFile(file);
@@ -329,6 +331,7 @@ const acceptance = await readFile(path.join(root, "docs/acceptance/v1-capabiliti
 const traceability = await readFile(path.join(root, "docs/traceability/phase-0.yaml"), "utf8");
 const phase2Traceability = await readFile(path.join(root, "docs/traceability/phase-2-durable-core.yaml"), "utf8");
 const phase3Traceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-runtime-core.yaml"), "utf8");
+const phase3SafetyTraceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-safety-hooks.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -386,7 +389,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);

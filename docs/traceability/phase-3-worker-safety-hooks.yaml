@@ -1,0 +1,33 @@
+slice: worker-safety-hooks
+status: complete
+requirements:
+  - REQ-V1-006
+  - REQ-SEC-003
+  - REQ-SAFE-001
+  - REQ-SAFE-002
+  - REQ-SAFE-003
+  - REQ-SAFE-004
+  - REQ-SAFE-005
+  - REQ-SAFE-006
+  - REQ-SAFE-007
+artifacts:
+  - packages/contracts
+  - packages/policy
+  - packages/worker
+  - packages/test-kit
+  - docs/adr/ADR-0009-independent-safety-monitor-and-dry-run-remediation.md
+tests:
+  - pnpm --filter @agent-ops/contracts test
+  - pnpm --filter @agent-ops/policy test
+  - pnpm --filter @agent-ops/worker test
+  - pnpm validate
+acceptance: ACC-WORKER-001
+evidence:
+  resource_and_worktree_gate_matrix: passed
+  independently_invocable_hung_agent_monitor: passed
+  destructive_delete_interception: passed
+  dry_run_cleanup_with_evidence_preservation: passed
+  stale_session_and_orphaned_process_audit: passed
+  drain_and_quarantine_before_later_admission: passed
+  secret_safe_versioned_safety_audit: passed
+  host_mutation_or_service_installation: not-implemented

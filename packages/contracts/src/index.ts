@@ -259,6 +259,89 @@ export const workerHeartbeatSchema = z.object({
 
 export type WorkerHeartbeat = z.infer<typeof workerHeartbeatSchema>;
 
+export const safetyDecisionKindSchema = z.enum([
+  "allow",
+  "warn",
+  "block",
+  "require-approval",
+  "remediate",
+  "quarantine-worker",
+]);
+
+export type SafetyDecisionKind = z.infer<typeof safetyDecisionKindSchema>;
+
+export const safetyWorkerTransitionSchema = z.enum([
+  "none",
+  "drain",
+  "quarantine",
+]);
+
+export type SafetyWorkerTransition = z.infer<typeof safetyWorkerTransitionSchema>;
+
+export const safetyFindingSchema = z.object({
+  code: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+  severity: z.enum(["info", "warning", "critical"]),
+  evidence: secretSafeObjectSchema,
+}).strict();
+
+export type SafetyFinding = z.infer<typeof safetyFindingSchema>;
+
+const secretSafeTargetSchema = z.string().min(1).max(4096).superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason });
+});
+
+export const safetyRemediationSchema = z.object({
+  kind: z.enum(["none", "cleanup-proposal"]),
+  mode: z.enum(["none", "dry-run"]),
+  targets: z.array(secretSafeTargetSchema).max(100),
+  evidencePreserved: z.boolean(),
+  outcome: z.enum(["not-needed", "proposed", "not-executed"]),
+}).strict().superRefine((value, context) => {
+  if (value.kind === "none" && (value.mode !== "none" || value.targets.length > 0)) {
+    context.addIssue({
+      code: "custom",
+      message: "A no-op remediation cannot include a mode or targets.",
+    });
+  }
+  if (value.kind === "cleanup-proposal" && value.mode !== "dry-run") {
+    context.addIssue({
+      code: "custom",
+      message: "Cleanup proposals must be dry-run only.",
+    });
+  }
+});
+
+export type SafetyRemediation = z.infer<typeof safetyRemediationSchema>;
+
+export const safetyAuditRecordSchema = z.object({
+  version: contractVersionSchema,
+  policyVersion: semanticVersionSchema,
+  decision: safetyDecisionKindSchema,
+  workerTransition: safetyWorkerTransitionSchema,
+  findings: z.array(safetyFindingSchema).max(100),
+  remediation: safetyRemediationSchema,
+}).strict().superRefine((value, context) => {
+  if (value.decision === "quarantine-worker" && value.workerTransition !== "quarantine") {
+    context.addIssue({
+      code: "custom",
+      message: "A quarantine-worker decision must quarantine the worker.",
+    });
+  }
+  if (
+    value.workerTransition !== "none"
+    && (value.decision === "allow" || value.decision === "warn")
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "An allow or warn decision cannot transition a worker.",
+    });
+  }
+});
+
+export type SafetyAuditRecord = z.infer<typeof safetyAuditRecordSchema>;
+
 export const normalizedEventSchema = z.object({
   version: contractVersionSchema,
   type: z.string().regex(/^[a-z][a-z0-9.-]{1,120}$/),

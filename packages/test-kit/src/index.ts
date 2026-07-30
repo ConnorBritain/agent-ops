@@ -7,6 +7,7 @@ import {
   type WorkerRegistration,
   type WorkerResourceSnapshot,
 } from "@agent-ops/contracts";
+import type { WorkerSafetySnapshot } from "@agent-ops/policy";
 
 export const testIds = {
   worker: "00000000-0000-4000-8000-000000000101",
@@ -49,6 +50,33 @@ export class StaticResourceInspector {
 
   async inspect(): Promise<WorkerResourceSnapshot> {
     return { ...this.snapshot };
+  }
+}
+
+export class StaticSafetyInspector {
+  snapshot: WorkerSafetySnapshot;
+
+  constructor(snapshot: WorkerSafetySnapshot = {
+    resources: {
+      freeDiskBytes: 100_000,
+      availableMemoryBytes: 50_000,
+      activeWorktreeCount: 0,
+      runningJobCount: 0,
+    },
+    sessions: [],
+    processes: [],
+    cleanupCandidates: [],
+  }) {
+    this.snapshot = snapshot;
+  }
+
+  async inspectSafety(): Promise<WorkerSafetySnapshot> {
+    return {
+      resources: { ...this.snapshot.resources },
+      sessions: this.snapshot.sessions.map((session) => ({ ...session })),
+      processes: this.snapshot.processes.map((process) => ({ ...process })),
+      cleanupCandidates: this.snapshot.cleanupCandidates.map((candidate) => ({ ...candidate })),
+    };
   }
 }
 
