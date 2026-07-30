@@ -8,7 +8,7 @@ scenarios:
   - id: ACC-CORE-001
     title: Durable task, run, event, and health core
     requirements: [REQ-V1-002, REQ-DATA-001, REQ-DATA-003, REQ-CONTRACT-003, REQ-CONTRACT-004]
-    evidence: future integration fixture
+    evidence: pnpm test:unit and pnpm test:db
     phase: 2
   - id: ACC-WORKER-001
     title: Worker preflight and reboot recovery

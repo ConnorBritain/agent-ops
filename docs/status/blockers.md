@@ -2,10 +2,12 @@
 
 ## Active blockers
 
-None for the public Phase 0 repository scaffold.
+None for generalized local Phase 2 implementation and CI verification.
 
 ## Explicit authorization gates
 
 - No host bootstrap or worker installation is authorized by this repository bootstrap.
-- No Supabase project, production environment, secret, RustDesk relay, account, device enrollment, or unattended-access configuration is authorized.
+- No hosted Supabase migration, production environment, secret, RustDesk relay,
+  account, device enrollment, or unattended-access configuration is authorized
+  by the public implementation.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.

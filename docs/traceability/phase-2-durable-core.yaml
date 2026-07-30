@@ -1,0 +1,40 @@
+slice: supabase-durable-core
+status: in-progress
+requirements:
+  - REQ-SEC-001
+  - REQ-SEC-003
+  - REQ-SEC-004
+  - REQ-DATA-001
+  - REQ-DATA-002
+  - REQ-DATA-003
+  - REQ-DATA-004
+  - REQ-DATA-005
+  - REQ-DATA-006
+  - REQ-CONTRACT-001
+  - REQ-CONTRACT-002
+  - REQ-CONTRACT-003
+  - REQ-CONTRACT-004
+  - REQ-CONTRACT-005
+  - REQ-CONTRACT-006
+  - REQ-COORD-001
+  - REQ-COORD-002
+  - REQ-COORD-005
+  - REQ-COORD-006
+artifacts:
+  - packages/contracts
+  - packages/domain
+  - packages/adapters
+  - supabase/migrations
+  - supabase/tests
+  - tools/validate-supabase.mjs
+tests:
+  - pnpm check:supabase
+  - pnpm typecheck
+  - pnpm test:unit
+  - pnpm test:db
+  - pnpm db:lint
+acceptance: ACC-CORE-001
+evidence:
+  local_static_validation: pending
+  public_ci_database_test: pending
+  remote_project_application: separately-gated

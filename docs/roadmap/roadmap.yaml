@@ -2,7 +2,7 @@ meta:
   schema_version: 1
   program: AGENT-OPS
   north_star: docs/specs/SPEC-000-program-charter.md
-  updated: "2026-07-28"
+  updated: "2026-07-29"
   default_gate: pnpm validate
   branch_convention: "{pi}/{sprint}"
   terminal: print
@@ -107,3 +107,59 @@ pis:
           weight: 80
           reason: Protects owners, hosts, and security boundary.
         prompt: Work only in the private overlay. Do not install, enroll, or configure any host or remote-access system without explicit authorization.
+  - id: phase-2-durable-core
+    title: Supabase durable operational core
+    status: active
+    deps: [phase-0-governance]
+    summary: Implement durable contracts and database authority locally before any hosted integration or worker automation.
+    exit_criteria: Unit and pgTAP tests prove versioned contracts, scoped access, idempotent events, outbox delivery state, lease fencing, lineage, and no automatic restart.
+    detail: docs/status/current.md
+    priority:
+      tier: P0
+      weight: 100
+      reason: Durable truth is required before Coordinator, worker, provider, or chat execution.
+    sprints:
+      - id: supabase-core
+        title: Local durable schema, contracts, RLS, outbox, and Coordinator lease
+        status: active
+        invoke: supabase-durable-core
+        what: Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project.
+        est_sessions: 2
+        weight: medium
+        gate: pnpm validate plus pnpm test:db and pnpm db:lint
+        touches:
+          - packages/
+          - supabase/
+          - tools/
+          - docs/
+          - .github/
+        read_order:
+          - docs/specs/SPEC-003-trust-security-and-federation.md
+          - docs/specs/SPEC-004-domain-data-and-identity.md
+          - docs/specs/SPEC-005-commands-events-and-idempotency.md
+          - docs/specs/SPEC-006-coordinator-runtime.md
+        resume_action: Complete local contracts, migrations, RLS tests, lease/fencing tests, and CI evidence.
+        priority:
+          tier: P0
+          weight: 100
+          reason: This is the first executable durable-authority slice.
+        prompt: Use database time, explicit grants, RLS, append-only events, a transactional outbox, scoped identities, and stale-leader rejection. Do not connect or mutate a hosted project.
+      - id: supabase-remote-verification
+        title: Private hosted-project application and verification
+        status: gated
+        invoke: supabase-remote-verification
+        what: Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.
+        est_sessions: 1
+        weight: light
+        deps: [supabase-core]
+        gated_on: Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning
+        gate: Private overlay validation plus remote migration, RLS, advisor, and rollback evidence
+        read_order:
+          - docs/specs/SPEC-003-trust-security-and-federation.md
+          - docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
+        resume_action: Wait for the private overlay to supply authorization and scoped references; never place them in this public repository.
+        priority:
+          tier: P1
+          weight: 80
+          reason: Hosted verification is required before a private runtime can rely on the schema.
+        prompt: Work only through an authorized private overlay. Never store project references, URLs, credentials, account identities, or deployment topology in public.

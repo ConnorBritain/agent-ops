@@ -15,3 +15,18 @@ Completion evidence:
 - The private implementation overlay was seeded independently from the merged public baseline and its private validation passed.
 
 Next slice: private host baseline and approved RustDesk enrollment planning. It is gated on owner authorization, a finalized relay/security design, and private-only configuration.
+
+## Phase 2 — durable operational core
+
+Status: **in progress**.
+
+The generalized implementation now begins independently of any private host or
+cloud project. The active slice adds versioned TypeScript contracts, pure
+placement/reconciliation rules, a transport-neutral Supabase adapter, explicit
+Postgres schemas, RLS, an append-only event log, transactional outbox,
+database-timed Coordinator leases, fencing-token enforcement, and local pgTAP
+acceptance tests.
+
+This work creates no remote project, credential, Coordinator process, worker
+process, provider session, or deployment. Applying the migration to a hosted
+project remains a separate, private-overlay gate.

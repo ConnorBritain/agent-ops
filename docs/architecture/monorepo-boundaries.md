@@ -1,6 +1,8 @@
 # Future TypeScript monorepo boundaries
 
-Phase 0 creates no runtime packages. This document fixes the boundaries that future slices must respect.
+Phase 0 created no runtime packages. Phase 2 activates only the contract,
+domain, adapter, and Supabase boundaries described here; applications and host
+services remain later slices.
 
 | Future location | Responsibility | Must not own |
 | --- | --- | --- |
@@ -12,7 +14,8 @@ Phase 0 creates no runtime packages. This document fixes the boundaries that fut
 | `packages/provider-sdk` | Provider lifecycle port and capability semantics. | Coordinator state mutation. |
 | `packages/adapters` | Supabase, Roadmap, chat, portfolio, GitHub, memory, and RustDesk adapter implementations. | Domain ownership outside their explicit port. |
 | `packages/testkit` | Deterministic fakes, fixtures, contract suites, and acceptance harnesses. | Production credentials or host inventory. |
-| `infra/supabase` | Append-only migrations and database policy definitions. | Runtime secrets. |
+| `supabase` | Append-only migrations, local configuration, database policy definitions, and pgTAP tests. | Runtime secrets or hosted-project identifiers. |
 | `config/fleet` | Public schemas and generic examples. | Real host, relay, network, or credential values. |
 
-No generated package directory is committed until its owning Roadmap slice is ready. This prevents Phase 0 governance work from being misrepresented as a runtime implementation.
+No generated package directory is committed before its owning Roadmap slice is
+active. Phase 2 is the first active implementation slice.

@@ -14,12 +14,20 @@
     "generate:specs": "node tools/generate-public-specs.mjs",
     "check:specs": "node tools/generate-public-specs.mjs --check",
     "check:governance": "node tools/validate-governance.mjs",
+    "check:supabase": "node tools/validate-supabase.mjs",
     "roadmap:validate": "roadmap validate",
     "roadmap:render": "roadmap render",
-    "validate": "pnpm run check:specs && pnpm run check:governance && pnpm run roadmap:validate",
-    "test": "pnpm run validate"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test:unit": "pnpm -r --if-present test",
+    "test:db": "supabase test db supabase/tests --local",
+    "db:start:minimal": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
+    "db:lint": "supabase db lint --local --schema agentops,agentops_audit,agentops_private --level warning --fail-on error",
+    "validate": "pnpm run check:specs && pnpm run check:governance && pnpm run check:supabase && pnpm run typecheck && pnpm run test:unit && pnpm run roadmap:validate",
+    "test": "pnpm run test:unit"
   },
   "devDependencies": {
-    "@connorbritain/roadmap": "0.4.0"
+    "@connorbritain/roadmap": "0.4.0",
+    "@types/node": "22.20.1",
+    "typescript": "7.0.2"
   }
 }
