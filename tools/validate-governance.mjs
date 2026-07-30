@@ -116,24 +116,15 @@ const scanContent = (content, location) => {
   }
 };
 
-const isScannableTextPath = (file) => {
-  const base = path.basename(file);
-  return (
-    base === "LICENSE"
-    || base === ".gitignore"
-    || base === ".env.example"
-    || /\.(md|ya?ml|json|mjs|ts|yml|sql|toml)$/i.test(file)
-  );
-};
+const isLikelyText = (content) => !content.includes(0);
 
 for (const relative of files) {
   const normalized = relative.replaceAll(path.sep, "/");
   if (/\.(docx|docm|pdf)$/i.test(normalized)) errors.push(`Private document artifact is not allowed: ${normalized}`);
   if (/\.(?:key|pem|p12|pfx|kdbx)$/i.test(normalized)) errors.push(`Credential-bearing file type is not allowed: ${normalized}`);
   if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
-  if (!isScannableTextPath(normalized)) continue;
-  const content = await readFile(path.join(root, relative), "utf8");
-  scanContent(content, normalized);
+  const content = await readFile(path.join(root, relative));
+  if (isLikelyText(content)) scanContent(content.toString("utf8"), normalized);
 }
 
 const collectHistoricalBlobPaths = async () => {
@@ -163,7 +154,7 @@ const collectHistoricalBlobPaths = async () => {
     if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
       errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
     }
-    if (isScannableTextPath(historicalPath) && !objectPaths.has(objectId)) {
+    if (!objectPaths.has(objectId)) {
       objectPaths.set(objectId, historicalPath);
     }
   }
@@ -219,7 +210,7 @@ const scanHistoricalBlobs = async (objectPaths) => {
       if (buffer.length < pending.size + 1) break;
       const content = buffer.subarray(0, pending.size);
       buffer = buffer.subarray(pending.size + 1);
-      if (pending.type === "blob") {
+      if (pending.type === "blob" && isLikelyText(content)) {
         const historicalPath = objectPaths.get(pending.objectId) ?? "<unknown>";
         scanContent(
           content.toString("utf8"),
