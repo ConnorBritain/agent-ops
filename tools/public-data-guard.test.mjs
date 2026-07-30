@@ -199,6 +199,17 @@ describe("public data guard", () => {
     );
   });
 
+  it("applies expansion-aware Unicode folding to isolated candidate spans", () => {
+    assert.equal(
+      containsPrivateDenylistValue("ſ\u0301\u0327", ["Ś"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("private-strasse", ["PRIVATE-STRAẞE"]),
+      true
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));

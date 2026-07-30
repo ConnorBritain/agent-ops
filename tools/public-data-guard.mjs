@@ -51,7 +51,12 @@ const canonicalizeGuardText = (value) =>
   value.normalize("NFC");
 
 const canonicalCaseFold = (value) =>
-  canonicalizeGuardText(value).toLowerCase().normalize("NFC");
+  value
+    .normalize("NFD")
+    .toLowerCase()
+    .toUpperCase()
+    .toLowerCase()
+    .normalize("NFD");
 
 const escapeRegExp = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -143,7 +148,8 @@ export const containsPrivateDenylistValue = (content, denylist) => {
       ),
       requiresBoundarySafeScan:
         /\p{M}/u.test(decomposedValue) ||
-        codePointLength(value.toLowerCase()) !== codePointLength(value)
+        codePointLength(value.toLowerCase()) !== codePointLength(value) ||
+        codePointLength(canonicalCaseFolded) !== codePointLength(value)
     };
   });
   for (const representation of decodeForGuard(content)) {
