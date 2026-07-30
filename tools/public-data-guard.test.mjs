@@ -498,6 +498,11 @@ describe("public data guard", () => {
       await runGit("add", "--force", ".env");
       const { stdout } = await runGit("write-tree");
       await runGit("tag", "tree-fixture", stdout.trim());
+      const { stdout: blobOutput } = await runGit(
+        "hash-object",
+        "base.txt"
+      );
+      await runGit("tag", "blob-fixture", blobOutput.trim());
 
       const historicalPaths = await collectHistoricalPaths(directory);
       assert.equal(hasHistoricalPath(historicalPaths, ".env"), true);

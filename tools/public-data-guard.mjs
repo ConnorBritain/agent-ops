@@ -321,7 +321,7 @@ const collectRefTreePaths = async (repositoryRoot) => {
     }
     const exitCode = await completion;
     if (exitCode === 0) continue;
-    if (/not a tree object/i.test(stderr)) continue;
+    if (/(?:not a tree object|expected tree type)/i.test(stderr)) continue;
     throw new Error(
       stderr.trim() || `git ls-tree exited with code ${exitCode} for ${objectId}`
     );
