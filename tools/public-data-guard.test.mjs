@@ -14,6 +14,7 @@ import { promisify } from "node:util";
 import {
   collectHistoricalPaths,
   collectRefNames,
+  commitHasDeclaredEncoding,
   containsPrivateDenylistValue,
   createIncrementalGuardScanner,
   findCredentialSignals,
@@ -514,6 +515,30 @@ describe("public data guard", () => {
       mayContainLegacyEncodedDenylistValue(tag, [privateIdentifier]),
       true
     );
+  });
+
+  it("matches ASCII legacy anchors case-insensitively", () => {
+    const tag = Buffer.concat([
+      Buffer.from("tag release-safe\n\n"),
+      Buffer.from([0x87]),
+      Buffer.from("-private")
+    ]);
+    assert.equal(
+      mayContainLegacyEncodedDenylistValue(tag, ["Ç-Private"]),
+      true
+    );
+  });
+
+  it("recognizes a commit's declared supported encoding", () => {
+    const commit = Buffer.from([
+      `tree ${"a".repeat(40)}`,
+      "author Example Operator <operator@example.invalid> 1 +0000",
+      "committer Example Operator <operator@example.invalid> 1 +0000",
+      "encoding ISO-8859-1",
+      "",
+      "Café"
+    ].join("\n"), "latin1");
+    assert.equal(commitHasDeclaredEncoding(commit), true);
   });
 
   it("scans tag text embedded in a commit mergetag header", () => {

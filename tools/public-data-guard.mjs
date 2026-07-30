@@ -295,6 +295,11 @@ export const mayContainLegacyEncodedDenylistValue = (content, denylist) => {
   const raw = Buffer.isBuffer(content) ? content : Buffer.from(content);
   const hasLegacyBytes = raw.some((value) => value >= 0x80 || value === 0x1b);
   if (!hasLegacyBytes) return false;
+  const asciiFoldedRaw = Buffer.from(raw);
+  for (let index = 0; index < asciiFoldedRaw.length; index += 1) {
+    const value = asciiFoldedRaw[index];
+    if (value >= 0x41 && value <= 0x5a) asciiFoldedRaw[index] = value + 0x20;
+  }
 
   for (const value of denylist) {
     if (/^[\x00-\x7f]*$/.test(value)) continue;
@@ -308,7 +313,10 @@ export const mayContainLegacyEncodedDenylistValue = (content, denylist) => {
     let offset = 0;
     let matched = true;
     for (const run of asciiRuns) {
-      const index = raw.indexOf(Buffer.from(run, "ascii"), offset);
+      const index = asciiFoldedRaw.indexOf(
+        Buffer.from(run.toLowerCase(), "ascii"),
+        offset
+      );
       if (index < 0) {
         matched = false;
         break;
@@ -494,6 +502,9 @@ const declaredCommitText = (content) => {
     );
   }
 };
+
+export const commitHasDeclaredEncoding = (content) =>
+  declaredCommitText(content) !== undefined;
 
 export const historicalObjectContentForScan = (content, type) => {
   if (type === "blob") return content;

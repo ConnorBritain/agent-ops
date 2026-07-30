@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import {
   collectHistoricalPaths,
   collectRefNames,
+  commitHasDeclaredEncoding,
   containsPrivateDenylistValue,
   createIncrementalGuardScanner,
   decodeForGuard,
@@ -207,7 +208,10 @@ const scanHistoricalObjects = async (objectLocations) => {
     } else if (historicalObjectNeedsContentScan(pending.type)) {
       const content = Buffer.concat(pending.parts, pending.size);
       if (
-        (pending.type === "commit" || pending.type === "tag") &&
+        (
+          pending.type === "tag" ||
+          (pending.type === "commit" && !commitHasDeclaredEncoding(content))
+        ) &&
         mayContainLegacyEncodedDenylistValue(content, privateDenylist)
       ) {
         errors.push(
