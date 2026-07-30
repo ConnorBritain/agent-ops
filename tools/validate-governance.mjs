@@ -9,6 +9,7 @@ import {
   collectRefNames,
   containsPrivateDenylistValue,
   createIncrementalGuardScanner,
+  decodeForGuard,
   findCredentialSignals,
   historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
@@ -93,15 +94,29 @@ const scanContent = (content, location) => {
 };
 
 const scanHistoricalPath = (historicalPath) => {
-  if (/\.(?:docx|docm|pdf|key|pem|p12|pfx|kdbx)$/i.test(historicalPath)) {
-    errors.push(`Forbidden artifact exists in public Git history: ${historicalPath}`);
+  const rawPath = Buffer.isBuffer(historicalPath)
+    ? historicalPath
+    : Buffer.from(historicalPath);
+  const displayPath = rawPath.toString("utf8");
+  const representations = decodeForGuard(rawPath);
+  for (const representation of representations) {
+    if (/\.(?:docx|docm|pdf|key|pem|p12|pfx|kdbx)$/i.test(representation)) {
+      errors.push(`Forbidden artifact exists in public Git history: ${displayPath}`);
+      break;
+    }
   }
-  if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
-    errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
+  for (const representation of representations) {
+    if (
+      /(^|\/)\.env($|\.)/i.test(representation) &&
+      !representation.endsWith(".env.example")
+    ) {
+      errors.push(`Raw environment file exists in public Git history: ${displayPath}`);
+      break;
+    }
   }
   scanContent(
-    Buffer.from(historicalPath),
-    `Git history path ${historicalPath}`
+    rawPath,
+    `Git history path ${displayPath}`
   );
 };
 

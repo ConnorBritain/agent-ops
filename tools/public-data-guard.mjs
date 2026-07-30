@@ -162,40 +162,46 @@ const historicalObjectTextForScan = (value, type) => {
   const separator = lines.indexOf("");
   const headers = separator < 0 ? lines : lines.slice(0, separator);
   const message = separator < 0 ? "" : lines.slice(separator + 1).join("\n");
-  const textualHeaders = headers
-    .filter((line) => (
-      type === "commit"
-        ? /^(?:author|committer|encoding) /.test(line)
-        : /^(?:type|tag|tagger) /.test(line)
-    ))
-    .map(identityWithoutTimestamp);
+  const textualHeaders = [];
   const embeddedTagText = [];
   const commitSignatureText = [];
-  if (type === "commit") {
-    for (let index = 0; index < headers.length; index += 1) {
-      const line = headers[index];
-      if (line.startsWith("mergetag ")) {
-        const embeddedTag = [line.slice("mergetag ".length)];
-        while (headers[index + 1]?.startsWith(" ")) {
-          index += 1;
-          embeddedTag.push(headers[index].slice(1));
-        }
-        embeddedTagText.push(
-          historicalObjectTextForScan(embeddedTag.join("\n"), "tag")
-        );
-        continue;
-      }
-      const signatureMatch = /^gpgsig(?:-sha256)? (.*)$/.exec(line);
-      if (!signatureMatch) continue;
-      const signature = [signatureMatch[1]];
-      while (headers[index + 1]?.startsWith(" ")) {
-        index += 1;
-        signature.push(headers[index].slice(1));
-      }
+  const structuralHeaders = type === "commit"
+    ? new Set(["tree", "parent"])
+    : new Set(["object"]);
+  for (let index = 0; index < headers.length; index += 1) {
+    const line = headers[index];
+    const firstSpace = line.indexOf(" ");
+    const key = firstSpace < 0 ? line : line.slice(0, firstSpace);
+    const continued = [];
+    while (headers[index + 1]?.startsWith(" ")) {
+      index += 1;
+      continued.push(headers[index].slice(1));
+    }
+    if (type === "commit" && key === "mergetag") {
+      const embeddedTag = [
+        firstSpace < 0 ? "" : line.slice(firstSpace + 1),
+        ...continued
+      ];
+      embeddedTagText.push(
+        historicalObjectTextForScan(embeddedTag.join("\n"), "tag")
+      );
+      continue;
+    }
+    if (
+      type === "commit" &&
+      (key === "gpgsig" || key === "gpgsig-sha256")
+    ) {
+      const signature = [
+        firstSpace < 0 ? "" : line.slice(firstSpace + 1),
+        ...continued
+      ];
       commitSignatureText.push(
         signatureTextForScan(signature.join("\n"))
       );
+      continue;
     }
+    if (structuralHeaders.has(key)) continue;
+    textualHeaders.push(identityWithoutTimestamp(line), ...continued);
   }
 
   return [
@@ -241,35 +247,13 @@ export const historicalObjectContentForScan = (content, type) => {
   );
 };
 
-const collectReachableObjectPaths = async (repositoryRoot) => {
-  const child = spawn("git", ["rev-list", "--objects", "--all"], {
-    cwd: repositoryRoot,
-    stdio: ["ignore", "pipe", "pipe"]
-  });
-  let stderr = "";
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk;
-  });
-  const completion = new Promise((resolve, reject) => {
-    child.once("error", reject);
-    child.once("close", resolve);
-  });
-  const paths = new Set();
-  const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
-  for await (const line of lines) {
-    const { historicalPath } = parseHistoricalObjectLine(line);
-    if (historicalPath) paths.add(historicalPath);
-  }
-  const exitCode = await completion;
-  if (exitCode !== 0) {
-    throw new Error(stderr.trim() || `git rev-list exited with code ${exitCode}`);
-  }
-  return paths;
+const addRawPath = (paths, value) => {
+  const owned = Buffer.from(value);
+  paths.set(owned.toString("hex"), owned);
 };
 
 const collectRefTreePaths = async (repositoryRoot) => {
-  const paths = new Set();
+  const paths = new Map();
   for (const refName of await collectRefNames(repositoryRoot)) {
     const child = spawn(
       "git",
@@ -298,7 +282,7 @@ const collectRefTreePaths = async (repositoryRoot) => {
         const separator = content.indexOf(0, offset);
         if (separator < 0) break;
         if (separator > offset) {
-          paths.add(content.subarray(offset, separator).toString("utf8"));
+          addRawPath(paths, content.subarray(offset, separator));
         }
         offset = separator + 1;
       }
@@ -314,7 +298,7 @@ const collectRefTreePaths = async (repositoryRoot) => {
       stderr.trim() || `git ls-tree exited with code ${exitCode} for ${refName}`
     );
   }
-  return paths;
+  return [...paths.values()];
 };
 
 export const collectHistoricalPaths = async (repositoryRoot) => {
@@ -344,7 +328,7 @@ export const collectHistoricalPaths = async (repositoryRoot) => {
     child.once("error", reject);
     child.once("close", resolve);
   });
-  const paths = new Set();
+  const paths = new Map();
   let remainder = Buffer.alloc(0);
   for await (const chunk of child.stdout) {
     const content = remainder.length
@@ -355,24 +339,21 @@ export const collectHistoricalPaths = async (repositoryRoot) => {
       const separator = content.indexOf(0, offset);
       if (separator < 0) break;
       if (separator > offset) {
-        paths.add(content.subarray(offset, separator).toString("utf8"));
+        addRawPath(paths, content.subarray(offset, separator));
       }
       offset = separator + 1;
     }
-    remainder = content.subarray(offset);
+    remainder = Buffer.from(content.subarray(offset));
   }
-  if (remainder.length) paths.add(remainder.toString("utf8"));
+  if (remainder.length) addRawPath(paths, remainder);
   const exitCode = await completion;
   if (exitCode !== 0) {
     throw new Error(stderr.trim() || `git log exited with code ${exitCode}`);
   }
-  for (const reachablePath of await collectReachableObjectPaths(repositoryRoot)) {
-    paths.add(reachablePath);
-  }
   for (const refTreePath of await collectRefTreePaths(repositoryRoot)) {
-    paths.add(refTreePath);
+    addRawPath(paths, refTreePath);
   }
-  return paths;
+  return [...paths.values()];
 };
 
 export const collectRefNames = async (repositoryRoot) => {

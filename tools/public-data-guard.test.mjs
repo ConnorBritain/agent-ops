@@ -25,6 +25,8 @@ import {
 
 const fixtureToken = () => ["ghp", "_", "a".repeat(20)].join("");
 const execFileAsync = promisify(execFile);
+const hasHistoricalPath = (paths, expected) =>
+  paths.some((value) => value.equals(Buffer.from(expected)));
 
 describe("public data guard", () => {
   it("detects a credential in ordinary text", () => {
@@ -251,6 +253,40 @@ describe("public data guard", () => {
     );
   });
 
+  it("scans custom textual commit and tag headers", () => {
+    const privateIdentifier = "private-host-zephyr";
+    const commit = Buffer.from([
+      `tree ${"a".repeat(40)}`,
+      "author Example Operator <operator@example.invalid> 1 +0000",
+      "committer Example Operator <operator@example.invalid> 1 +0000",
+      `x-deployment ${privateIdentifier}`,
+      "",
+      "Safe commit message"
+    ].join("\n"));
+    const tag = Buffer.from([
+      `object ${"b".repeat(40)}`,
+      "type commit",
+      "tag release-safe",
+      "tagger Example Operator <operator@example.invalid> 1 +0000",
+      `x-deployment ${privateIdentifier}`,
+      "",
+      "Safe tag message"
+    ].join("\n"));
+
+    for (const [content, type] of [
+      [commit, "commit"],
+      [tag, "tag"]
+    ]) {
+      assert.equal(
+        containsPrivateDenylistValue(
+          historicalObjectContentForScan(content, type),
+          [privateIdentifier]
+        ),
+        true
+      );
+    }
+  });
+
   it("scans a non-ASCII private value in a legacy-encoded commit", () => {
     const privateIdentifier = "Privaté-Worker";
     const commit = Buffer.from([
@@ -381,8 +417,8 @@ describe("public data guard", () => {
       );
 
       const historicalPaths = await collectHistoricalPaths(directory);
-      assert.equal(historicalPaths.has(".env"), true);
-      assert.equal(historicalPaths.has(".env.example"), true);
+      assert.equal(hasHistoricalPath(historicalPaths, ".env"), true);
+      assert.equal(hasHistoricalPath(historicalPaths, ".env.example"), true);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -434,7 +470,7 @@ describe("public data guard", () => {
       await commit("Merge side with fixture");
 
       const historicalPaths = await collectHistoricalPaths(directory);
-      assert.equal(historicalPaths.has(".env"), true);
+      assert.equal(hasHistoricalPath(historicalPaths, ".env"), true);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -464,7 +500,81 @@ describe("public data guard", () => {
       await runGit("tag", "tree-fixture", stdout.trim());
 
       const historicalPaths = await collectHistoricalPaths(directory);
-      assert.equal(historicalPaths.has(".env"), true);
+      assert.equal(hasHistoricalPath(historicalPaths, ".env"), true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves raw bytes in a deleted historical path", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-raw-path-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    const commitTree = (tree, message, parent) =>
+      runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit-tree",
+        tree,
+        ...(parent ? ["-p", parent] : []),
+        "-m",
+        message
+      );
+    const privateIdentifier = "Privaté-Worker";
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, "fixture.txt"), "fixture\n");
+      const { stdout: blobOutput } = await runGit(
+        "hash-object",
+        "-w",
+        "fixture.txt"
+      );
+      const treeContent = Buffer.concat([
+        Buffer.from("100644 Privat"),
+        Buffer.from([0xe9]),
+        Buffer.from("-Worker.txt\0"),
+        Buffer.from(blobOutput.trim(), "hex")
+      ]);
+      await writeFile(path.join(directory, "legacy-tree.bin"), treeContent);
+      const { stdout: legacyTreeOutput } = await runGit(
+        "hash-object",
+        "-t",
+        "tree",
+        "-w",
+        "legacy-tree.bin"
+      );
+      const { stdout: firstCommitOutput } = await commitTree(
+        legacyTreeOutput.trim(),
+        "Add legacy path"
+      );
+      await writeFile(path.join(directory, "empty-tree.bin"), Buffer.alloc(0));
+      const { stdout: emptyTreeOutput } = await runGit(
+        "hash-object",
+        "-t",
+        "tree",
+        "-w",
+        "empty-tree.bin"
+      );
+      const { stdout: secondCommitOutput } = await commitTree(
+        emptyTreeOutput.trim(),
+        "Delete legacy path",
+        firstCommitOutput.trim()
+      );
+      await runGit(
+        "update-ref",
+        "refs/heads/main",
+        secondCommitOutput.trim()
+      );
+
+      const historicalPaths = await collectHistoricalPaths(directory);
+      assert.equal(
+        historicalPaths.some((value) =>
+          containsPrivateDenylistValue(value, [privateIdentifier])
+        ),
+        true
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
