@@ -4,10 +4,12 @@ AgentOps is a provider-neutral, policy-governed architecture for supervising bou
 
 The public repository is a clean reference implementation and governance template. It contains no private host inventory, credentials, deployment configuration, or production infrastructure.
 
-The governed bootstrap and local durable operational core are complete. The
-full specification-ordered v1 Roadmap is tracked in `docs/SLICES.md`, and the
-generated requirement-to-slice-to-test report is in
-`docs/traceability/v1-requirements.yaml`.
+The governed bootstrap, local durable operational core, and transport-neutral
+worker supervisor are complete. The full specification-ordered v1 Roadmap is
+tracked in `docs/SLICES.md`, and the generated
+requirement-to-slice-to-acceptance-to-test report is in
+`docs/traceability/v1-requirements.yaml`. No host service or provider runtime
+is installed by this repository.
 
 Run `pnpm validate` for specifications, traceability, public-data policy,
 Supabase migration structure, TypeScript, unit tests, and Roadmap validation.

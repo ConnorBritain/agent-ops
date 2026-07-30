@@ -14,7 +14,9 @@ Completion evidence:
 - Roadmap validation and rendering succeed.
 - The private implementation overlay was seeded independently from the merged public baseline and its private validation passed.
 
-Active public slice: the Phase 2 durable operational core described below. Private host baseline and RustDesk enrollment remain a separately gated private-overlay workstream requiring owner authorization, a finalized relay/security design, and private-only configuration.
+Private host baseline and RustDesk enrollment remain a separately gated
+private-overlay workstream requiring owner authorization, a finalized
+relay/security design, and private-only configuration.
 
 ## Phase 2 — durable operational core
 
@@ -44,7 +46,8 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker runtime is next** as of 2026-07-30.
+Status: **Phase 3 worker core is complete; safety hooks are next** as of
+2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -61,3 +64,29 @@ Every one of the 130 normative requirements now has an enforced primary
 requirement-to-slice-to-acceptance-to-test mapping in
 `docs/traceability/v1-requirements.yaml`. Future evidence is labeled planned or
 gated rather than being inferred from code existence.
+
+## Phase 3 — worker runtime core
+
+Status: **local worker core complete** on 2026-07-30; host service packaging
+and enrollment are not started.
+
+The transport-neutral `packages/worker` supervisor now starts idle, registers a
+versioned capability/skill manifest, publishes sequenced heartbeats and
+normalized lifecycle/health events, and exposes bounded admission,
+inspection, and cancellation paths. Its pure preflight decision rejects
+unverified policy or signatures, expired or mismatched leases, domain/path
+mismatches, missing capabilities or skills, missing or excessive resource
+budgets, disk/memory/worktree pressure, and job-capacity overcommit before any
+provider can start.
+
+Deterministic fixtures prove duplicate accepted envelopes create no duplicate
+lifecycle event, reservations are accounted before another admission, inline
+secrets are rejected, and supervisor startup restores no workload. The package
+intentionally has no inbound listener, provider launcher, service-manager
+definition, host identity, secret, or remote connection.
+
+Next slice: `worker-safety-hooks` adds independent resource/process/worktree
+collectors, unsafe-delete interception, dry-run cleanup, drain, quarantine, and
+hung-agent monitoring. `REQ-WORKER-001`, `REQ-WORKER-005`, real cryptographic
+verification, scoped runtime identity, and private canary evidence remain
+planned or gated rather than inferred from the local supervisor.

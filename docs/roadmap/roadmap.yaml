@@ -15,7 +15,7 @@ meta:
   links:
     narrative: docs/specs/SPEC-000-program-charter.md
     status: docs/status/current.md
-    tracker: docs/traceability/phase-2-durable-core.yaml
+    tracker: docs/traceability/phase-3-worker-runtime-core.yaml
     bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
 pis:
   - id: phase-0-governance
@@ -178,13 +178,14 @@ pis:
     sprints:
       - id: worker-runtime-core
         title: Worker supervisor, manifests, preflight, and normalized health
-        status: next
+        status: complete
         invoke: worker-runtime-core
         what: Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [supabase-durable-core]
         gate: pnpm validate plus worker contract and preflight fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/contracts/
           - packages/domain/
@@ -200,7 +201,7 @@ pis:
           - docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
           - docs/specs/SPEC-009-hooks-health-and-safeguards.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
-        resume_action: Implement only the local supervisor and deterministic test harness; do not install a service or authenticate a host.
+        resume_action: Preserve the transport-neutral contract and green fixtures; service installation and host authentication remain separately gated.
         priority:
           tier: P0
           weight: 100
@@ -208,7 +209,7 @@ pis:
         prompt: Keep the worker outbound-only, deny incompatible or expired work before launch, emit idempotent normalized observations, and remain idle after reboot until the Coordinator authorizes recovery.
       - id: worker-safety-hooks
         title: Independent safety collectors, drain, and quarantine
-        status: scheduled
+        status: next
         invoke: worker-safety-hooks
         what: Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling.
         est_sessions: 2
@@ -297,7 +298,7 @@ pis:
         what: Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation.
         est_sessions: 1
         weight: light
-        deps: [worker-runtime-core]
+        deps: [worker-service-packaging]
         gate: Roadmap adapter scenario and correlation contract tests
         touches:
           - packages/adapters/
