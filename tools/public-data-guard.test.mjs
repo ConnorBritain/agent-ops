@@ -111,6 +111,32 @@ describe("public data guard", () => {
     );
   });
 
+  it("matches a non-ASCII private value in Latin-1 text", () => {
+    const privateIdentifier = "Privaté-Worker";
+    assert.equal(
+      containsPrivateDenylistValue(
+        Buffer.from(`host=${privateIdentifier}`, "latin1"),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
+  it("matches a non-ASCII private value in Windows-1252 text", () => {
+    const privateIdentifier = "Private–Worker";
+    assert.equal(
+      containsPrivateDenylistValue(
+        Buffer.concat([
+          Buffer.from("host=Private"),
+          Buffer.from([0x96]),
+          Buffer.from("Worker")
+        ]),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
   it("incrementally detects findings across chunks with bounded retention", () => {
     const privateIdentifier = "private-host-zephyr";
     const token = fixtureToken();
@@ -191,6 +217,26 @@ describe("public data guard", () => {
     assert.equal(
       containsPrivateDenylistValue(
         historicalObjectContentForScan(tag, "tag"),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
+  it("scans a non-ASCII private value in a legacy-encoded commit", () => {
+    const privateIdentifier = "Privaté-Worker";
+    const commit = Buffer.from([
+      `tree ${"a".repeat(40)}`,
+      "author Example Operator <operator@example.invalid> 1 +0000",
+      "committer Example Operator <operator@example.invalid> 1 +0000",
+      "encoding ISO-8859-1",
+      "",
+      `Deploy ${privateIdentifier}`
+    ].join("\n"), "latin1");
+
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(commit, "commit"),
         [privateIdentifier]
       ),
       true

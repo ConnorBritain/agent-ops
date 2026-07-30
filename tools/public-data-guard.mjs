@@ -5,6 +5,11 @@ import {
   readlink
 } from "node:fs/promises";
 import { createInterface } from "node:readline";
+import { TextDecoder } from "node:util";
+
+const windows1252Decoder = new TextDecoder("windows-1252");
+const utf16leDecoder = new TextDecoder("utf-16le");
+const utf16beDecoder = new TextDecoder("utf-16be");
 
 export const credentialSignals = [
   /(xox[baprs]-[A-Za-z0-9-]{20,}|xapp-[A-Za-z0-9-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sb_(?:secret|publishable)_[A-Za-z0-9_-]{20,}|(?:AKIA|ASIA)[A-Z0-9]{16}|sk-(?:proj-)?[A-Za-z0-9_-]{20,})/,
@@ -14,9 +19,17 @@ export const credentialSignals = [
 
 export const decodeForGuard = (content) => {
   const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
-  const representations = [buffer.toString("utf8")];
+  const representations = [
+    buffer.toString("utf8"),
+    buffer.toString("latin1"),
+    windows1252Decoder.decode(buffer)
+  ];
   if (buffer.includes(0)) {
-    representations.push(buffer.toString("latin1").replaceAll("\0", ""));
+    representations.push(
+      utf16leDecoder.decode(buffer),
+      utf16beDecoder.decode(buffer),
+      ...representations.map((value) => value.replaceAll("\0", ""))
+    );
   }
   return [...new Set(representations)];
 };
@@ -141,11 +154,8 @@ const identityWithoutTimestamp = (line) => {
   return match ? `${match[1]} ${match[2]}` : line;
 };
 
-export const historicalObjectContentForScan = (content, type) => {
-  if (type === "blob") return content;
-  if (type !== "commit" && type !== "tag") return Buffer.alloc(0);
-
-  const lines = Buffer.from(content).toString("utf8").split("\n");
+const historicalObjectTextForScan = (value, type) => {
+  const lines = value.split("\n");
   const separator = lines.indexOf("");
   const headers = separator < 0 ? lines : lines.slice(0, separator);
   const message = separator < 0 ? "" : lines.slice(separator + 1).join("\n");
@@ -168,10 +178,7 @@ export const historicalObjectContentForScan = (content, type) => {
           embeddedTag.push(headers[index].slice(1));
         }
         embeddedTagText.push(
-          historicalObjectContentForScan(
-            Buffer.from(embeddedTag.join("\n")),
-            "tag"
-          ).toString("utf8")
+          historicalObjectTextForScan(embeddedTag.join("\n"), "tag")
         );
         continue;
       }
@@ -188,13 +195,22 @@ export const historicalObjectContentForScan = (content, type) => {
     }
   }
 
+  return [
+    ...textualHeaders,
+    ...embeddedTagText,
+    ...commitSignatureText,
+    signatureTextForScan(message)
+  ].join("\n");
+};
+
+export const historicalObjectContentForScan = (content, type) => {
+  if (type === "blob") return content;
+  if (type !== "commit" && type !== "tag") return Buffer.alloc(0);
   return Buffer.from(
-    [
-      ...textualHeaders,
-      ...embeddedTagText,
-      ...commitSignatureText,
-      signatureTextForScan(message)
-    ].join("\n")
+    [...new Set(
+      decodeForGuard(content)
+        .map((value) => historicalObjectTextForScan(value, type))
+    )].join("\n")
   );
 };
 
