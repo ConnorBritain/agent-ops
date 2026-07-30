@@ -124,6 +124,31 @@ describe("public data guard", () => {
     );
   });
 
+  it("matches canonically equivalent Unicode in content and repository paths", () => {
+    const composed = "Privaté-Worker";
+    const decomposed = composed.normalize("NFD");
+    assert.notEqual(composed, decomposed);
+
+    for (const [content, denylistValue] of [
+      [`host=${decomposed}`, composed],
+      [`host=${composed}`, decomposed],
+      [`inventory/${decomposed}.yaml`, composed]
+    ]) {
+      assert.equal(
+        containsPrivateDenylistValue(Buffer.from(content), [denylistValue]),
+        true
+      );
+    }
+  });
+
+  it("incrementally matches a decomposed private value across chunks", () => {
+    const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
+    scanner.write(Buffer.from("host=Privat"));
+    scanner.write(Buffer.from("e"));
+    scanner.write(Buffer.from("\u0301-Worker"));
+    assert.equal(scanner.finish().privateValue, true);
+  });
+
   it("matches a non-ASCII private value in Latin-1 text", () => {
     const privateIdentifier = "Privaté-Worker";
     assert.equal(
@@ -565,6 +590,79 @@ describe("public data guard", () => {
       const { stdout: secondCommitOutput } = await commitTree(
         emptyTreeOutput.trim(),
         "Delete legacy path",
+        firstCommitOutput.trim()
+      );
+      await runGit(
+        "update-ref",
+        "refs/heads/main",
+        secondCommitOutput.trim()
+      );
+
+      const historicalPaths = await collectHistoricalPaths(directory);
+      assert.equal(
+        historicalPaths.some((value) =>
+          containsPrivateDenylistValue(value, [privateIdentifier])
+        ),
+        true
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("matches a canonically equivalent deleted historical path", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-unicode-path-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    const commitTree = (tree, message, parent) =>
+      runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit-tree",
+        tree,
+        ...(parent ? ["-p", parent] : []),
+        "-m",
+        message
+      );
+    const privateIdentifier = "Privaté-Worker";
+    const decomposedPath = `${privateIdentifier.normalize("NFD")}.txt`;
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, "fixture.txt"), "fixture\n");
+      const { stdout: blobOutput } = await runGit(
+        "hash-object",
+        "-w",
+        "fixture.txt"
+      );
+      const treeContent = Buffer.concat([
+        Buffer.from(`100644 ${decomposedPath}\0`),
+        Buffer.from(blobOutput.trim(), "hex")
+      ]);
+      await writeFile(path.join(directory, "unicode-tree.bin"), treeContent);
+      const { stdout: unicodeTreeOutput } = await runGit(
+        "hash-object",
+        "-t",
+        "tree",
+        "-w",
+        "unicode-tree.bin"
+      );
+      const { stdout: firstCommitOutput } = await commitTree(
+        unicodeTreeOutput.trim(),
+        "Add decomposed path"
+      );
+      await writeFile(path.join(directory, "empty-tree.bin"), Buffer.alloc(0));
+      const { stdout: emptyTreeOutput } = await runGit(
+        "hash-object",
+        "-t",
+        "tree",
+        "-w",
+        "empty-tree.bin"
+      );
+      const { stdout: secondCommitOutput } = await commitTree(
+        emptyTreeOutput.trim(),
+        "Delete decomposed path",
         firstCommitOutput.trim()
       );
       await runGit(

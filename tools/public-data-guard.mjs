@@ -47,11 +47,17 @@ export const findCredentialSignals = (content) => {
   return [...matches];
 };
 
+const canonicalizeGuardText = (value) =>
+  value.normalize("NFC").toLowerCase().normalize("NFC");
+
 export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
+  const canonicalDenylist = denylist.map(canonicalizeGuardText);
   for (const representation of decodeForGuard(content)) {
-    const normalized = representation.toLowerCase();
-    if (denylist.some((value) => normalized.includes(value.toLowerCase()))) {
+    const canonicalRepresentation = canonicalizeGuardText(representation);
+    if (canonicalDenylist.some((value) =>
+      canonicalRepresentation.includes(value)
+    )) {
       return true;
     }
   }
