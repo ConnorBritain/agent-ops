@@ -15,6 +15,7 @@ import {
   collectHistoricalPaths,
   collectRefNames,
   containsPrivateDenylistValue,
+  createIncrementalGuardScanner,
   findCredentialSignals,
   historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
@@ -108,6 +109,22 @@ describe("public data guard", () => {
       ),
       true
     );
+  });
+
+  it("incrementally detects findings across chunks with bounded retention", () => {
+    const privateIdentifier = "private-host-zephyr";
+    const token = fixtureToken();
+    const scanner = createIncrementalGuardScanner([privateIdentifier]);
+    scanner.write(Buffer.alloc(1024 * 1024));
+    assert.ok(scanner.retainedByteLength <= scanner.overlapBytes);
+    scanner.write(Buffer.from("private-host-"));
+    scanner.write(Buffer.from(`zephyr token=${token.slice(0, 9)}`));
+    scanner.write(Buffer.from(token.slice(9)));
+
+    const findings = scanner.finish();
+    assert.equal(findings.privateValue, true);
+    assert.equal(findings.credentialSignals.length, 1);
+    assert.ok(scanner.retainedByteLength <= scanner.overlapBytes);
   });
 
   it("scans symlink text without following missing, file, or directory targets", async () => {

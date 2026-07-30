@@ -8,6 +8,7 @@ import {
   collectHistoricalPaths,
   collectRefNames,
   containsPrivateDenylistValue,
+  createIncrementalGuardScanner,
   findCredentialSignals,
   historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
@@ -173,35 +174,85 @@ const scanHistoricalObjects = async (objectLocations) => {
     child.stdin.end();
   })();
 
-  let buffer = Buffer.alloc(0);
+  let headerParts = [];
   let pending;
+  const finishPendingContent = () => {
+    const historicalPath = objectLocations.get(pending.objectId) ?? "<unknown>";
+    const location =
+      `Git history ${pending.type} ${pending.objectId} (${historicalPath})`;
+    if (pending.scanner) {
+      const findings = pending.scanner.finish();
+      if (findings.privateValue) {
+        errors.push(`Private deployment denylist value found in ${location}`);
+      }
+      for (const signal of findings.credentialSignals) {
+        errors.push(`Credential signal ${signal} found in ${location}`);
+      }
+    } else if (historicalObjectNeedsContentScan(pending.type)) {
+      scanContent(
+        historicalObjectContentForScan(
+          Buffer.concat(pending.parts, pending.size),
+          pending.type
+        ),
+        location
+      );
+    }
+    pending.awaitingDelimiter = true;
+  };
+
   for await (const chunk of child.stdout) {
-    buffer = Buffer.concat([buffer, chunk]);
-    while (true) {
+    let offset = 0;
+    while (offset < chunk.length) {
       if (!pending) {
-        const newline = buffer.indexOf(0x0a);
-        if (newline < 0) break;
-        const header = buffer.subarray(0, newline).toString("utf8");
-        buffer = buffer.subarray(newline + 1);
+        const newline = chunk.indexOf(0x0a, offset);
+        if (newline < 0) {
+          headerParts.push(Buffer.from(chunk.subarray(offset)));
+          offset = chunk.length;
+          continue;
+        }
+        headerParts.push(Buffer.from(chunk.subarray(offset, newline)));
+        const header = Buffer.concat(headerParts).toString("utf8");
+        headerParts = [];
+        offset = newline + 1;
         const match = /^([0-9a-f]+) ([a-z]+) (\d+)$/.exec(header);
         if (!match) throw new Error(`Unexpected git cat-file header: ${header}`);
+        const type = match[2];
         pending = {
           objectId: match[1],
-          type: match[2],
-          size: Number.parseInt(match[3], 10)
+          type,
+          size: Number.parseInt(match[3], 10),
+          remaining: Number.parseInt(match[3], 10),
+          awaitingDelimiter: false,
+          parts: [],
+          scanner: type === "blob"
+            ? createIncrementalGuardScanner(privateDenylist)
+            : undefined
         };
       }
-      if (buffer.length < pending.size + 1) break;
-      const content = buffer.subarray(0, pending.size);
-      buffer = buffer.subarray(pending.size + 1);
-      if (historicalObjectNeedsContentScan(pending.type)) {
-        const historicalPath = objectLocations.get(pending.objectId) ?? "<unknown>";
-        scanContent(
-          historicalObjectContentForScan(content, pending.type),
-          `Git history ${pending.type} ${pending.objectId} (${historicalPath})`
-        );
+      if (pending.awaitingDelimiter) {
+        if (chunk[offset] !== 0x0a) {
+          throw new Error(
+            `Missing delimiter after git object ${pending.objectId}`
+          );
+        }
+        offset += 1;
+        pending = undefined;
+        continue;
       }
-      pending = undefined;
+      if (pending.remaining === 0) {
+        finishPendingContent();
+        continue;
+      }
+      const length = Math.min(pending.remaining, chunk.length - offset);
+      const part = chunk.subarray(offset, offset + length);
+      if (pending.scanner) {
+        pending.scanner.write(part);
+      } else if (historicalObjectNeedsContentScan(pending.type)) {
+        pending.parts.push(Buffer.from(part));
+      }
+      pending.remaining -= length;
+      offset += length;
+      if (pending.remaining === 0) finishPendingContent();
     }
   }
   await feed;
@@ -209,7 +260,7 @@ const scanHistoricalObjects = async (objectLocations) => {
   if (exitCode !== 0) {
     throw new Error(stderr.trim() || `git cat-file exited with code ${exitCode}`);
   }
-  if (pending || buffer.length) {
+  if (pending || headerParts.length) {
     throw new Error("Incomplete response from git cat-file --batch");
   }
 };
@@ -256,6 +307,10 @@ const traceability = await readFile(path.join(root, "docs/traceability/phase-0.y
 const phase2Traceability = await readFile(path.join(root, "docs/traceability/phase-2-durable-core.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
+const roadmapSlices = new Set(
+  [...roadmap.matchAll(/^\s*invoke:\s*([a-z0-9-]+)\s*$/gm)]
+    .map((match) => match[1])
+);
 const acceptanceRequirements = new Map();
 let acceptanceId;
 for (const line of acceptance.split("\n")) {
@@ -284,7 +339,7 @@ for (const route of acceptanceRoutes) {
   if (!acceptanceRequirements.has(route.acceptance)) {
     errors.push(`Acceptance route is absent from catalog: ${route.acceptance}`);
   }
-  if (!roadmap.includes(`invoke: ${route.slice}`)) {
+  if (!roadmapSlices.has(route.slice)) {
     errors.push(`Acceptance route slice is absent from Roadmap: ${route.slice}`);
   }
   for (const marker of [
@@ -318,11 +373,56 @@ for (const entry of traceabilityEntries) {
   ]) {
     if (!v1Traceability.includes(marker)) errors.push(`Traceability report is missing ${marker.trim()}`);
   }
-  if (!roadmap.includes(`invoke: ${entry.slice}`)) errors.push(`Traceability slice is absent from Roadmap: ${entry.slice}`);
+  if (!roadmapSlices.has(entry.slice)) {
+    errors.push(`Traceability slice is absent from Roadmap: ${entry.slice}`);
+  }
   const acceptedRequirements = acceptanceRequirements.get(entry.acceptance);
   if (!acceptedRequirements) errors.push(`Traceability acceptance is absent from catalog: ${entry.acceptance}`);
   else if (!acceptedRequirements.has(entry.id)) {
     errors.push(`Acceptance ${entry.acceptance} does not include routed requirement ${entry.id}`);
+  }
+  if (entry.coverage) {
+    if (entry.coveragePolicy !== "all") {
+      errors.push(`Traceability coverage policy must be all for ${entry.id}`);
+    }
+    for (const coverage of entry.coverage) {
+      if (!roadmapSlices.has(coverage.slice)) {
+        errors.push(
+          `Traceability coverage slice is absent from Roadmap for ${entry.id}: ${coverage.slice}`
+        );
+      }
+      const coverageRequirements =
+        acceptanceRequirements.get(coverage.acceptance);
+      if (!coverageRequirements) {
+        errors.push(
+          `Traceability coverage acceptance is absent from catalog for ${entry.id}: ${coverage.acceptance}`
+        );
+      } else if (!coverageRequirements.has(entry.id)) {
+        errors.push(
+          `Acceptance ${coverage.acceptance} does not include covered requirement ${entry.id}`
+        );
+      }
+      for (const marker of [
+        `      - slice: ${coverage.slice}`,
+        `        acceptance: ${coverage.acceptance}`,
+        `        status: ${coverage.status}`,
+        `        test: ${JSON.stringify(coverage.test)}`
+      ]) {
+        if (!v1Traceability.includes(marker)) {
+          errors.push(
+            `Traceability report is missing coverage for ${entry.id}: ${marker.trim()}`
+          );
+        }
+      }
+    }
+    if (
+      entry.status === "complete" &&
+      entry.coverage.some((coverage) => coverage.status !== "complete")
+    ) {
+      errors.push(
+        `Requirement is complete before all traceability coverage is complete: ${entry.id}`
+      );
+    }
   }
   if (entry.status === "complete" && !completedEvidence.includes(entry.id)) {
     errors.push(`Requirement is marked complete without completed-slice evidence: ${entry.id}`);

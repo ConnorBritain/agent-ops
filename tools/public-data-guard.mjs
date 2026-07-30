@@ -42,6 +42,43 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   return false;
 };
 
+export const createIncrementalGuardScanner = (denylist) => {
+  const overlapBytes = Math.max(
+    256,
+    ...denylist.map((value) => (Buffer.byteLength(value, "utf8") * 4) + 16)
+  );
+  let tail = Buffer.alloc(0);
+  let privateValue = false;
+  const signals = new Set();
+
+  return {
+    write(chunk) {
+      const content = tail.length
+        ? Buffer.concat([tail, chunk])
+        : chunk;
+      if (!privateValue && containsPrivateDenylistValue(content, denylist)) {
+        privateValue = true;
+      }
+      for (const signal of findCredentialSignals(content)) {
+        signals.add(signal);
+      }
+      tail = Buffer.from(
+        content.subarray(Math.max(0, content.length - overlapBytes))
+      );
+    },
+    finish() {
+      return {
+        privateValue,
+        credentialSignals: [...signals]
+      };
+    },
+    get retainedByteLength() {
+      return tail.length;
+    },
+    overlapBytes
+  };
+};
+
 export const readRepositoryEntry = async (absolutePath) => {
   const metadata = await lstat(absolutePath);
   if (metadata.isSymbolicLink()) {

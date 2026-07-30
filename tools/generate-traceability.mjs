@@ -11,7 +11,8 @@ const check = process.argv.includes("--check");
 let current = null;
 try {
   current = await readFile(target, "utf8");
-} catch {
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
   // A missing generated artifact is stale.
 }
 

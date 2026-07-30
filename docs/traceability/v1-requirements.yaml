@@ -845,11 +845,33 @@ requirements:
     required_evidence: "PR-gate test."
   - id: REQ-TEST-005
     owner: SPEC-017
-    slice: worker-safety-hooks
-    acceptance: ACC-WORKER-001
-    status: planned
-    test: "future safety decision and independent-monitor fixtures"
+    slice: observed-browser-path
+    acceptance: ACC-BROWSER-001
+    status: gated
+    test: "future browser classification and confirmation suite"
     required_evidence: "Scenario catalog review."
+    coverage_policy: all
+    coverage:
+      - slice: worker-safety-hooks
+        acceptance: ACC-WORKER-001
+        status: planned
+        test: "future safety decision and independent-monitor fixtures"
+      - slice: worker-service-packaging
+        acceptance: ACC-WORKER-001
+        status: planned
+        test: "future clean-host service and reboot-idle fixtures"
+      - slice: private-worker-canary
+        acceptance: ACC-WORKER-001
+        status: gated
+        test: "future private worker canary acceptance"
+      - slice: private-worker-canary
+        acceptance: ACC-REMOTE-001
+        status: gated
+        test: "future private headless RemoteAccessPortal and worker-health canary"
+      - slice: observed-browser-path
+        acceptance: ACC-BROWSER-001
+        status: planned
+        test: "future browser classification and confirmation suite"
   - id: REQ-TEST-006
     owner: SPEC-017
     slice: release-recovery

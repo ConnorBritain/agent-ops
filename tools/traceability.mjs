@@ -53,6 +53,14 @@ export const acceptanceRoutes = [
   routes.federation
 ];
 
+const scenarioCatalogCoverage = [
+  routes.safety,
+  routes.service,
+  routes.canary,
+  routes.remoteAcceptance,
+  routes.browser
+];
+
 const completedRequirementIds = new Set([
   "REQ-CATALOG-001",
   "REQ-CATALOG-002",
@@ -150,7 +158,7 @@ const overrides = new Map(Object.entries({
   "REQ-OPS-006": "projections",
   "REQ-TEST-001": "governance",
   "REQ-TEST-002": "print",
-  "REQ-TEST-005": "safety",
+  "REQ-TEST-005": "browser",
   "REQ-TEST-006": "release",
   "REQ-ROLL-001": "governance",
   "REQ-ROLL-003": "release",
@@ -170,16 +178,33 @@ const routeKeyFor = (requirementId) => {
   return match ? prefixRoutes.get(match[1]) : undefined;
 };
 
+const coverageFor = (requirementId) =>
+  requirementId === "REQ-TEST-005"
+    ? scenarioCatalogCoverage
+    : undefined;
+
 export const traceabilityEntries = documents.flatMap((document) =>
   document.requirements.map((requirement) => {
     const routeKey = routeKeyFor(requirement.id);
     const selected = routeKey ? routes[routeKey] : undefined;
     if (!selected) throw new Error(`No traceability route for ${requirement.id}`);
+    const coverage = coverageFor(requirement.id);
+    const status = completedRequirementIds.has(requirement.id)
+      ? "complete"
+      : coverage?.some((entry) => entry.status === "gated")
+        ? "gated"
+        : selected.status;
     return {
       id: requirement.id,
       owner: document.id,
       ...selected,
-      status: completedRequirementIds.has(requirement.id) ? "complete" : selected.status,
+      status,
+      ...(coverage
+        ? {
+            coveragePolicy: "all",
+            coverage
+          }
+        : {}),
       requiredEvidence: requirement.evidence
     };
   })
@@ -198,14 +223,29 @@ export const renderTraceability = () => [
     `    test: ${scalar(entry.test)}`
   ]),
   "requirements:",
-  ...traceabilityEntries.flatMap((entry) => [
-    `  - id: ${entry.id}`,
-    `    owner: ${entry.owner}`,
-    `    slice: ${entry.slice}`,
-    `    acceptance: ${entry.acceptance}`,
-    `    status: ${entry.status}`,
-    `    test: ${scalar(entry.test)}`,
-    `    required_evidence: ${scalar(entry.requiredEvidence)}`
-  ]),
+  ...traceabilityEntries.flatMap((entry) => {
+    const rendered = [
+      `  - id: ${entry.id}`,
+      `    owner: ${entry.owner}`,
+      `    slice: ${entry.slice}`,
+      `    acceptance: ${entry.acceptance}`,
+      `    status: ${entry.status}`,
+      `    test: ${scalar(entry.test)}`,
+      `    required_evidence: ${scalar(entry.requiredEvidence)}`
+    ];
+    if (entry.coverage) {
+      rendered.push(
+        `    coverage_policy: ${entry.coveragePolicy}`,
+        "    coverage:",
+        ...entry.coverage.flatMap((coverage) => [
+          `      - slice: ${coverage.slice}`,
+          `        acceptance: ${coverage.acceptance}`,
+          `        status: ${coverage.status}`,
+          `        test: ${scalar(coverage.test)}`
+        ])
+      );
+    }
+    return rendered;
+  }),
   ""
 ].join("\n");
