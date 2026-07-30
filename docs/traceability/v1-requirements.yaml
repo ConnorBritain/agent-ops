@@ -1,0 +1,913 @@
+# Generated requirement-to-slice-to-test report; edit tools/traceability.mjs.
+schema_version: 1
+requirements:
+  - id: REQ-CATALOG-001
+    owner: CAT-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Metadata lint."
+  - id: REQ-CATALOG-002
+    owner: CAT-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Traceability report."
+  - id: REQ-CATALOG-003
+    owner: CAT-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Prompt governance review."
+  - id: REQ-CHARTER-001
+    owner: SPEC-000
+    slice: slack-attention-adapter
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Slack attention adapter contract suite"
+    required_evidence: "Attention-item scenario."
+  - id: REQ-CHARTER-002
+    owner: SPEC-000
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "Command-to-job audit trace."
+  - id: REQ-CHARTER-003
+    owner: SPEC-000
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Denied self-escalation fixture."
+  - id: REQ-CHARTER-004
+    owner: SPEC-000
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "Accepted-task evidence export."
+  - id: REQ-CHARTER-005
+    owner: SPEC-000
+    slice: restricted-domain-federation
+    acceptance: ACC-FEDERATION-001
+    status: gated
+    test: "future authority, sanitization, isolation, and negative-dispatch suite"
+    required_evidence: "Scheduler rejection test."
+  - id: REQ-CHARTER-006
+    owner: SPEC-000
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Clean-host bootstrap rehearsal."
+  - id: REQ-V1-001
+    owner: SPEC-001
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Worker health scenario."
+  - id: REQ-V1-002
+    owner: SPEC-001
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "Schema and traceability test."
+  - id: REQ-V1-003
+    owner: SPEC-001
+    slice: second-cli-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future second CLI provider conformance suite"
+    required_evidence: "Provider conformance fixture."
+  - id: REQ-V1-004
+    owner: SPEC-001
+    slice: slack-attention-adapter
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Slack attention adapter contract suite"
+    required_evidence: "Intervention scenario."
+  - id: REQ-V1-005
+    owner: SPEC-001
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "Delivery scenario."
+  - id: REQ-V1-006
+    owner: SPEC-001
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Resource-gate test."
+  - id: REQ-V1-007
+    owner: SPEC-001
+    slice: restricted-domain-federation
+    acceptance: ACC-FEDERATION-001
+    status: gated
+    test: "future authority, sanitization, isolation, and negative-dispatch suite"
+    required_evidence: "Cross-domain negative test."
+  - id: REQ-CONTEXT-001
+    owner: SPEC-002
+    slice: roadmap-adapter
+    acceptance: ACC-PLANNING-001
+    status: planned
+    test: "future Roadmap adapter scenario"
+    required_evidence: "Adapter boundary review."
+  - id: REQ-CONTEXT-002
+    owner: SPEC-002
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Outage tests."
+  - id: REQ-CONTEXT-003
+    owner: SPEC-002
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "Authorization integration test."
+  - id: REQ-CONTEXT-004
+    owner: SPEC-002
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Provenance assertion."
+  - id: REQ-CONTEXT-005
+    owner: SPEC-002
+    slice: roadmap-adapter
+    acceptance: ACC-PLANNING-001
+    status: planned
+    test: "future Roadmap adapter scenario"
+    required_evidence: "Dependency manifest review."
+  - id: REQ-CONTEXT-006
+    owner: SPEC-002
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Outbox replay scenario."
+  - id: REQ-SEC-001
+    owner: SPEC-003
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Domain-label schema test."
+  - id: REQ-SEC-002
+    owner: SPEC-003
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Cross-domain routing test."
+  - id: REQ-SEC-003
+    owner: SPEC-003
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Redaction fixture."
+  - id: REQ-SEC-004
+    owner: SPEC-003
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Credential-scope review."
+  - id: REQ-SEC-005
+    owner: SPEC-003
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Approval negative tests."
+  - id: REQ-SEC-006
+    owner: SPEC-003
+    slice: restricted-domain-federation
+    acceptance: ACC-FEDERATION-001
+    status: gated
+    test: "future authority, sanitization, isolation, and negative-dispatch suite"
+    required_evidence: "Federation gate review."
+  - id: REQ-DATA-001
+    owner: SPEC-004
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Foreign-key lifecycle test."
+  - id: REQ-DATA-002
+    owner: SPEC-004
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "ID migration fixture."
+  - id: REQ-DATA-003
+    owner: SPEC-004
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "State-to-event trace query."
+  - id: REQ-DATA-004
+    owner: SPEC-004
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Mapping contract test."
+  - id: REQ-DATA-005
+    owner: SPEC-004
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Full-lineage query."
+  - id: REQ-DATA-006
+    owner: SPEC-004
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Migration review."
+  - id: REQ-CONTRACT-001
+    owner: SPEC-005
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Invalid-command rejection test."
+  - id: REQ-CONTRACT-002
+    owner: SPEC-005
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Signature and lease validation."
+  - id: REQ-CONTRACT-003
+    owner: SPEC-005
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Event-schema test."
+  - id: REQ-CONTRACT-004
+    owner: SPEC-005
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Duplicate-delivery test."
+  - id: REQ-CONTRACT-005
+    owner: SPEC-005
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Outbox retry test."
+  - id: REQ-CONTRACT-006
+    owner: SPEC-005
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Compatibility manifest review."
+  - id: REQ-COORD-001
+    owner: SPEC-006
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Dispatch ordering test."
+  - id: REQ-COORD-002
+    owner: SPEC-006
+    slice: supabase-durable-core
+    acceptance: ACC-CORE-001
+    status: complete
+    test: "pnpm test:unit && pnpm test:db"
+    required_evidence: "Candidate-filter test."
+  - id: REQ-COORD-003
+    owner: SPEC-006
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "Stale-session scenario."
+  - id: REQ-COORD-004
+    owner: SPEC-006
+    slice: slack-attention-adapter
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Slack attention adapter contract suite"
+    required_evidence: "Response persistence test."
+  - id: REQ-COORD-005
+    owner: SPEC-006
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "False-positive start test."
+  - id: REQ-COORD-006
+    owner: SPEC-006
+    slice: coordinator-runtime
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Coordinator application-service fixtures"
+    required_evidence: "Audit decision query."
+  - id: REQ-WORKER-001
+    owner: SPEC-007
+    slice: worker-service-packaging
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future clean-host service and reboot-idle fixtures"
+    required_evidence: "Reboot-and-register test."
+  - id: REQ-WORKER-002
+    owner: SPEC-007
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Preflight rejection matrix."
+  - id: REQ-WORKER-003
+    owner: SPEC-007
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Manifest conformance test."
+  - id: REQ-WORKER-004
+    owner: SPEC-007
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Event-client test."
+  - id: REQ-WORKER-005
+    owner: SPEC-007
+    slice: worker-service-packaging
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future clean-host service and reboot-idle fixtures"
+    required_evidence: "Post-reboot no-auto-resume test."
+  - id: REQ-WORKER-006
+    owner: SPEC-007
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Cancellation recovery test."
+  - id: REQ-PROVIDER-001
+    owner: SPEC-008
+    slice: print-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future shared provider and PrintProvider conformance suite"
+    required_evidence: "Provider conformance suite."
+  - id: REQ-PROVIDER-002
+    owner: SPEC-008
+    slice: print-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future shared provider and PrintProvider conformance suite"
+    required_evidence: "Capability-routing test."
+  - id: REQ-PROVIDER-003
+    owner: SPEC-008
+    slice: print-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future shared provider and PrintProvider conformance suite"
+    required_evidence: "Normalization fixture."
+  - id: REQ-PROVIDER-004
+    owner: SPEC-008
+    slice: print-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future shared provider and PrintProvider conformance suite"
+    required_evidence: "Dry-run test."
+  - id: REQ-PROVIDER-005
+    owner: SPEC-008
+    slice: observed-browser-path
+    acceptance: ACC-BROWSER-001
+    status: planned
+    test: "future browser classification and confirmation suite"
+    required_evidence: "Maturity-manifest check."
+  - id: REQ-PROVIDER-006
+    owner: SPEC-008
+    slice: observed-browser-path
+    acceptance: ACC-BROWSER-001
+    status: planned
+    test: "future browser classification and confirmation suite"
+    required_evidence: "Browser-policy test."
+  - id: REQ-SAFE-001
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Disk and worktree gate tests."
+  - id: REQ-SAFE-002
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Hung-agent monitor test."
+  - id: REQ-SAFE-003
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Deletion-guard matrix."
+  - id: REQ-SAFE-004
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Cleanup dry-run test."
+  - id: REQ-SAFE-005
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Orphan-process fixture."
+  - id: REQ-SAFE-006
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Quarantine routing test."
+  - id: REQ-SAFE-007
+    owner: SPEC-009
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Hook-audit query."
+  - id: REQ-NET-001
+    owner: SPEC-010
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Post-reboot secure-shell test."
+  - id: REQ-NET-002
+    owner: SPEC-010
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Service and access test."
+  - id: REQ-NET-003
+    owner: SPEC-010
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Host inventory review."
+  - id: REQ-NET-004
+    owner: SPEC-010
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "In-person checklist."
+  - id: REQ-NET-005
+    owner: SPEC-010
+    slice: private-host-baseline
+    acceptance: ACC-REMOTE-001
+    status: gated
+    test: "private host-baseline acceptance"
+    required_evidence: "Headless visual-access test."
+  - id: REQ-NET-006
+    owner: SPEC-010
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Host record validation."
+  - id: REQ-INT-001
+    owner: SPEC-011
+    slice: roadmap-adapter
+    acceptance: ACC-PLANNING-001
+    status: planned
+    test: "future Roadmap adapter scenario"
+    required_evidence: "Roadmap adapter scenario."
+  - id: REQ-INT-002
+    owner: SPEC-011
+    slice: roadmap-adapter
+    acceptance: ACC-PLANNING-001
+    status: planned
+    test: "future Roadmap adapter scenario"
+    required_evidence: "Correlation contract test."
+  - id: REQ-INT-003
+    owner: SPEC-011
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Noise-suppression test."
+  - id: REQ-INT-004
+    owner: SPEC-011
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Multi-link lineage test."
+  - id: REQ-INT-005
+    owner: SPEC-011
+    slice: slack-attention-adapter
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Slack attention adapter contract suite"
+    required_evidence: "Verbatim-question UI test."
+  - id: REQ-INT-006
+    owner: SPEC-011
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Integration replay test."
+  - id: REQ-SKILL-001
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Manifest schema validation."
+  - id: REQ-SKILL-002
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Static skill audit."
+  - id: REQ-SKILL-003
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Worker manifest test."
+  - id: REQ-SKILL-004
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Missing-skill dispatch test."
+  - id: REQ-SKILL-005
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Enforcement classification review."
+  - id: REQ-SKILL-006
+    owner: SPEC-012
+    slice: skills-estimation-finops
+    acceptance: ACC-SKILLS-001
+    status: planned
+    test: "future primitive manifest and enforcement suite"
+    required_evidence: "Redaction and relay test."
+  - id: REQ-FINOPS-001
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "Estimate lineage test."
+  - id: REQ-FINOPS-002
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "Time-accounting fixture."
+  - id: REQ-FINOPS-003
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "Rate-card review."
+  - id: REQ-FINOPS-004
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "Allocation lineage query."
+  - id: REQ-FINOPS-005
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "System-of-record review."
+  - id: REQ-FINOPS-006
+    owner: SPEC-013
+    slice: skills-estimation-finops
+    acceptance: ACC-FINOPS-001
+    status: planned
+    test: "future estimation and FinOps lineage suite"
+    required_evidence: "Projection contract test."
+  - id: REQ-MEMORY-001
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "ADR review."
+  - id: REQ-MEMORY-002
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "Curation pipeline test."
+  - id: REQ-MEMORY-003
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "Write-authorization test."
+  - id: REQ-MEMORY-004
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "Supersession scenario."
+  - id: REQ-MEMORY-005
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "Domain-filter test."
+  - id: REQ-MEMORY-006
+    owner: SPEC-014
+    slice: graphiti-curation
+    acceptance: ACC-MEMORY-001
+    status: planned
+    test: "future curated-memory contract suite"
+    required_evidence: "Outage fixture."
+  - id: REQ-DEPLOY-001
+    owner: SPEC-015
+    slice: worker-service-packaging
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future clean-host service and reboot-idle fixtures"
+    required_evidence: "Configuration review."
+  - id: REQ-DEPLOY-002
+    owner: SPEC-015
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Compatibility manifest test."
+  - id: REQ-DEPLOY-003
+    owner: SPEC-015
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Promotion record."
+  - id: REQ-DEPLOY-004
+    owner: SPEC-015
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Migration review."
+  - id: REQ-DEPLOY-005
+    owner: SPEC-015
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Migration gate test."
+  - id: REQ-DEPLOY-006
+    owner: SPEC-015
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Replacement rehearsal."
+  - id: REQ-OPS-001
+    owner: SPEC-016
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Correlation query."
+  - id: REQ-OPS-002
+    owner: SPEC-016
+    slice: worker-runtime-core
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future worker contract and preflight fixtures"
+    required_evidence: "Redaction test."
+  - id: REQ-OPS-003
+    owner: SPEC-016
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Alert scenario suite."
+  - id: REQ-OPS-004
+    owner: SPEC-016
+    slice: slack-attention-adapter
+    acceptance: ACC-ATTENTION-001
+    status: planned
+    test: "future Slack attention adapter contract suite"
+    required_evidence: "Noise-suppression test."
+  - id: REQ-OPS-005
+    owner: SPEC-016
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Runbook review."
+  - id: REQ-OPS-006
+    owner: SPEC-016
+    slice: github-portfolio-projections
+    acceptance: ACC-PROJECTION-001
+    status: planned
+    test: "future projection replay and noise-suppression suite"
+    required_evidence: "Operator-view acceptance."
+  - id: REQ-TEST-001
+    owner: SPEC-017
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Traceability report."
+  - id: REQ-TEST-002
+    owner: SPEC-017
+    slice: print-provider
+    acceptance: ACC-PROVIDER-001
+    status: planned
+    test: "future shared provider and PrintProvider conformance suite"
+    required_evidence: "Provider conformance suite."
+  - id: REQ-TEST-003
+    owner: SPEC-017
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "Independent-verifier test."
+  - id: REQ-TEST-004
+    owner: SPEC-017
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "PR-gate test."
+  - id: REQ-TEST-005
+    owner: SPEC-017
+    slice: worker-safety-hooks
+    acceptance: ACC-WORKER-001
+    status: planned
+    test: "future safety decision and independent-monitor fixtures"
+    required_evidence: "Scenario catalog review."
+  - id: REQ-TEST-006
+    owner: SPEC-017
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Release-gate matrix."
+  - id: REQ-ROLL-001
+    owner: SPEC-018
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Milestone report."
+  - id: REQ-ROLL-002
+    owner: SPEC-018
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "End-to-end v1 slice."
+  - id: REQ-ROLL-003
+    owner: SPEC-018
+    slice: release-recovery
+    acceptance: ACC-RELEASE-001
+    status: planned
+    test: "future compatibility, promotion, backup, and replacement suite"
+    required_evidence: "Promotion record."
+  - id: REQ-ROLL-004
+    owner: SPEC-018
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Baseline inventory."
+  - id: REQ-ROLL-005
+    owner: SPEC-018
+    slice: restricted-domain-federation
+    acceptance: ACC-FEDERATION-001
+    status: gated
+    test: "future authority, sanitization, isolation, and negative-dispatch suite"
+    required_evidence: "Federation milestone gate."
+  - id: REQ-ROLL-006
+    owner: SPEC-018
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Governance consistency check."
+  - id: REQ-FLEET-001
+    owner: SPEC-019
+    slice: private-host-baseline
+    acceptance: ACC-REMOTE-001
+    status: gated
+    test: "private host-baseline acceptance"
+    required_evidence: "Fleet-config validation."
+  - id: REQ-FLEET-002
+    owner: SPEC-019
+    slice: private-host-baseline
+    acceptance: ACC-REMOTE-001
+    status: gated
+    test: "private host-baseline acceptance"
+    required_evidence: "Capability-health test."
+  - id: REQ-FLEET-003
+    owner: SPEC-019
+    slice: private-host-baseline
+    acceptance: ACC-REMOTE-001
+    status: gated
+    test: "private host-baseline acceptance"
+    required_evidence: "Worker readiness test."
+  - id: REQ-FLEET-004
+    owner: SPEC-019
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Fleet-routing negative test."
+  - id: REQ-FLEET-005
+    owner: SPEC-019
+    slice: private-worker-canary
+    acceptance: ACC-WORKER-001
+    status: gated
+    test: "future private worker canary acceptance"
+    required_evidence: "Enrollment checklist test."
+  - id: REQ-FLEET-006
+    owner: SPEC-019
+    slice: restricted-domain-federation
+    acceptance: ACC-FEDERATION-001
+    status: gated
+    test: "future authority, sanitization, isolation, and negative-dispatch suite"
+    required_evidence: "Constraint-precedence test."
+  - id: REQ-BUILD-001
+    owner: BUILD-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Cycle checklist evidence."
+  - id: REQ-BUILD-002
+    owner: BUILD-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "PR scope review."
+  - id: REQ-BUILD-003
+    owner: BUILD-001
+    slice: verified-draft-delivery
+    acceptance: ACC-DELIVERY-001
+    status: planned
+    test: "future disposable-repository end-to-end scenario"
+    required_evidence: "End-to-end v1 scenario."
+  - id: REQ-BUILD-004
+    owner: BUILD-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Blocked-decision record."
+  - id: REQ-BUILD-005
+    owner: BUILD-001
+    slice: governed-scaffold
+    acceptance: ACC-GOV-001
+    status: complete
+    test: "pnpm validate"
+    required_evidence: "Traceability gate."
