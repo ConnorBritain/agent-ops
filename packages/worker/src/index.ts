@@ -5,6 +5,7 @@ import {
   workerHeartbeatSchema,
   workerManifestSchema,
   workerRegistrationSchema,
+  workerResourceSnapshotSchema,
   type NormalizedEvent,
   type SignedJobEnvelope,
   type WorkerHeartbeat,
@@ -107,7 +108,7 @@ const canonicalJson = (value: unknown): string => {
   }
   const entries = Object.entries(value as Readonly<Record<string, unknown>>)
     .filter(([, entry]) => entry !== undefined)
-    .sort(([left], [right]) => left.localeCompare(right));
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0));
   return `{${entries
     .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
     .join(",")}}`;
@@ -152,6 +153,12 @@ export class WorkerSupervisor {
 
   #mode(): WorkerMode {
     return this.#activeJobs.size ? "busy" : "idle";
+  }
+
+  async #inspectResources(): Promise<WorkerResourceSnapshot> {
+    return workerResourceSnapshotSchema.parse(
+      await this.#ports.resources.inspect(),
+    );
   }
 
   #applyReservations(resources: WorkerResourceSnapshot): WorkerResourceSnapshot {
@@ -202,7 +209,7 @@ export class WorkerSupervisor {
     }
 
     const occurredAt = this.#ports.clock.now();
-    const resources = await this.#ports.resources.inspect();
+    const resources = await this.#inspectResources();
     const registration = workerRegistrationSchema.parse({
       version: CONTRACT_VERSION,
       registrationId: this.#configuration.registrationId,
@@ -250,7 +257,7 @@ export class WorkerSupervisor {
       sequence: this.#heartbeatSequence,
       mode: this.#mode(),
       activeJobIds: [...this.#activeJobs].sort(),
-      resources: this.#applyReservations(await this.#ports.resources.inspect()),
+      resources: this.#applyReservations(await this.#inspectResources()),
       occurredAt: this.#ports.clock.now(),
     });
     await this.#ports.controlPlane.heartbeat(heartbeat);
@@ -307,7 +314,7 @@ export class WorkerSupervisor {
       this.#ports.verifier.verifyPolicy(envelope),
       this.#ports.verifier.verifySignature(envelope),
       this.#ports.pathScope.isAllowed(envelope.safeWorkingDirectory),
-      this.#ports.resources.inspect(),
+      this.#inspectResources(),
     ]);
     const capabilities = new Set(this.#configuration.manifest.capabilities);
     const installedSkills = new Map(

@@ -226,6 +226,19 @@ describe("worker job admission", () => {
     });
   });
 
+  it("fails closed when a later resource inspection violates the snapshot contract", async () => {
+    const resources = new StaticResourceInspector();
+    const fixture = createFixture({ resources });
+    await fixture.supervisor.start();
+    resources.snapshot = {
+      ...resources.snapshot,
+      availableMemoryBytes: -1,
+    } as unknown as typeof resources.snapshot;
+
+    await assert.rejects(fixture.supervisor.admit(buildJobEnvelope()));
+    assert.deepEqual(fixture.supervisor.inspect().activeJobIds, []);
+  });
+
   it("does not reserve a job until its durable admission event succeeds", async () => {
     class InterruptedControlPlane extends InMemoryWorkerControlPlane {
       admissionAttempts: NormalizedEvent[] = [];
