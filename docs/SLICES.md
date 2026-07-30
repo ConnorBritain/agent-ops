@@ -110,7 +110,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | WORKER-RUNTIME-CORE | `/slice worker-runtime-core` | 🟡 Next · **P0** | ~2 | SUPABASE-CORE | Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures. |
 | WORKER-SAFETY-HOOKS | `/slice worker-safety-hooks` | ⚪ Scheduled · **P0** | ~2 | WORKER-RUNTIME-CORE | Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling. |
 | WORKER-SERVICE-PACKAGING | `/slice worker-service-packaging` | ⚪ Scheduled · **P1** | ~1 | WORKER-SAFETY-HOOKS | Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them. |
-| PRIVATE-WORKER-CANARY | `/slice private-worker-canary` | 🔒 Gated · **P1** | ~1 | WORKER-SERVICE-PACKAGING | Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior. |
+| PRIVATE-WORKER-CANARY | `/slice private-worker-canary` | 🔒 Gated · **P1** | ~1 | WORKER-SERVICE-PACKAGING, HOST-BASELINE | Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior. |
 
 ### PHASE-4-ROADMAP-PRINT-PROVIDER — Roadmap composition and PrintProvider · ⚪ Scheduled · ~3 sessions remaining
 > Sprints: ROADMAP-ADAPTER ⚪ · PRINT-PROVIDER ⚪
@@ -289,7 +289,7 @@ pnpm validate
 - **What:** Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior.
 - **Status:** 🔒 Gated (PHASE-3-WORKER-SAFETY · PRIVATE-WORKER-CANARY)
 - **Priority:** P1 · weight 80 — A real canary is required before normal worker use.
-- **Deps:** WORKER-SERVICE-PACKAGING
+- **Deps:** WORKER-SERVICE-PACKAGING, HOST-BASELINE
 - **Read-order:**
   1. docs/specs/SPEC-003-trust-security-and-federation.md
   2. docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md

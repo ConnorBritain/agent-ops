@@ -263,7 +263,7 @@ pis:
         what: Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior.
         est_sessions: 1
         weight: light
-        deps: [worker-service-packaging]
+        deps: [worker-service-packaging, private-host-baseline]
         gated_on: Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan
         gate: Private reboot, registration, resource refusal, cancellation, and unenrollment evidence
         read_order:

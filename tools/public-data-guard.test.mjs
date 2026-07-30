@@ -49,6 +49,13 @@ describe("public data guard", () => {
     }
   });
 
+  it("detects long-lived and temporary AWS access-key IDs", () => {
+    for (const prefix of ["AKIA", "ASIA"]) {
+      const accessKeyId = [prefix, "A".repeat(16)].join("");
+      assert.equal(findCredentialSignals(Buffer.from(accessKeyId)).length, 1);
+    }
+  });
+
   it("matches exact private values without publishing their shape", () => {
     const fixtures = [
       "Worker-Host-A",
