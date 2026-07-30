@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createInterface } from "node:readline";
@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   collectHistoricalPaths,
+  collectRepositoryPaths,
   collectRefNames,
   commitHasDeclaredEncoding,
   containsPrivateDenylistValue,
@@ -33,19 +34,6 @@ const requireFile = async (relative) => {
   } catch {
     errors.push(`Missing required artifact: ${relative}`);
   }
-};
-
-const walk = async (relative = "") => {
-  const directory = path.join(root, relative);
-  const entries = await readdir(directory, { withFileTypes: true });
-  const results = [];
-  for (const entry of entries) {
-    if (entry.name === ".git" || entry.name === "node_modules") continue;
-    const next = path.join(relative, entry.name);
-    if (entry.isDirectory()) results.push(...await walk(next));
-    else results.push(next);
-  }
-  return results;
 };
 
 const required = [
@@ -77,7 +65,9 @@ for (let index = 1; index <= 8; index += 1) await requireFile(`docs/adr/ADR-000$
   "phase-zero-has-no-infrastructure-side-effects"
 ][index - 1]}.md`);
 
-const files = await walk();
+const files = await collectRepositoryPaths(root);
+const rootBytes = Buffer.from(root);
+const filesystemSeparator = Buffer.from(path.sep);
 const privateDenylist = (process.env.AGENTOPS_PRIVATE_DENYLIST ?? "")
   .split(/\r?\n/)
   .map((value) => value.trim())
@@ -123,13 +113,19 @@ const scanHistoricalPath = (historicalPath) => {
 };
 
 for (const relative of files) {
-  const normalized = relative.replaceAll(path.sep, "/");
-  if (/\.(docx|docm|pdf)$/i.test(normalized)) errors.push(`Private document artifact is not allowed: ${normalized}`);
-  if (/\.(?:key|pem|p12|pfx|kdbx)$/i.test(normalized)) errors.push(`Credential-bearing file type is not allowed: ${normalized}`);
-  if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
-  scanContent(Buffer.from(normalized), `repository path ${normalized}`);
-  const content = await readRepositoryEntry(path.join(root, relative));
-  scanContent(content, normalized);
+  const displayPath = relative.toString("utf8").replaceAll(path.sep, "/");
+  const pathRepresentations = decodeForGuard(relative);
+  if (pathRepresentations.some((value) => /\.(docx|docm|pdf)$/i.test(value))) errors.push(`Private document artifact is not allowed: ${displayPath}`);
+  if (pathRepresentations.some((value) => /\.(?:key|pem|p12|pfx|kdbx)$/i.test(value))) errors.push(`Credential-bearing file type is not allowed: ${displayPath}`);
+  if (pathRepresentations.some((value) => /(^|\/)\.env($|\.)/i.test(value) && !value.endsWith(".env.example"))) errors.push(`Raw environment file is not allowed: ${displayPath}`);
+  scanContent(relative, `repository path ${displayPath}`);
+  const absolutePath = Buffer.concat([
+    rootBytes,
+    filesystemSeparator,
+    relative
+  ]);
+  const content = await readRepositoryEntry(absolutePath);
+  scanContent(content, displayPath);
 }
 
 const collectHistoricalObjectLocations = async () => {

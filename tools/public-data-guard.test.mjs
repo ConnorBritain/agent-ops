@@ -13,6 +13,7 @@ import { describe, it } from "node:test";
 import { promisify } from "node:util";
 import {
   collectHistoricalPaths,
+  collectRepositoryPaths,
   collectRefNames,
   commitHasDeclaredEncoding,
   containsPrivateDenylistValue,
@@ -349,6 +350,51 @@ describe("public data guard", () => {
       assert.deepEqual(scannedTarget, rawTarget);
       assert.equal(
         containsPrivateDenylistValue(scannedTarget, [privateIdentifier]),
+        true
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("enumerates current repository paths as byte buffers", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-guard-"));
+    try {
+      const privateIdentifier = "Privaté-Worker";
+      const rawName = Buffer.from(privateIdentifier);
+      await writeFile(path.join(directory, privateIdentifier), "safe");
+      const paths = await collectRepositoryPaths(directory);
+      assert.ok(paths.some((value) => value.equals(rawName)));
+      assert.equal(
+        containsPrivateDenylistValue(rawName, [privateIdentifier]),
+        true
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves legacy bytes while enumerating current paths when supported", async (t) => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-guard-"));
+    try {
+      const privateIdentifier = "Privaté-Worker";
+      const rawName = Buffer.from(privateIdentifier, "latin1");
+      try {
+        await writeFile(
+          Buffer.concat([Buffer.from(directory), Buffer.from(path.sep), rawName]),
+          "safe"
+        );
+      } catch (error) {
+        if (error?.code === "EILSEQ") {
+          t.skip("filesystem rejects invalid UTF-8 filenames");
+          return;
+        }
+        throw error;
+      }
+      const paths = await collectRepositoryPaths(directory);
+      assert.ok(paths.some((value) => value.equals(rawName)));
+      assert.equal(
+        containsPrivateDenylistValue(rawName, [privateIdentifier]),
         true
       );
     } finally {

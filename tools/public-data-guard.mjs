@@ -1,9 +1,11 @@
 import { spawn } from "node:child_process";
 import {
   lstat,
+  readdir,
   readFile,
   readlink
 } from "node:fs/promises";
+import { sep } from "node:path";
 import { createInterface } from "node:readline";
 import { TextDecoder } from "node:util";
 
@@ -374,6 +376,33 @@ export const readRepositoryEntry = async (absolutePath) => {
     return readlink(absolutePath, { encoding: "buffer" });
   }
   return readFile(absolutePath);
+};
+
+export const collectRepositoryPaths = async (repositoryRoot) => {
+  const root = Buffer.isBuffer(repositoryRoot)
+    ? repositoryRoot
+    : Buffer.from(repositoryRoot);
+  const separator = Buffer.from(sep);
+  const excludedNames = new Set([".git", "node_modules"]);
+  const join = (left, right) =>
+    left.length ? Buffer.concat([left, separator, right]) : right;
+  const walk = async (relative = Buffer.alloc(0)) => {
+    const directory = relative.length ? join(root, relative) : root;
+    const entries = await readdir(directory, {
+      withFileTypes: true,
+      encoding: "buffer"
+    });
+    const results = [];
+    for (const entry of entries) {
+      const name = Buffer.from(entry.name);
+      if (excludedNames.has(name.toString("ascii"))) continue;
+      const next = join(relative, name);
+      if (entry.isDirectory()) results.push(...await walk(next));
+      else results.push(next);
+    }
+    return results;
+  };
+  return walk();
 };
 
 export const parseHistoricalObjectLine = (line) => {
