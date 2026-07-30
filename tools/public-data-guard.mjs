@@ -494,12 +494,21 @@ const declaredCommitText = (content) => {
   const match = /^encoding ([^\r\n]+)$/m.exec(headers);
   if (!match) return undefined;
   const encoding = match[1].trim();
+  let decoder;
   try {
-    return new TextDecoder(encoding).decode(buffer);
+    decoder = new TextDecoder(encoding, { fatal: true });
   } catch (error) {
     throw new Error(
       `Unsupported declared Git commit encoding ${JSON.stringify(encoding)}: ${error.message}`
     );
+  }
+  try {
+    return decoder.decode(buffer);
+  } catch {
+    // Git accepts malformed bytes even with a declared encoding. Treat this
+    // as unlabelled for the privacy guard so its conservative raw-byte path
+    // remains in force.
+    return undefined;
   }
 };
 

@@ -541,6 +541,25 @@ describe("public data guard", () => {
     assert.equal(commitHasDeclaredEncoding(commit), true);
   });
 
+  it("treats malformed declared commit text as eligible for legacy fallback", () => {
+    const commit = Buffer.concat([
+      Buffer.from([
+        `tree ${"a".repeat(40)}`,
+        "author Example Operator <operator@example.invalid> 1 +0000",
+        "committer Example Operator <operator@example.invalid> 1 +0000",
+        "encoding UTF-8",
+        ""
+      ].join("\n")),
+      Buffer.from([0x87]),
+      Buffer.from("-private")
+    ]);
+    assert.equal(commitHasDeclaredEncoding(commit), false);
+    assert.equal(
+      mayContainLegacyEncodedDenylistValue(commit, ["Ç-Private"]),
+      true
+    );
+  });
+
   it("scans tag text embedded in a commit mergetag header", () => {
     const privateIdentifier = "private-host-zephyr";
     const commit = Buffer.from([
