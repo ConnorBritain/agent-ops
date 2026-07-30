@@ -338,6 +338,17 @@ describe("public data guard", () => {
         await symlink(target, link);
         assert.equal((await readRepositoryEntry(link)).toString("utf8"), target);
       }
+
+      const privateIdentifier = "Privaté-Worker";
+      const rawTarget = Buffer.from(privateIdentifier, "latin1");
+      const legacyLink = path.join(directory, "legacy-link");
+      await symlink(rawTarget, legacyLink);
+      const scannedTarget = await readRepositoryEntry(legacyLink);
+      assert.deepEqual(scannedTarget, rawTarget);
+      assert.equal(
+        containsPrivateDenylistValue(scannedTarget, [privateIdentifier]),
+        true
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -465,6 +476,29 @@ describe("public data guard", () => {
     assert.equal(
       containsPrivateDenylistValue(
         historicalObjectContentForScan(commit, "commit"),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
+  it("scans a legacy-encoded annotated tag message", () => {
+    const privateIdentifier = "秘密作業者";
+    const tag = Buffer.concat([
+      Buffer.from([
+        `object ${"a".repeat(40)}`,
+        "type commit",
+        "tag release-safe",
+        "tagger Example Operator <operator@example.invalid> 1 +0000",
+        "",
+        "Deploy "
+      ].join("\n")),
+      Buffer.from("94e996a78dec8bc68ed2", "hex")
+    ]);
+
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(tag, "tag"),
         [privateIdentifier]
       ),
       true

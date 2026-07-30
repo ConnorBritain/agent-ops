@@ -10,6 +10,51 @@ import { TextDecoder } from "node:util";
 const windows1252Decoder = new TextDecoder("windows-1252");
 const utf16leDecoder = new TextDecoder("utf-16le");
 const utf16beDecoder = new TextDecoder("utf-16be");
+const legacyGitEncodingLabels = [
+  "ibm866",
+  "iso-8859-2",
+  "iso-8859-3",
+  "iso-8859-4",
+  "iso-8859-5",
+  "iso-8859-6",
+  "iso-8859-7",
+  "iso-8859-8",
+  "iso-8859-8-i",
+  "iso-8859-10",
+  "iso-8859-13",
+  "iso-8859-14",
+  "iso-8859-15",
+  "iso-8859-16",
+  "koi8-r",
+  "koi8-u",
+  "macintosh",
+  "windows-874",
+  "windows-1250",
+  "windows-1251",
+  "windows-1253",
+  "windows-1254",
+  "windows-1255",
+  "windows-1256",
+  "windows-1257",
+  "windows-1258",
+  "x-mac-cyrillic",
+  "gbk",
+  "gb18030",
+  "big5",
+  "euc-jp",
+  "iso-2022-jp",
+  "shift_jis",
+  "euc-kr"
+];
+const legacyGitDecoders = legacyGitEncodingLabels.flatMap((label) => {
+  try {
+    return [new TextDecoder(label)];
+  } catch {
+    // Node builds expose different optional ICU encodings. Scan every one
+    // available in the current runtime rather than weakening the guard.
+    return [];
+  }
+});
 
 export const credentialSignals = [
   /(xox[baprs]-[A-Za-z0-9-]{20,}|xapp-[A-Za-z0-9-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sb_(?:secret|publishable)_[A-Za-z0-9_-]{20,}|(?:AKIA|ASIA)[A-Z0-9]{16}|sk-(?:proj-)?[A-Za-z0-9_-]{20,})/,
@@ -331,7 +376,7 @@ export const createIncrementalGuardScanner = (denylist) => {
 export const readRepositoryEntry = async (absolutePath) => {
   const metadata = await lstat(absolutePath);
   if (metadata.isSymbolicLink()) {
-    return Buffer.from(await readlink(absolutePath));
+    return readlink(absolutePath, { encoding: "buffer" });
   }
   return readFile(absolutePath);
 };
@@ -469,10 +514,14 @@ export const historicalObjectContentForScan = (content, type) => {
   const declaredText = type === "commit"
     ? declaredCommitText(content)
     : undefined;
+  const legacyDecodedText = legacyGitDecoders.map((decoder) =>
+    decoder.decode(content)
+  );
   return Buffer.from(
     [...new Set(
       [
         ...decodeForGuard(content),
+        ...legacyDecodedText,
         ...(declaredText === undefined ? [] : [declaredText])
       ]
         .map((value) => historicalObjectTextForScan(value, type))
