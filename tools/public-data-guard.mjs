@@ -197,7 +197,14 @@ const hasBoundarySafeCanonicalMatch = (
         if (
           endExclusive > maximumEndExclusive ||
           prefixLengths[endExclusive] !== targetLength ||
-          prefixBoundaryCounts[endExclusive] === prefixBoundaryCounts[start]
+          (
+            prefixBoundaryCounts[endExclusive] ===
+              prefixBoundaryCounts[start] &&
+            (
+              endExclusive >= codePoints.length ||
+              !combiningMarkPattern.test(codePoints[endExclusive])
+            )
+          )
         ) {
           continue;
         }

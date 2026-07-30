@@ -187,6 +187,10 @@ describe("public data guard", () => {
       true
     );
     assert.equal(
+      containsPrivateDenylistValue("é\u0327", ["e\u0301"]),
+      true
+    );
+    assert.equal(
       containsPrivateDenylistValue("Éo\u0308\u0327", ["éö"]),
       true
     );
