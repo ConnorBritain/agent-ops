@@ -226,9 +226,30 @@ describe("public data guard", () => {
   });
 
   it("bounds fallback work for dense complex Unicode that has no match", () => {
+    const differentlySizedValues = Array.from(
+      { length: 50 },
+      (_, index) => `absent-${"x".repeat(index)}`
+    );
     assert.equal(
-      containsPrivateDenylistValue("é".repeat(100_000), ["absent-key"]),
+      containsPrivateDenylistValue(
+        "é".repeat(100_000),
+        differentlySizedValues
+      ),
       false
+    );
+  });
+
+  it("fails closed when boundary fallback work exceeds its budget", () => {
+    const boundarySensitiveValues = Array.from(
+      { length: 50 },
+      (_, index) => `z${"x".repeat(index)}e\u0301q`
+    );
+    assert.equal(
+      containsPrivateDenylistValue(
+        "a\u0301".repeat(25_000),
+        boundarySensitiveValues
+      ),
+      true
     );
   });
 
