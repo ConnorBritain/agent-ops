@@ -90,9 +90,31 @@ export const historicalObjectContentForScan = (content, type) => {
         : /^(?:type|tag|tagger) /.test(line)
     ))
     .map(identityWithoutTimestamp);
+  const embeddedTagText = [];
+  if (type === "commit") {
+    for (let index = 0; index < headers.length; index += 1) {
+      const line = headers[index];
+      if (!line.startsWith("mergetag ")) continue;
+      const embeddedTag = [line.slice("mergetag ".length)];
+      while (headers[index + 1]?.startsWith(" ")) {
+        index += 1;
+        embeddedTag.push(headers[index].slice(1));
+      }
+      embeddedTagText.push(
+        historicalObjectContentForScan(
+          Buffer.from(embeddedTag.join("\n")),
+          "tag"
+        ).toString("utf8")
+      );
+    }
+  }
 
   return Buffer.from(
-    [...textualHeaders, stripSignatureBlocks(message)].join("\n")
+    [
+      ...textualHeaders,
+      ...embeddedTagText,
+      stripSignatureBlocks(message)
+    ].join("\n")
   );
 };
 

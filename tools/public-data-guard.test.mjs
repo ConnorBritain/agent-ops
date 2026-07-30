@@ -180,6 +180,34 @@ describe("public data guard", () => {
     );
   });
 
+  it("scans tag text embedded in a commit mergetag header", () => {
+    const privateIdentifier = "private-host-zephyr";
+    const commit = Buffer.from([
+      `tree ${"a".repeat(40)}`,
+      "author Example Operator <operator@example.invalid> 1 +0000",
+      "committer Example Operator <operator@example.invalid> 1 +0000",
+      `mergetag object ${"b".repeat(40)}`,
+      " type commit",
+      ` tag release-${privateIdentifier}`,
+      " tagger Example Operator <operator@example.invalid> 1 +0000",
+      " ",
+      ` Release for ${privateIdentifier}`,
+      " -----BEGIN PGP SIGNATURE-----",
+      " structural-signature-payload",
+      " -----END PGP SIGNATURE-----",
+      "",
+      "Merge tagged release"
+    ].join("\n"));
+
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(commit, "commit"),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
   it("retains a sensitive historical path after an unchanged rename", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "agentops-history-"));
     const runGit = (...arguments_) =>
