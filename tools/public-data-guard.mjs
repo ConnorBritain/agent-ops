@@ -252,12 +252,40 @@ const addRawPath = (paths, value) => {
   paths.set(owned.toString("hex"), owned);
 };
 
+const collectRefObjectIds = async (repositoryRoot) => {
+  const child = spawn("git", ["for-each-ref", "--format=%(objectname)"], {
+    cwd: repositoryRoot,
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+  });
+  const completion = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", resolve);
+  });
+  const objectIds = new Set();
+  const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
+  for await (const line of lines) {
+    if (line) objectIds.add(line);
+  }
+  const exitCode = await completion;
+  if (exitCode !== 0) {
+    throw new Error(
+      stderr.trim() || `git for-each-ref exited with code ${exitCode}`
+    );
+  }
+  return objectIds;
+};
+
 const collectRefTreePaths = async (repositoryRoot) => {
   const paths = new Map();
-  for (const refName of await collectRefNames(repositoryRoot)) {
+  for (const objectId of await collectRefObjectIds(repositoryRoot)) {
     const child = spawn(
       "git",
-      ["ls-tree", "-r", "-z", "--name-only", refName],
+      ["ls-tree", "-r", "-z", "--name-only", `${objectId}^{tree}`],
       {
         cwd: repositoryRoot,
         stdio: ["ignore", "pipe", "pipe"]
@@ -289,13 +317,13 @@ const collectRefTreePaths = async (repositoryRoot) => {
       remainder = Buffer.from(content.subarray(offset));
     }
     if (remainder.length) {
-      throw new Error(`Incomplete git ls-tree output for ${refName}`);
+      throw new Error(`Incomplete git ls-tree output for ${objectId}`);
     }
     const exitCode = await completion;
     if (exitCode === 0) continue;
     if (/not a tree object/i.test(stderr)) continue;
     throw new Error(
-      stderr.trim() || `git ls-tree exited with code ${exitCode} for ${refName}`
+      stderr.trim() || `git ls-tree exited with code ${exitCode} for ${objectId}`
     );
   }
   return [...paths.values()];
@@ -370,16 +398,29 @@ export const collectRefNames = async (repositoryRoot) => {
     child.once("error", reject);
     child.once("close", resolve);
   });
-  const refNames = new Set();
-  const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
-  for await (const line of lines) {
-    if (line) refNames.add(line);
+  const refNames = new Map();
+  let remainder = Buffer.alloc(0);
+  for await (const chunk of child.stdout) {
+    const content = remainder.length
+      ? Buffer.concat([remainder, chunk])
+      : chunk;
+    let offset = 0;
+    while (true) {
+      const newline = content.indexOf(0x0a, offset);
+      if (newline < 0) break;
+      if (newline > offset) {
+        addRawPath(refNames, content.subarray(offset, newline));
+      }
+      offset = newline + 1;
+    }
+    remainder = Buffer.from(content.subarray(offset));
   }
+  if (remainder.length) addRawPath(refNames, remainder);
   const exitCode = await completion;
   if (exitCode !== 0) {
     throw new Error(
       stderr.trim() || `git for-each-ref exited with code ${exitCode}`
     );
   }
-  return refNames;
+  return [...refNames.values()];
 };

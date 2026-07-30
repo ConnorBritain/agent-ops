@@ -602,11 +602,51 @@ describe("public data guard", () => {
 
       const refNames = await collectRefNames(directory);
       const tagName = "refs/tags/private-host-zephyr";
-      assert.equal(refNames.has(tagName), true);
+      assert.equal(hasHistoricalPath(refNames, tagName), true);
       assert.equal(
-        containsPrivateDenylistValue([...refNames].join("\n"), [
-          "private-host-zephyr"
-        ]),
+        refNames.some((value) =>
+          containsPrivateDenylistValue(value, ["private-host-zephyr"])
+        ),
+        true
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves raw bytes in a packed ref name", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-raw-ref-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    const privateIdentifier = "Privaté-Worker";
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, "fixture.txt"), "fixture\n");
+      await runGit("add", "fixture.txt");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "Add fixture"
+      );
+      const { stdout } = await runGit("rev-parse", "HEAD");
+      const packedRefs = Buffer.concat([
+        Buffer.from("# pack-refs with: peeled fully-peeled sorted\n"),
+        Buffer.from(`${stdout.trim()} refs/tags/Privat`),
+        Buffer.from([0xe9]),
+        Buffer.from("-Worker\n")
+      ]);
+      await writeFile(path.join(directory, ".git/packed-refs"), packedRefs);
+
+      const refNames = await collectRefNames(directory);
+      assert.equal(
+        refNames.some((value) =>
+          containsPrivateDenylistValue(value, [privateIdentifier])
+        ),
         true
       );
     } finally {

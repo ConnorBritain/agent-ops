@@ -282,7 +282,10 @@ const scanHistoricalObjects = async (objectLocations) => {
 
 try {
   for (const refName of await collectRefNames(root)) {
-    scanContent(Buffer.from(refName), `Git ref ${refName}`);
+    const rawRefName = Buffer.isBuffer(refName)
+      ? refName
+      : Buffer.from(refName);
+    scanContent(rawRefName, `Git ref ${rawRefName.toString("utf8")}`);
   }
   for (const historicalPath of await collectHistoricalPaths(root)) {
     scanHistoricalPath(historicalPath);
