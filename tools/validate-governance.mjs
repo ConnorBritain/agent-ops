@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   collectHistoricalPaths,
+  collectRefNames,
   containsPrivateDenylistValue,
   findCredentialSignals,
   historicalObjectNeedsContentScan,
@@ -213,6 +214,9 @@ const scanHistoricalObjects = async (objectLocations) => {
 };
 
 try {
+  for (const refName of await collectRefNames(root)) {
+    scanContent(Buffer.from(refName), `Git ref ${refName}`);
+  }
   for (const historicalPath of await collectHistoricalPaths(root)) {
     scanHistoricalPath(historicalPath);
   }

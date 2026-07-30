@@ -13,6 +13,7 @@ import { describe, it } from "node:test";
 import { promisify } from "node:util";
 import {
   collectHistoricalPaths,
+  collectRefNames,
   containsPrivateDenylistValue,
   findCredentialSignals,
   historicalObjectNeedsContentScan,
@@ -60,6 +61,26 @@ describe("public data guard", () => {
       const accessKeyId = [prefix, "A".repeat(16)].join("");
       assert.equal(findCredentialSignals(Buffer.from(accessKeyId)).length, 1);
     }
+  });
+
+  it("detects standard private-key block headers", () => {
+    for (const type of [
+      "",
+      "RSA ",
+      "DSA ",
+      "EC ",
+      "OPENSSH ",
+      "ENCRYPTED "
+    ]) {
+      const header = `-----BEGIN ${type}PRIVATE KEY-----`;
+      assert.equal(findCredentialSignals(Buffer.from(header)).length, 1);
+    }
+    assert.equal(
+      findCredentialSignals(
+        Buffer.from(["-----BEGIN PGP ", "PRIVATE KEY BLOCK-----"].join(""))
+      ).length,
+      1
+    );
   });
 
   it("matches exact private values without publishing their shape", () => {
@@ -208,6 +229,40 @@ describe("public data guard", () => {
 
       const historicalPaths = await collectHistoricalPaths(directory);
       assert.equal(historicalPaths.has(".env"), true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("enumerates lightweight ref names for private-value scanning", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-ref-history-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, "fixture.txt"), "fixture\n");
+      await runGit("add", "fixture.txt");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "Add fixture"
+      );
+      await runGit("tag", "private-host-zephyr");
+
+      const refNames = await collectRefNames(directory);
+      const tagName = "refs/tags/private-host-zephyr";
+      assert.equal(refNames.has(tagName), true);
+      assert.equal(
+        containsPrivateDenylistValue([...refNames].join("\n"), [
+          "private-host-zephyr"
+        ]),
+        true
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
