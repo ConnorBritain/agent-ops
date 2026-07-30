@@ -53,6 +53,10 @@ export const acceptanceRoutes = [
   routes.federation
 ];
 
+const acceptanceCompletionRoutes = new Map(
+  acceptanceRoutes.map((entry) => [entry.acceptance, entry])
+);
+
 const scenarioCatalogCoverage = [
   routes.safety,
   routes.service,
@@ -190,6 +194,13 @@ export const traceabilityEntries = documents.flatMap((document) =>
     const selected = routeKey ? routes[routeKey] : undefined;
     if (!selected) throw new Error(`No traceability route for ${requirement.id}`);
     const coverage = coverageFor(requirement.id);
+    const acceptanceCompletion =
+      acceptanceCompletionRoutes.get(selected.acceptance);
+    if (!acceptanceCompletion) {
+      throw new Error(
+        `No canonical acceptance completion route for ${requirement.id}`
+      );
+    }
     const status = completedRequirementIds.has(requirement.id)
       ? "complete"
       : coverage?.some((entry) => entry.status === "gated")
@@ -200,6 +211,12 @@ export const traceabilityEntries = documents.flatMap((document) =>
       owner: document.id,
       ...selected,
       status,
+      routeRole: (
+        selected.slice === acceptanceCompletion.slice &&
+        selected.test === acceptanceCompletion.test
+      )
+        ? "completion"
+        : "contributing",
       ...(coverage
         ? {
             coveragePolicy: "all",
@@ -215,6 +232,7 @@ const scalar = (value) => JSON.stringify(value);
 
 export const renderTraceability = () => [
   "# Generated requirement-to-slice-to-test report; edit tools/traceability.mjs.",
+  "# acceptance_routes are canonical completion gates; contributing requirement routes provide prerequisite evidence.",
   "schema_version: 1",
   "acceptance_routes:",
   ...acceptanceRoutes.flatMap((entry) => [
@@ -231,6 +249,7 @@ export const renderTraceability = () => [
       `    slice: ${entry.slice}`,
       `    acceptance: ${entry.acceptance}`,
       `    status: ${entry.status}`,
+      `    route_role: ${entry.routeRole}`,
       `    test: ${scalar(entry.test)}`,
       `    required_evidence: ${scalar(entry.requiredEvidence)}`
     ];

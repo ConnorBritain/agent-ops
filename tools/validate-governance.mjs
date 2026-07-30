@@ -331,11 +331,13 @@ for (const requirement of ["REQ-BUILD-001", "REQ-BUILD-002", "REQ-BUILD-005", "R
 if (!acceptance.includes("ACC-GOV-001")) errors.push("Acceptance catalog is missing ACC-GOV-001");
 
 const routedAcceptanceIds = new Set();
+const acceptanceCompletionRoutes = new Map();
 for (const route of acceptanceRoutes) {
   if (routedAcceptanceIds.has(route.acceptance)) {
     errors.push(`Duplicate explicit acceptance route: ${route.acceptance}`);
   }
   routedAcceptanceIds.add(route.acceptance);
+  acceptanceCompletionRoutes.set(route.acceptance, route);
   if (!acceptanceRequirements.has(route.acceptance)) {
     errors.push(`Acceptance route is absent from catalog: ${route.acceptance}`);
   }
@@ -369,7 +371,8 @@ for (const entry of traceabilityEntries) {
     `    owner: ${entry.owner}`,
     `    slice: ${entry.slice}`,
     `    acceptance: ${entry.acceptance}`,
-    `    status: ${entry.status}`
+    `    status: ${entry.status}`,
+    `    route_role: ${entry.routeRole}`
   ]) {
     if (!v1Traceability.includes(marker)) errors.push(`Traceability report is missing ${marker.trim()}`);
   }
@@ -380,6 +383,21 @@ for (const entry of traceabilityEntries) {
   if (!acceptedRequirements) errors.push(`Traceability acceptance is absent from catalog: ${entry.acceptance}`);
   else if (!acceptedRequirements.has(entry.id)) {
     errors.push(`Acceptance ${entry.acceptance} does not include routed requirement ${entry.id}`);
+  }
+  const acceptanceCompletion =
+    acceptanceCompletionRoutes.get(entry.acceptance);
+  if (acceptanceCompletion) {
+    const expectedRole = (
+      entry.slice === acceptanceCompletion.slice &&
+      entry.test === acceptanceCompletion.test
+    )
+      ? "completion"
+      : "contributing";
+    if (entry.routeRole !== expectedRole) {
+      errors.push(
+        `Traceability route role for ${entry.id} must be ${expectedRole}`
+      );
+    }
   }
   if (entry.coverage) {
     if (entry.coveragePolicy !== "all") {
