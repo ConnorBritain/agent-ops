@@ -170,6 +170,28 @@ describe("public data guard", () => {
     );
   });
 
+  it("matches expanding Unicode lowercase mappings in candidate spans", () => {
+    assert.equal(
+      containsPrivateDenylistValue("i\u0307st", ["İST"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("İST", ["i\u0307st"]),
+      true
+    );
+  });
+
+  it("isolates canonical case matching from trailing combining context", () => {
+    assert.equal(
+      containsPrivateDenylistValue("E\u0301\u0327", ["é"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("Éo\u0308\u0327", ["éö"]),
+      true
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));

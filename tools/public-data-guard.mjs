@@ -50,26 +50,99 @@ export const findCredentialSignals = (content) => {
 const canonicalizeGuardText = (value) =>
   value.normalize("NFC");
 
+const canonicalCaseFold = (value) =>
+  canonicalizeGuardText(value).toLowerCase().normalize("NFC");
+
+const escapeRegExp = (value) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const literalPattern = (value) =>
-  new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "iu");
+  new RegExp(escapeRegExp(value), "iu");
+
+const firstCodePoint = (value) => [...value][0];
+
+const boundaryStartPattern = (value) => {
+  const starts = new Set();
+  for (const variant of [
+    value,
+    value.normalize("NFC"),
+    value.normalize("NFD"),
+    value.toLowerCase().normalize("NFC"),
+    value.toLowerCase().normalize("NFD"),
+    value.toUpperCase().normalize("NFC"),
+    value.toUpperCase().normalize("NFD")
+  ]) {
+    const first = firstCodePoint(variant);
+    if (first !== undefined) starts.add(first);
+  }
+  return new RegExp(
+    `(?:${[...starts].map(escapeRegExp).join("|")})`,
+    "iu"
+  );
+};
+
+const codePointLength = (value) => [...value].length;
+
+const hasBoundarySafeCanonicalMatch = (representation, matcher) => {
+  const codePoints = [...representation];
+  const maximumLength = Math.min(
+    codePoints.length,
+    matcher.maximumCandidateCodePoints
+  );
+  for (let start = 0; start < codePoints.length; start += 1) {
+    if (!matcher.boundaryStart.test(codePoints[start])) continue;
+    let candidate = "";
+    const remainingLength = Math.min(
+      maximumLength,
+      codePoints.length - start
+    );
+    for (let length = 1; length <= remainingLength; length += 1) {
+      candidate += codePoints[start + length - 1];
+      if (canonicalCaseFold(candidate) === matcher.canonicalCaseFolded) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 
 export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
-  const matchers = denylist.map((value) => ({
-    raw: value,
-    caseInsensitive: literalPattern(value),
-    canonicalCaseInsensitive: literalPattern(canonicalizeGuardText(value))
-  }));
+  const matchers = denylist.map((value) => {
+    const canonicalCaseFolded = canonicalCaseFold(value);
+    const decomposedValue = value.normalize("NFD");
+    return {
+      raw: value,
+      caseInsensitive: literalPattern(value),
+      canonicalCaseInsensitive: literalPattern(canonicalizeGuardText(value)),
+      canonicalCaseFolded,
+      boundaryStart: boundaryStartPattern(value),
+      maximumCandidateCodePoints: Math.max(
+        codePointLength(decomposedValue),
+        codePointLength(canonicalCaseFolded.normalize("NFD"))
+      ),
+      requiresBoundarySafeScan:
+        /\p{M}/u.test(decomposedValue) ||
+        codePointLength(value.toLowerCase()) !== codePointLength(value)
+    };
+  });
   for (const representation of decodeForGuard(content)) {
     const canonicalRepresentation = canonicalizeGuardText(representation);
     if (matchers.some(({
       raw,
       caseInsensitive,
-      canonicalCaseInsensitive
+      canonicalCaseInsensitive,
+      requiresBoundarySafeScan,
+      ...matcher
     }) =>
       representation.includes(raw) ||
       caseInsensitive.test(representation) ||
-      canonicalCaseInsensitive.test(canonicalRepresentation)
+      canonicalCaseInsensitive.test(canonicalRepresentation) ||
+      (
+        requiresBoundarySafeScan &&
+        matcher.boundaryStart.test(representation) &&
+        hasBoundarySafeCanonicalMatch(representation, matcher)
+      )
     )) {
       return true;
     }
