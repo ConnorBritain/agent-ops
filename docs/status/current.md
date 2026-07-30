@@ -14,4 +14,30 @@ Completion evidence:
 - Roadmap validation and rendering succeed.
 - The private implementation overlay was seeded independently from the merged public baseline and its private validation passed.
 
-Next slice: private host baseline and approved RustDesk enrollment planning. It is gated on owner authorization, a finalized relay/security design, and private-only configuration.
+Active public slice: the Phase 2 durable operational core described below. Private host baseline and RustDesk enrollment remain a separately gated private-overlay workstream requiring owner authorization, a finalized relay/security design, and private-only configuration.
+
+## Phase 2 — durable operational core
+
+Status: **local implementation complete** on 2026-07-29; hosted verification is gated.
+
+The generalized implementation was completed independently of any private host
+or cloud project. The local slice adds versioned TypeScript contracts, pure
+placement/reconciliation rules, a transport-neutral Supabase adapter, explicit
+Postgres schemas, RLS, an append-only event log, transactional outbox,
+database-timed Coordinator leases, fencing-token enforcement, and local pgTAP
+acceptance tests.
+
+Completion evidence:
+
+- Governance, generated views, TypeScript, and unit validation pass.
+- A fresh ephemeral Supabase stack applies the migration and passes the pgTAP
+  authorization, lineage, fencing, idempotency, outbox, and recovery suites.
+- Database lint passes for all durable schemas.
+- Review findings covering stale leaders, worker spoofing, abandoned outbox
+  locks, idempotency collisions, secret guards, and reconciliation drift are
+  incorporated in the validated implementation.
+
+This work created no remote project, credential, Coordinator process, worker
+process, provider session, or deployment. Applying the migration to a hosted
+project remains the separately authorized `supabase-remote-verification`
+private-overlay gate.
