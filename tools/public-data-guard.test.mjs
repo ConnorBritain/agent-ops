@@ -192,6 +192,13 @@ describe("public data guard", () => {
     );
   });
 
+  it("canonicalizes nonpreferred precomposed candidate starts", () => {
+    assert.equal(
+      containsPrivateDenylistValue("\u1F71\u0345", ["\u0386"]),
+      true
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));

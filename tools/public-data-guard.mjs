@@ -82,6 +82,23 @@ const boundaryStartPattern = (value) => {
 };
 
 const codePointLength = (value) => [...value].length;
+const nonAsciiPattern = /[^\x00-\x7f]/u;
+
+const couldStartBoundaryMatch = (codePoint, matcher) => {
+  if (matcher.startEligibility.has(codePoint)) {
+    return matcher.startEligibility.get(codePoint);
+  }
+  const eligible =
+    matcher.boundaryStart.test(codePoint) ||
+    (
+      nonAsciiPattern.test(codePoint) &&
+      matcher.canonicalCaseFoldedNfd.startsWith(
+        canonicalCaseFold(codePoint).normalize("NFD")
+      )
+    );
+  matcher.startEligibility.set(codePoint, eligible);
+  return eligible;
+};
 
 const hasBoundarySafeCanonicalMatch = (representation, matcher) => {
   const codePoints = [...representation];
@@ -90,7 +107,7 @@ const hasBoundarySafeCanonicalMatch = (representation, matcher) => {
     matcher.maximumCandidateCodePoints
   );
   for (let start = 0; start < codePoints.length; start += 1) {
-    if (!matcher.boundaryStart.test(codePoints[start])) continue;
+    if (!couldStartBoundaryMatch(codePoints[start], matcher)) continue;
     let candidate = "";
     const remainingLength = Math.min(
       maximumLength,
@@ -110,13 +127,16 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
   const matchers = denylist.map((value) => {
     const canonicalCaseFolded = canonicalCaseFold(value);
+    const canonicalCaseFoldedNfd = canonicalCaseFolded.normalize("NFD");
     const decomposedValue = value.normalize("NFD");
     return {
       raw: value,
       caseInsensitive: literalPattern(value),
       canonicalCaseInsensitive: literalPattern(canonicalizeGuardText(value)),
       canonicalCaseFolded,
+      canonicalCaseFoldedNfd,
       boundaryStart: boundaryStartPattern(value),
+      startEligibility: new Map(),
       maximumCandidateCodePoints: Math.max(
         codePointLength(decomposedValue),
         codePointLength(canonicalCaseFolded.normalize("NFD"))
@@ -140,7 +160,6 @@ export const containsPrivateDenylistValue = (content, denylist) => {
       canonicalCaseInsensitive.test(canonicalRepresentation) ||
       (
         requiresBoundarySafeScan &&
-        matcher.boundaryStart.test(representation) &&
         hasBoundarySafeCanonicalMatch(representation, matcher)
       )
     )) {
