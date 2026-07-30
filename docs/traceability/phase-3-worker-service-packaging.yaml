@@ -1,0 +1,22 @@
+slice: worker-service-packaging
+status: complete
+requirements:
+  - REQ-DEPLOY-001
+artifacts:
+  - deploy/worker-supervisor
+  - config/worker-supervisor.env.example
+  - docs/runbooks/worker-service-packaging.md
+  - docs/adr/ADR-0010-supervisor-only-service-packaging.md
+  - packages/test-kit
+tests:
+  - pnpm run check:service-packaging
+  - pnpm --filter @agent-ops/test-kit test
+  - pnpm validate
+acceptance: ACC-WORKER-001
+evidence:
+  systemd_static_definition: passed
+  launchd_static_definition: passed
+  windows_wrapper_static_definition: passed
+  reboot_idle_fixture: passed
+  secret_references_without_values: passed
+  installation_and_reboot_registration: separately-gated

@@ -441,7 +441,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future clean-host service and reboot-idle fixtures"
+    test: "pnpm run check:service-packaging && pnpm --filter @agent-ops/test-kit test"
     required_evidence: "Reboot-and-register test."
   - id: REQ-WORKER-002
     owner: SPEC-007
@@ -473,7 +473,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future clean-host service and reboot-idle fixtures"
+    test: "pnpm run check:service-packaging && pnpm --filter @agent-ops/test-kit test"
     required_evidence: "Post-reboot no-auto-resume test."
   - id: REQ-WORKER-006
     owner: SPEC-007
@@ -831,9 +831,9 @@ requirements:
     owner: SPEC-015
     slice: worker-service-packaging
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future clean-host service and reboot-idle fixtures"
+    test: "pnpm run check:service-packaging && pnpm --filter @agent-ops/test-kit test"
     required_evidence: "Configuration review."
   - id: REQ-DEPLOY-002
     owner: SPEC-015
@@ -971,8 +971,8 @@ requirements:
         test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
       - slice: worker-service-packaging
         acceptance: ACC-WORKER-001
-        status: planned
-        test: "future clean-host service and reboot-idle fixtures"
+        status: complete
+        test: "pnpm run check:service-packaging && pnpm --filter @agent-ops/test-kit test"
       - slice: private-worker-canary
         acceptance: ACC-WORKER-001
         status: gated

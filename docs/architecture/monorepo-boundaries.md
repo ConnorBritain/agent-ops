@@ -17,6 +17,7 @@ deployment.
 | `packages/provider-sdk` | Provider lifecycle port and capability semantics. | Coordinator state mutation. |
 | `packages/adapters` | Supabase, Roadmap, chat, portfolio, GitHub, memory, and RustDesk adapter implementations. | Domain ownership outside their explicit port. |
 | `packages/test-kit` | Deterministic clocks, resources, control-plane recordings, fixtures, contract suites, and acceptance harnesses. | Production credentials or host inventory. |
+| `deploy/worker-supervisor` | Versioned service-manager templates and read-only clean-host verification scripts. | Installation, account creation, artifact download, service activation, or workload restart. |
 | `supabase` | Append-only migrations, local configuration, database policy definitions, and pgTAP tests. | Runtime secrets or hosted-project identifiers. |
 | `config/fleet` | Public schemas and generic examples. | Real host, relay, network, or credential values. |
 

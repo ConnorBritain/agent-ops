@@ -13,7 +13,7 @@ scenarios:
   - id: ACC-WORKER-001
     title: Worker preflight and reboot recovery
     requirements: [REQ-CHARTER-003, REQ-V1-001, REQ-V1-006, REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-CONTRACT-002, REQ-WORKER-001, REQ-WORKER-002, REQ-WORKER-003, REQ-WORKER-004, REQ-WORKER-005, REQ-WORKER-006, REQ-SAFE-001, REQ-SAFE-002, REQ-SAFE-003, REQ-SAFE-004, REQ-SAFE-005, REQ-SAFE-006, REQ-SAFE-007, REQ-NET-001, REQ-NET-002, REQ-NET-003, REQ-NET-004, REQ-NET-006, REQ-DEPLOY-001, REQ-OPS-001, REQ-OPS-002, REQ-OPS-003, REQ-TEST-005, REQ-ROLL-004, REQ-FLEET-004, REQ-FLEET-005]
-    evidence: worker core fixtures plus future service, safety, identity, and reboot-canary evidence
+    evidence: worker core, safety, and static service-package fixtures plus future identity and private reboot-canary evidence
     phase: 3
   - id: ACC-PROVIDER-001
     title: Provider conformance and dry-run planning

@@ -80,6 +80,32 @@ export class StaticSafetyInspector {
   }
 }
 
+export type RebootIdleServiceFixture = {
+  readonly platform: "systemd" | "launchd" | "windows-service-wrapper";
+  readonly startsWithoutInteractiveLogin: boolean;
+  readonly startsSupervisorOnly: boolean;
+  readonly automaticWorkloadResume: boolean;
+  readonly restartsSupervisorOnFailure: boolean;
+};
+
+export function assertRebootIdleServiceFixture(
+  fixture: RebootIdleServiceFixture,
+): RebootIdleServiceFixture {
+  if (!fixture.startsWithoutInteractiveLogin) {
+    throw new Error("A worker service must start without interactive login.");
+  }
+  if (!fixture.startsSupervisorOnly) {
+    throw new Error("A worker service must start the supervisor only.");
+  }
+  if (fixture.automaticWorkloadResume) {
+    throw new Error("A worker service must never automatically resume a workload.");
+  }
+  if (!fixture.restartsSupervisorOnFailure) {
+    throw new Error("A worker service must recover the supervisor after its own failure.");
+  }
+  return fixture;
+}
+
 export class InMemoryWorkerControlPlane {
   readonly registrations: WorkerRegistration[] = [];
   readonly heartbeats: WorkerHeartbeat[] = [];
