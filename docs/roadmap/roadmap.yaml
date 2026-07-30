@@ -109,7 +109,7 @@ pis:
         prompt: Work only in the private overlay. Do not install, enroll, or configure any host or remote-access system without explicit authorization.
   - id: phase-2-durable-core
     title: Supabase durable operational core
-    status: active
+    status: gated
     deps: [phase-0-governance]
     summary: Implement durable contracts and database authority locally before any hosted integration or worker automation.
     exit_criteria: Unit and pgTAP tests prove versioned contracts, scoped access, idempotent events, outbox delivery state, lease fencing, lineage, and no automatic restart.
@@ -121,12 +121,13 @@ pis:
     sprints:
       - id: supabase-core
         title: Local durable schema, contracts, RLS, outbox, and Coordinator lease
-        status: active
+        status: complete
         invoke: supabase-durable-core
         what: Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         gate: pnpm validate plus pnpm test:db and pnpm db:lint
+        completed_on: "2026-07-29"
         touches:
           - packages/
           - supabase/
@@ -138,7 +139,7 @@ pis:
           - docs/specs/SPEC-004-domain-data-and-identity.md
           - docs/specs/SPEC-005-commands-events-and-idempotency.md
           - docs/specs/SPEC-006-coordinator-runtime.md
-        resume_action: Complete local contracts, migrations, RLS tests, lease/fencing tests, and CI evidence.
+        resume_action: Preserve the green local and CI evidence; hosted application remains a separately authorized private-overlay slice.
         priority:
           tier: P0
           weight: 100

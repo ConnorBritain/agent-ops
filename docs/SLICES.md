@@ -11,9 +11,7 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
-**Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P0]** `/slice supabase-durable-core` — Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project. · touches `packages/`, `supabase/`, `tools/`, `docs/`, `.github/`
-
+_No agent-runnable slices right now._
 **Held on a human:**
 - `/slice private-host-baseline` — gated on **private owner authorization and relay-security decision** — Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
 - `/slice supabase-remote-verification` — gated on **Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning** — Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.
@@ -41,15 +39,15 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 |---|---|---|---|---|---|
 | HOST-BASELINE | `/slice private-host-baseline` | 🔒 Gated · **P1** | ~1 | — | Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts. |
 
-### PHASE-2-DURABLE-CORE — Supabase durable operational core · 🟢 Active · ~3 sessions remaining
-> Sprints: SUPABASE-CORE 🟢 · SUPABASE-REMOTE-VERIFICATION 🔒
-> Exec plan: SUPABASE-CORE→SUPABASE-REMOTE-VERIFICATION
+### PHASE-2-DURABLE-CORE — Supabase durable operational core · 🔒 Gated · ~1 session remaining
+> Sprints: SUPABASE-CORE ✅ · SUPABASE-REMOTE-VERIFICATION 🔒
+> Exec plan: SUPABASE-REMOTE-VERIFICATION
 > Deps: PHASE-0-GOVERNANCE
 > Exit: Unit and pgTAP tests prove versioned contracts, scoped access, idempotent events, outbox delivery state, lease fencing, lineage, and no automatic restart.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| SUPABASE-CORE | `/slice supabase-durable-core` | 🟢 Active · **P0** | ~2 | — | Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project. |
+| SUPABASE-CORE | `/slice supabase-durable-core` | ✅ Complete · **P0** | — | — | Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project. |
 | SUPABASE-REMOTE-VERIFICATION | `/slice supabase-remote-verification` | 🔒 Gated · **P1** | ~1 | SUPABASE-CORE | Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence. |
 
 ---
@@ -60,6 +58,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 |---|---|---|
 | GOVERNED-SCAFFOLD | PHASE-0-GOVERNANCE | — |
 | PRIVATE-OVERLAY | PHASE-0-GOVERNANCE | — |
+| SUPABASE-CORE | PHASE-2-DURABLE-CORE | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -83,18 +82,6 @@ pnpm validate
 - **Resume / next action:** Wait for explicit owner authorization and finalized private relay topology.
 - **Gate:** default verification gate
 - **Gated on:** private owner authorization and relay-security decision (an agent prepares; it does not perform the gate).
-
-### `supabase-durable-core`
-- **What:** Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project.
-- **Status:** 🟢 Active (PHASE-2-DURABLE-CORE · SUPABASE-CORE)
-- **Priority:** P0 · weight 100 — This is the first executable durable-authority slice.
-- **Read-order:**
-  1. docs/specs/SPEC-003-trust-security-and-federation.md
-  2. docs/specs/SPEC-004-domain-data-and-identity.md
-  3. docs/specs/SPEC-005-commands-events-and-idempotency.md
-  4. docs/specs/SPEC-006-coordinator-runtime.md
-- **Resume / next action:** Complete local contracts, migrations, RLS tests, lease/fencing tests, and CI evidence.
-- **Gate:** pnpm validate plus pnpm test:db and pnpm db:lint
 
 ### `supabase-remote-verification`
 - **What:** Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.

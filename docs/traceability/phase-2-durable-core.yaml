@@ -1,5 +1,5 @@
 slice: supabase-durable-core
-status: in-progress
+status: complete
 requirements:
   - REQ-SEC-001
   - REQ-SEC-003
@@ -35,6 +35,6 @@ tests:
   - pnpm db:lint
 acceptance: ACC-CORE-001
 evidence:
-  local_static_validation: pending
-  public_ci_database_test: pending
+  local_static_validation: passed
+  public_ci_database_test: passed
   remote_project_application: separately-gated

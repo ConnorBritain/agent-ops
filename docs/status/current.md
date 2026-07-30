@@ -18,15 +18,26 @@ Active public slice: the Phase 2 durable operational core described below. Priva
 
 ## Phase 2 — durable operational core
 
-Status: **in progress**.
+Status: **local implementation complete** on 2026-07-29; hosted verification is gated.
 
-The generalized implementation now begins independently of any private host or
-cloud project. The active slice adds versioned TypeScript contracts, pure
+The generalized implementation was completed independently of any private host
+or cloud project. The local slice adds versioned TypeScript contracts, pure
 placement/reconciliation rules, a transport-neutral Supabase adapter, explicit
 Postgres schemas, RLS, an append-only event log, transactional outbox,
 database-timed Coordinator leases, fencing-token enforcement, and local pgTAP
 acceptance tests.
 
-This work creates no remote project, credential, Coordinator process, worker
+Completion evidence:
+
+- Governance, generated views, TypeScript, and unit validation pass.
+- A fresh ephemeral Supabase stack applies the migration and passes the pgTAP
+  authorization, lineage, fencing, idempotency, outbox, and recovery suites.
+- Database lint passes for all durable schemas.
+- Review findings covering stale leaders, worker spoofing, abandoned outbox
+  locks, idempotency collisions, secret guards, and reconciliation drift are
+  incorporated in the validated implementation.
+
+This work created no remote project, credential, Coordinator process, worker
 process, provider session, or deployment. Applying the migration to a hosted
-project remains a separate, private-overlay gate.
+project remains the separately authorized `supabase-remote-verification`
+private-overlay gate.
