@@ -225,6 +225,13 @@ describe("public data guard", () => {
     );
   });
 
+  it("bounds fallback work for dense complex Unicode that has no match", () => {
+    assert.equal(
+      containsPrivateDenylistValue("é".repeat(100_000), ["absent-key"]),
+      false
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));

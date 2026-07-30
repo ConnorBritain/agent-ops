@@ -66,7 +66,46 @@ const literalPattern = (value) =>
 
 const codePointLength = (value) => [...value].length;
 const complexCodePointCache = new Map();
+const isolatedFoldSignatureCache = new Map();
 const combiningMarkPattern = /\p{M}/u;
+const canonicalSigma = "\u03c3";
+const finalSigma = "\u03c2";
+
+const mixCodePoint = (codePoint, seed) => {
+  let value = (codePoint ^ seed) >>> 0;
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  return (value ^ (value >>> 16)) >>> 0;
+};
+
+const foldSignature = (foldedValue) => {
+  let length = 0;
+  let hashA = 0;
+  let hashB = 0;
+  for (const character of foldedValue) {
+    // Canonical ordering preserves this additive signature. Collapsing the
+    // context-sensitive final sigma makes isolated and whole-string folds
+    // comparable; a signature hit is still verified by an exact span fold.
+    const codePoint = (
+      character === finalSigma ? canonicalSigma : character
+    ).codePointAt(0);
+    length += 1;
+    hashA = (hashA + mixCodePoint(codePoint, 0x9e3779b9)) >>> 0;
+    hashB = (hashB + mixCodePoint(codePoint, 0x85ebca6b)) >>> 0;
+  }
+  return { length, hashA, hashB };
+};
+
+const isolatedFoldSignature = (codePoint) => {
+  if (isolatedFoldSignatureCache.has(codePoint)) {
+    return isolatedFoldSignatureCache.get(codePoint);
+  }
+  const signature = foldSignature(canonicalCaseFold(codePoint));
+  isolatedFoldSignatureCache.set(codePoint, signature);
+  return signature;
+};
+
+const signatureKey = ({ hashA, hashB }) => `${hashA}:${hashB}`;
 
 const isComplexCodePoint = (codePoint) => {
   if (complexCodePointCache.has(codePoint)) {
@@ -101,12 +140,23 @@ const candidateStartIntervals = (complexPositions, maximumLength) => {
 const hasBoundarySafeCanonicalMatch = (
   representation,
   foldedDenylist,
+  foldedDenylistSignatures,
   maximumCandidateCodePoints
 ) => {
   const codePoints = [...representation];
   const complexPositions = [];
+  const prefixLengths = [0];
+  const prefixHashA = [0];
+  const prefixHashB = [0];
+  const prefixComplexCounts = [0];
   for (let index = 0; index < codePoints.length; index += 1) {
-    if (isComplexCodePoint(codePoints[index])) complexPositions.push(index);
+    const complex = isComplexCodePoint(codePoints[index]);
+    if (complex) complexPositions.push(index);
+    const signature = isolatedFoldSignature(codePoints[index]);
+    prefixLengths.push(prefixLengths[index] + signature.length);
+    prefixHashA.push((prefixHashA[index] + signature.hashA) >>> 0);
+    prefixHashB.push((prefixHashB[index] + signature.hashB) >>> 0);
+    prefixComplexCounts.push(prefixComplexCounts[index] + (complex ? 1 : 0));
   }
   if (!complexPositions.length) return false;
 
@@ -114,22 +164,41 @@ const hasBoundarySafeCanonicalMatch = (
     codePoints.length,
     maximumCandidateCodePoints
   );
-  let complexIndex = 0;
-  for (const interval of candidateStartIntervals(
-    complexPositions,
-    maximumLength
+  const intervals = candidateStartIntervals(complexPositions, maximumLength);
+  // Each isolated fold contributes at least one code point, so its prefix
+  // length is strictly increasing. For each denylist length, a start has at
+  // most one possible end and the end cursor only moves forward.
+  for (const [foldedLength, denylistSignatureKeys] of (
+    foldedDenylistSignatures
   )) {
-    for (let start = interval.start; start <= interval.end; start += 1) {
-      while (complexPositions[complexIndex] < start) complexIndex += 1;
-      const firstComplex = complexPositions[complexIndex];
-      const maximumEnd = Math.min(
-        codePoints.length - 1,
-        start + maximumLength - 1
-      );
-      if (firstComplex > maximumEnd) continue;
-      let candidate = codePoints.slice(start, firstComplex).join("");
-      for (let end = firstComplex; end <= maximumEnd; end += 1) {
-        candidate += codePoints[end];
+    for (const interval of intervals) {
+      let endExclusive = interval.start + 1;
+      for (let start = interval.start; start <= interval.end; start += 1) {
+        if (endExclusive <= start) endExclusive = start + 1;
+        const targetLength = prefixLengths[start] + foldedLength;
+        const maximumEndExclusive = Math.min(
+          codePoints.length,
+          start + maximumLength
+        );
+        while (
+          endExclusive <= maximumEndExclusive &&
+          prefixLengths[endExclusive] < targetLength
+        ) {
+          endExclusive += 1;
+        }
+        if (
+          endExclusive > maximumEndExclusive ||
+          prefixLengths[endExclusive] !== targetLength ||
+          prefixComplexCounts[endExclusive] === prefixComplexCounts[start]
+        ) {
+          continue;
+        }
+        const candidateSignatureKey = signatureKey({
+          hashA: (prefixHashA[endExclusive] - prefixHashA[start]) >>> 0,
+          hashB: (prefixHashB[endExclusive] - prefixHashB[start]) >>> 0
+        });
+        if (!denylistSignatureKeys.has(candidateSignatureKey)) continue;
+        const candidate = codePoints.slice(start, endExclusive).join("");
         if (foldedDenylist.has(canonicalCaseFold(candidate))) return true;
       }
     }
@@ -156,6 +225,14 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   const foldedDenylist = new Set(
     matchers.map(({ canonicalCaseFolded }) => canonicalCaseFolded)
   );
+  const foldedDenylistSignatures = new Map();
+  for (const canonicalCaseFolded of foldedDenylist) {
+    const signature = foldSignature(canonicalCaseFolded);
+    const signaturesAtLength =
+      foldedDenylistSignatures.get(signature.length) ?? new Set();
+    signaturesAtLength.add(signatureKey(signature));
+    foldedDenylistSignatures.set(signature.length, signaturesAtLength);
+  }
   const foldedDenylistPattern = new RegExp(
     `(?:${[...foldedDenylist].map(escapeRegExp).join("|")})`,
     "u"
@@ -184,6 +261,7 @@ export const containsPrivateDenylistValue = (content, denylist) => {
     if (hasBoundarySafeCanonicalMatch(
       representation,
       foldedDenylist,
+      foldedDenylistSignatures,
       maximumCandidateCodePoints
     )) return true;
   }
