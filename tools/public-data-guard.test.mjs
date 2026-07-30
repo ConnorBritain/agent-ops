@@ -190,6 +190,13 @@ describe("public data guard", () => {
       containsPrivateDenylistValue("Éo\u0308\u0327", ["éö"]),
       true
     );
+    assert.equal(
+      containsPrivateDenylistValue(
+        "é\u0327\u0316",
+        ["e\u0327\u0301"]
+      ),
+      true
+    );
   });
 
   it("canonicalizes nonpreferred precomposed candidate starts", () => {

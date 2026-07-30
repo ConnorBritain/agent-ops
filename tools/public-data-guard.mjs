@@ -64,64 +64,73 @@ const escapeRegExp = (value) =>
 const literalPattern = (value) =>
   new RegExp(escapeRegExp(value), "iu");
 
-const firstCodePoint = (value) => [...value][0];
-
-const boundaryStartPattern = (value) => {
-  const starts = new Set();
-  for (const variant of [
-    value,
-    value.normalize("NFC"),
-    value.normalize("NFD"),
-    value.toLowerCase().normalize("NFC"),
-    value.toLowerCase().normalize("NFD"),
-    value.toUpperCase().normalize("NFC"),
-    value.toUpperCase().normalize("NFD")
-  ]) {
-    const first = firstCodePoint(variant);
-    if (first !== undefined) starts.add(first);
-  }
-  return new RegExp(
-    `(?:${[...starts].map(escapeRegExp).join("|")})`,
-    "iu"
-  );
-};
-
 const codePointLength = (value) => [...value].length;
-const nonAsciiPattern = /[^\x00-\x7f]/u;
+const complexCodePointCache = new Map();
+const combiningMarkPattern = /\p{M}/u;
 
-const couldStartBoundaryMatch = (codePoint, matcher) => {
-  if (matcher.startEligibility.has(codePoint)) {
-    return matcher.startEligibility.get(codePoint);
+const isComplexCodePoint = (codePoint) => {
+  if (complexCodePointCache.has(codePoint)) {
+    return complexCodePointCache.get(codePoint);
   }
-  const eligible =
-    matcher.boundaryStart.test(codePoint) ||
+  const complex =
+    codePoint.codePointAt(0) > 0x7f &&
     (
-      nonAsciiPattern.test(codePoint) &&
-      matcher.canonicalCaseFoldedNfd.startsWith(
-        canonicalCaseFold(codePoint).normalize("NFD")
-      )
+      combiningMarkPattern.test(codePoint) ||
+      codePoint.normalize("NFD") !== codePoint ||
+      codePointLength(canonicalCaseFold(codePoint)) !== 1
     );
-  matcher.startEligibility.set(codePoint, eligible);
-  return eligible;
+  complexCodePointCache.set(codePoint, complex);
+  return complex;
 };
 
-const hasBoundarySafeCanonicalMatch = (representation, matcher) => {
+const candidateStartIntervals = (complexPositions, maximumLength) => {
+  const intervals = [];
+  for (const position of complexPositions) {
+    const start = Math.max(0, position - maximumLength + 1);
+    const end = position;
+    const previous = intervals.at(-1);
+    if (previous && start <= previous.end + 1) {
+      previous.end = Math.max(previous.end, end);
+    } else {
+      intervals.push({ start, end });
+    }
+  }
+  return intervals;
+};
+
+const hasBoundarySafeCanonicalMatch = (
+  representation,
+  foldedDenylist,
+  maximumCandidateCodePoints
+) => {
   const codePoints = [...representation];
+  const complexPositions = [];
+  for (let index = 0; index < codePoints.length; index += 1) {
+    if (isComplexCodePoint(codePoints[index])) complexPositions.push(index);
+  }
+  if (!complexPositions.length) return false;
+
   const maximumLength = Math.min(
     codePoints.length,
-    matcher.maximumCandidateCodePoints
+    maximumCandidateCodePoints
   );
-  for (let start = 0; start < codePoints.length; start += 1) {
-    if (!couldStartBoundaryMatch(codePoints[start], matcher)) continue;
-    let candidate = "";
-    const remainingLength = Math.min(
-      maximumLength,
-      codePoints.length - start
-    );
-    for (let length = 1; length <= remainingLength; length += 1) {
-      candidate += codePoints[start + length - 1];
-      if (canonicalCaseFold(candidate) === matcher.canonicalCaseFolded) {
-        return true;
+  let complexIndex = 0;
+  for (const interval of candidateStartIntervals(
+    complexPositions,
+    maximumLength
+  )) {
+    for (let start = interval.start; start <= interval.end; start += 1) {
+      while (complexPositions[complexIndex] < start) complexIndex += 1;
+      const firstComplex = complexPositions[complexIndex];
+      const maximumEnd = Math.min(
+        codePoints.length - 1,
+        start + maximumLength - 1
+      );
+      if (firstComplex > maximumEnd) continue;
+      let candidate = codePoints.slice(start, firstComplex).join("");
+      for (let end = firstComplex; end <= maximumEnd; end += 1) {
+        candidate += codePoints[end];
+        if (foldedDenylist.has(canonicalCaseFold(candidate))) return true;
       }
     }
   }
@@ -132,46 +141,51 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
   const matchers = denylist.map((value) => {
     const canonicalCaseFolded = canonicalCaseFold(value);
-    const canonicalCaseFoldedNfd = canonicalCaseFolded.normalize("NFD");
     const decomposedValue = value.normalize("NFD");
     return {
       raw: value,
       caseInsensitive: literalPattern(value),
       canonicalCaseInsensitive: literalPattern(canonicalizeGuardText(value)),
       canonicalCaseFolded,
-      canonicalCaseFoldedNfd,
-      boundaryStart: boundaryStartPattern(value),
-      startEligibility: new Map(),
       maximumCandidateCodePoints: Math.max(
         codePointLength(decomposedValue),
         codePointLength(canonicalCaseFolded.normalize("NFD"))
-      ),
-      requiresBoundarySafeScan:
-        /\p{M}/u.test(decomposedValue) ||
-        codePointLength(value.toLowerCase()) !== codePointLength(value) ||
-        codePointLength(canonicalCaseFolded) !== codePointLength(value)
+      )
     };
   });
+  const foldedDenylist = new Set(
+    matchers.map(({ canonicalCaseFolded }) => canonicalCaseFolded)
+  );
+  const foldedDenylistPattern = new RegExp(
+    `(?:${[...foldedDenylist].map(escapeRegExp).join("|")})`,
+    "u"
+  );
+  const maximumCandidateCodePoints = Math.max(
+    ...matchers.map(({ maximumCandidateCodePoints }) =>
+      maximumCandidateCodePoints
+    )
+  );
   for (const representation of decodeForGuard(content)) {
     const canonicalRepresentation = canonicalizeGuardText(representation);
-    const representationHasNonAscii = nonAsciiPattern.test(representation);
     if (matchers.some(({
       raw,
       caseInsensitive,
-      canonicalCaseInsensitive,
-      requiresBoundarySafeScan,
-      ...matcher
+      canonicalCaseInsensitive
     }) =>
       representation.includes(raw) ||
       caseInsensitive.test(representation) ||
-      canonicalCaseInsensitive.test(canonicalRepresentation) ||
-      (
-        (requiresBoundarySafeScan || representationHasNonAscii) &&
-        hasBoundarySafeCanonicalMatch(representation, matcher)
-      )
+      canonicalCaseInsensitive.test(canonicalRepresentation)
     )) {
       return true;
     }
+    if (foldedDenylistPattern.test(canonicalCaseFold(representation))) {
+      return true;
+    }
+    if (hasBoundarySafeCanonicalMatch(
+      representation,
+      foldedDenylist,
+      maximumCandidateCodePoints
+    )) return true;
   }
   return false;
 };
