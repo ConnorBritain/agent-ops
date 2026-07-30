@@ -2,36 +2,81 @@ catalog_version: 1
 scenarios:
   - id: ACC-GOV-001
     title: Governed bootstrap
-    requirements: [REQ-CATALOG-001, REQ-CATALOG-002, REQ-BUILD-001, REQ-BUILD-002, REQ-BUILD-005]
+    requirements: [REQ-CATALOG-001, REQ-CATALOG-002, REQ-CATALOG-003, REQ-TEST-001, REQ-ROLL-001, REQ-ROLL-006, REQ-BUILD-001, REQ-BUILD-002, REQ-BUILD-004, REQ-BUILD-005]
     evidence: pnpm validate
     phase: 0
   - id: ACC-CORE-001
     title: Durable task, run, event, and health core
-    requirements: [REQ-V1-002, REQ-DATA-001, REQ-DATA-003, REQ-CONTRACT-003, REQ-CONTRACT-004]
+    requirements: [REQ-SEC-001, REQ-SEC-002, REQ-DATA-001, REQ-DATA-004, REQ-DATA-005, REQ-DATA-006, REQ-CONTRACT-001, REQ-CONTRACT-003, REQ-CONTRACT-004, REQ-CONTRACT-005, REQ-COORD-001, REQ-COORD-002]
     evidence: pnpm test:unit and pnpm test:db
     phase: 2
   - id: ACC-WORKER-001
     title: Worker preflight and reboot recovery
-    requirements: [REQ-V1-001, REQ-WORKER-001, REQ-WORKER-002, REQ-WORKER-005, REQ-SAFE-001]
+    requirements: [REQ-CHARTER-003, REQ-V1-001, REQ-V1-006, REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-CONTRACT-002, REQ-WORKER-001, REQ-WORKER-002, REQ-WORKER-003, REQ-WORKER-004, REQ-WORKER-005, REQ-WORKER-006, REQ-SAFE-001, REQ-SAFE-002, REQ-SAFE-003, REQ-SAFE-004, REQ-SAFE-005, REQ-SAFE-006, REQ-SAFE-007, REQ-NET-001, REQ-NET-002, REQ-NET-003, REQ-NET-004, REQ-NET-006, REQ-DEPLOY-001, REQ-OPS-001, REQ-OPS-002, REQ-OPS-003, REQ-TEST-005, REQ-ROLL-004, REQ-FLEET-004, REQ-FLEET-005]
     evidence: future worker acceptance fixture
     phase: 3
   - id: ACC-PROVIDER-001
     title: Provider conformance and dry-run planning
-    requirements: [REQ-PROVIDER-001, REQ-PROVIDER-003, REQ-PROVIDER-004, REQ-TEST-002]
+    requirements: [REQ-V1-003, REQ-PROVIDER-001, REQ-PROVIDER-002, REQ-PROVIDER-003, REQ-PROVIDER-004, REQ-TEST-002]
     evidence: future provider contract suite
-    phase: 4
+    phase: 7
   - id: ACC-ATTENTION-001
     title: Attention and verified draft delivery loop
-    requirements: [REQ-V1-004, REQ-V1-005, REQ-COORD-004, REQ-TEST-003, REQ-TEST-004]
+    requirements: [REQ-CHARTER-001, REQ-CHARTER-002, REQ-V1-002, REQ-V1-004, REQ-V1-005, REQ-CONTEXT-003, REQ-DATA-003, REQ-COORD-003, REQ-COORD-004, REQ-COORD-005, REQ-COORD-006, REQ-INT-005, REQ-OPS-004, REQ-TEST-003, REQ-TEST-004]
     evidence: future end-to-end fixture
     phase: 6
   - id: ACC-SECURITY-001
     title: Domain, resource, and destructive-action refusal
     requirements: [REQ-V1-006, REQ-V1-007, REQ-SEC-002, REQ-SEC-005, REQ-SAFE-003]
     evidence: future negative scenario suite
-    phase: 6
+    phase: 11
   - id: ACC-REMOTE-001
     title: Managed remote-access boundary
-    requirements: [REQ-NET-005, REQ-TEST-005]
-    evidence: future RemoteAccessPortal contract suite
-    phase: 1
+    requirements: [REQ-NET-005, REQ-FLEET-001, REQ-FLEET-002, REQ-FLEET-003, REQ-TEST-005]
+    evidence: future private headless RemoteAccessPortal and worker-health canary
+    phase: 3
+  - id: ACC-PLANNING-001
+    title: Roadmap readiness and stable worktree intent
+    requirements: [REQ-CONTEXT-001, REQ-CONTEXT-005, REQ-INT-001, REQ-INT-002]
+    evidence: future Roadmap adapter scenario
+    phase: 4
+  - id: ACC-DELIVERY-001
+    title: Independently verified draft pull-request delivery
+    requirements: [REQ-CHARTER-004, REQ-V1-002, REQ-V1-005, REQ-TEST-003, REQ-TEST-004, REQ-ROLL-002, REQ-BUILD-003]
+    evidence: future disposable-repository delivery fixture
+    phase: 6
+  - id: ACC-PROJECTION-001
+    title: Replayable human-scale GitHub and portfolio projections
+    requirements: [REQ-CONTEXT-002, REQ-CONTEXT-004, REQ-CONTEXT-006, REQ-INT-003, REQ-INT-004, REQ-INT-006, REQ-OPS-006, REQ-TEST-005]
+    evidence: future projection replay and noise-suppression suite
+    phase: 7
+  - id: ACC-SKILLS-001
+    title: Portable primitive enforcement and missing-skill refusal
+    requirements: [REQ-SKILL-001, REQ-SKILL-002, REQ-SKILL-003, REQ-SKILL-004, REQ-SKILL-005, REQ-SKILL-006]
+    evidence: future primitive manifest and enforcement suite
+    phase: 8
+  - id: ACC-FINOPS-001
+    title: Estimate, time, outcome, and allocation lineage
+    requirements: [REQ-FINOPS-001, REQ-FINOPS-002, REQ-FINOPS-003, REQ-FINOPS-004, REQ-FINOPS-005, REQ-FINOPS-006]
+    evidence: future estimation and FinOps lineage suite
+    phase: 8
+  - id: ACC-RELEASE-001
+    title: Compatibility promotion and recoverable replacement
+    requirements: [REQ-CHARTER-006, REQ-DATA-002, REQ-CONTRACT-006, REQ-DEPLOY-002, REQ-DEPLOY-003, REQ-DEPLOY-004, REQ-DEPLOY-005, REQ-DEPLOY-006, REQ-OPS-005, REQ-TEST-006, REQ-ROLL-003]
+    evidence: future release, migration, backup, and replacement suite
+    phase: 8
+  - id: ACC-BROWSER-001
+    title: Human-confirmed observed browser path
+    requirements: [REQ-PROVIDER-005, REQ-PROVIDER-006, REQ-TEST-005]
+    evidence: future browser classification and confirmation suite
+    phase: 9
+  - id: ACC-MEMORY-001
+    title: Curated ADR memory with supersession and outage isolation
+    requirements: [REQ-MEMORY-001, REQ-MEMORY-002, REQ-MEMORY-003, REQ-MEMORY-004, REQ-MEMORY-005, REQ-MEMORY-006]
+    evidence: future curated-memory contract suite
+    phase: 10
+  - id: ACC-FEDERATION-001
+    title: Separately authorized sanitizing federation boundary
+    requirements: [REQ-CHARTER-005, REQ-V1-007, REQ-SEC-006, REQ-ROLL-005, REQ-FLEET-006]
+    evidence: future authority, sanitization, isolation, and negative-dispatch suite
+    phase: 11

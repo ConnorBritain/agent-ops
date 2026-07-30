@@ -41,3 +41,23 @@ This work created no remote project, credential, Coordinator process, worker
 process, provider session, or deployment. Applying the migration to a hosted
 project remains the separately authorized `supabase-remote-verification`
 private-overlay gate.
+
+## Ordered v1 implementation
+
+Status: **Phase 3 worker runtime is next** as of 2026-07-30.
+
+The Roadmap now represents the complete normative rollout from the local
+durable foundation through worker safety, Roadmap composition, PrintProvider,
+two CLI providers, the first attention-and-verified-delivery vertical slice,
+external projections, skills and FinOps, release recovery, observed browser
+support, optional curated memory, and separately authorized federation.
+
+The durable core is an executable foundation, not the first completed product
+vertical slice. `REQ-BUILD-003` and `REQ-ROLL-002` remain planned against
+`verified-draft-delivery`, which must prove the complete attention-and-delivery
+loop before broader automation is considered complete.
+
+Every one of the 130 normative requirements now has an enforced primary
+requirement-to-slice-to-acceptance-to-test mapping in
+`docs/traceability/v1-requirements.yaml`. Future evidence is labeled planned or
+gated rather than being inferred from code existence.

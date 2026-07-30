@@ -11,10 +11,59 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
-_No agent-runnable slices right now._
+**Wave 1** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice worker-runtime-core` — Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures. · touches `packages/contracts/`, `packages/domain/`, `packages/worker/`, `packages/test-kit/`, `docs/`
+
+**Wave 2** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice worker-safety-hooks` — Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling. · touches `packages/domain/`, `packages/worker/`, `packages/policy/`, `packages/test-kit/`, `docs/`
+
+**Wave 3** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice roadmap-adapter` — Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation. · touches `packages/adapters/`, `packages/contracts/`, `packages/test-kit/`, `docs/`
+
+**Wave 4** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice print-provider` — Implement the common provider lifecycle, capability manifest, observation normalization, conformance kit, and no-execution PrintProvider. · touches `packages/contracts/`, `packages/provider-sdk/`, `packages/providers/print/`, `packages/test-kit/`, `docs/`
+
+**Wave 5** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice first-cli-provider-spike` — Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR. · touches `docs/adr/`, `docs/architecture/`, `packages/test-kit/`
+
+**Wave 6** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice first-cli-provider` — Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection. · touches `packages/providers/`, `packages/provider-sdk/`, `packages/test-kit/`, `docs/`
+
+**Wave 7** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice coordinator-runtime` — Implement transport-neutral Coordinator application services around the durable ports, policy engine, scheduler, reconciler, and attention manager. · touches `apps/coordinator/`, `packages/domain/`, `packages/contracts/`, `packages/adapters/`, `packages/test-kit/`, `docs/`
+
+**Wave 8** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice slack-attention-adapter` — Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion. · touches `packages/adapters/`, `apps/coordinator/`, `packages/test-kit/`, `docs/`
+
+**Wave 9** — launch concurrently (disjoint files, deps satisfied):
+- **[P0]** `/slice verified-draft-delivery` — Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request. · touches `apps/`, `packages/`, `e2e/`, `docs/`
+
+**Wave 10** — launch concurrently (disjoint files, deps satisfied):
+- **[P1]** `/slice worker-service-packaging` — Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them. · touches `deploy/`, `config/`, `docs/runbooks/`, `packages/test-kit/`
+
+**Wave 11** — launch concurrently (disjoint files, deps satisfied):
+- **[P1]** `/slice second-cli-provider` — Select and implement a second documented CLI provider through the same SDK and conformance suite. · touches `packages/providers/`, `packages/provider-sdk/`, `packages/test-kit/`, `docs/adr/`
+
+**Wave 12** — launch concurrently (disjoint files, deps satisfied):
+- **[P1]** `/slice github-portfolio-projections` — Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
+
+**Wave 13** — launch concurrently (disjoint files, deps satisfied):
+- **[P1]** `/slice skills-estimation-finops` — Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. · touches `packages/adapters/`, `packages/domain/`, `packages/contracts/`, `packages/test-kit/`, `docs/`
+
+**Wave 14** — launch concurrently (disjoint files, deps satisfied):
+- **[P1]** `/slice release-recovery` — Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. · touches `deploy/`, `config/`, `packages/test-kit/`, `docs/runbooks/`, `docs/`
+
+**Wave 15** — launch concurrently (disjoint files, deps satisfied):
+- **[P2]** `/slice observed-browser-path` — Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. · touches `packages/providers/`, `packages/policy/`, `packages/test-kit/`, `docs/`
+
+**Wave 16** — launch concurrently (disjoint files, deps satisfied):
+- **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
+
 **Held on a human:**
 - `/slice private-host-baseline` — gated on **private owner authorization and relay-security decision** — Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
 - `/slice supabase-remote-verification` — gated on **Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning** — Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.
+- `/slice private-worker-canary` — gated on **Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan** — Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access.
+- `/slice restricted-domain-federation` — gated on **Explicit organization and owner authorization plus accepted federation ADR** — Create a dedicated ADR and sanitizing status protocol, then perform only the separately authorized bounded federation canary.
 
 ---
 
@@ -49,6 +98,105 @@ _No agent-runnable slices right now._
 |---|---|---|---|---|---|
 | SUPABASE-CORE | `/slice supabase-durable-core` | ✅ Complete · **P0** | — | — | Add TypeScript domain/adapter packages and local Supabase migrations and tests without connecting a hosted project. |
 | SUPABASE-REMOTE-VERIFICATION | `/slice supabase-remote-verification` | 🔒 Gated · **P1** | ~1 | SUPABASE-CORE | Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence. |
+
+### PHASE-3-WORKER-SAFETY — Outbound worker runtime and host safeguards · 🟢 Active · ~6 sessions remaining
+> Sprints: WORKER-RUNTIME-CORE 🟡 · WORKER-SAFETY-HOOKS ⚪ · WORKER-SERVICE-PACKAGING ⚪ · PRIVATE-WORKER-CANARY 🔒
+> Exec plan: WORKER-RUNTIME-CORE→WORKER-SAFETY-HOOKS→WORKER-SERVICE-PACKAGING→PRIVATE-WORKER-CANARY
+> Deps: PHASE-0-GOVERNANCE, PHASE-2-DURABLE-CORE
+> Exit: Deterministic fixtures prove registration, heartbeats, resource refusal, cancellation, quarantine, and reboot-idle recovery; private canary enrollment remains separately gated.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| WORKER-RUNTIME-CORE | `/slice worker-runtime-core` | 🟡 Next · **P0** | ~2 | SUPABASE-CORE | Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures. |
+| WORKER-SAFETY-HOOKS | `/slice worker-safety-hooks` | ⚪ Scheduled · **P0** | ~2 | WORKER-RUNTIME-CORE | Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling. |
+| WORKER-SERVICE-PACKAGING | `/slice worker-service-packaging` | ⚪ Scheduled · **P1** | ~1 | WORKER-SAFETY-HOOKS | Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them. |
+| PRIVATE-WORKER-CANARY | `/slice private-worker-canary` | 🔒 Gated · **P1** | ~1 | WORKER-SERVICE-PACKAGING, HOST-BASELINE | Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access. |
+
+### PHASE-4-ROADMAP-PRINT-PROVIDER — Roadmap composition and PrintProvider · ⚪ Scheduled · ~3 sessions remaining
+> Sprints: ROADMAP-ADAPTER ⚪ · PRINT-PROVIDER ⚪
+> Exec plan: ROADMAP-ADAPTER→PRINT-PROVIDER
+> Deps: PHASE-0-GOVERNANCE, PHASE-3-WORKER-SAFETY
+> Exit: A bounded fixture resolves a ready slice, retains stable correlation references, and produces a complete no-execution launch plan through the shared provider conformance suite.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| ROADMAP-ADAPTER | `/slice roadmap-adapter` | ⚪ Scheduled · **P0** | ~1 | WORKER-RUNTIME-CORE | Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation. |
+| PRINT-PROVIDER | `/slice print-provider` | ⚪ Scheduled · **P0** | ~2 | ROADMAP-ADAPTER, WORKER-SAFETY-HOOKS | Implement the common provider lifecycle, capability manifest, observation normalization, conformance kit, and no-execution PrintProvider. |
+
+### PHASE-5-FIRST-CLI-PROVIDER — First bounded CLI provider · ⚪ Scheduled · ~3 sessions remaining
+> Sprints: FIRST-CLI-PROVIDER-SPIKE ⚪ · FIRST-CLI-PROVIDER ⚪
+> Exec plan: FIRST-CLI-PROVIDER-SPIKE→FIRST-CLI-PROVIDER
+> Deps: PHASE-4-ROADMAP-PRINT-PROVIDER
+> Exit: A disposable fixture executes, blocks, resumes, cancels, and collects artifacts through the provider conformance suite with redacted evidence.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| FIRST-CLI-PROVIDER-SPIKE | `/slice first-cli-provider-spike` | ⚪ Scheduled · **P0** | ~1 | PRINT-PROVIDER | Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR. |
+| FIRST-CLI-PROVIDER | `/slice first-cli-provider` | ⚪ Scheduled · **P0** | ~2 | FIRST-CLI-PROVIDER-SPIKE | Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection. |
+
+### PHASE-6-ATTENTION-DELIVERY — Coordinator attention and verified draft delivery · ⚪ Scheduled · ~8 sessions remaining
+> Sprints: COORDINATOR-RUNTIME ⚪ · SLACK-ATTENTION-ADAPTER ⚪ · VERIFIED-DRAFT-DELIVERY ⚪
+> Exec plan: COORDINATOR-RUNTIME→SLACK-ATTENTION-ADAPTER→VERIFIED-DRAFT-DELIVERY
+> Deps: PHASE-5-FIRST-CLI-PROVIDER
+> Exit: A replayable disposable-repository scenario proves attention persistence before delivery, restart-safe resume, independent verification, policy-gated draft PR creation, and quiet successful completion.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| COORDINATOR-RUNTIME | `/slice coordinator-runtime` | ⚪ Scheduled · **P0** | ~3 | FIRST-CLI-PROVIDER, ROADMAP-ADAPTER | Implement transport-neutral Coordinator application services around the durable ports, policy engine, scheduler, reconciler, and attention manager. |
+| SLACK-ATTENTION-ADAPTER | `/slice slack-attention-adapter` | ⚪ Scheduled · **P0** | ~2 | COORDINATOR-RUNTIME | Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion. |
+| VERIFIED-DRAFT-DELIVERY | `/slice verified-draft-delivery` | ⚪ Scheduled · **P0** | ~3 | SLACK-ATTENTION-ADAPTER | Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request. |
+
+### PHASE-7-PROVIDER-PROJECTIONS — Second CLI provider and external projections · ⚪ Scheduled · ~4 sessions remaining
+> Sprints: SECOND-CLI-PROVIDER ⚪ · GITHUB-PORTFOLIO-PROJECTIONS ⚪
+> Exec plan: SECOND-CLI-PROVIDER→GITHUB-PORTFOLIO-PROJECTIONS
+> Deps: PHASE-6-ATTENTION-DELIVERY
+> Exit: Both providers pass the same suite; GitHub and portfolio projections are replayable, idempotent, and limited to meaningful transitions.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| SECOND-CLI-PROVIDER | `/slice second-cli-provider` | ⚪ Scheduled · **P1** | ~2 | VERIFIED-DRAFT-DELIVERY | Select and implement a second documented CLI provider through the same SDK and conformance suite. |
+| GITHUB-PORTFOLIO-PROJECTIONS | `/slice github-portfolio-projections` | ⚪ Scheduled · **P1** | ~2 | SECOND-CLI-PROVIDER | Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. |
+
+### PHASE-8-SKILLS-FINOPS-RELEASE — Portable skills, estimation, FinOps, and release recovery · ⚪ Scheduled · ~5 sessions remaining
+> Sprints: SKILLS-ESTIMATION-FINOPS ⚪ · RELEASE-RECOVERY ⚪
+> Exec plan: SKILLS-ESTIMATION-FINOPS→RELEASE-RECOVERY
+> Deps: PHASE-7-PROVIDER-PROJECTIONS
+> Exit: A completed task retains skill enforcement, estimate/actual/cost lineage, compatibility evidence, and a simulated development-to-canary-to-stable recovery record.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| SKILLS-ESTIMATION-FINOPS | `/slice skills-estimation-finops` | ⚪ Scheduled · **P1** | ~3 | GITHUB-PORTFOLIO-PROJECTIONS | Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. |
+| RELEASE-RECOVERY | `/slice release-recovery` | ⚪ Scheduled · **P1** | ~2 | SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING | Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. |
+
+### PHASE-9-OBSERVED-BROWSER — Observed browser path · ⚪ Scheduled · ~2 sessions remaining
+> Sprints: OBSERVED-BROWSER-PATH ⚪
+> Exec plan: OBSERVED-BROWSER-PATH
+> Deps: PHASE-8-SKILLS-FINOPS-RELEASE
+> Exit: Domain and write-authority policy, maturity metadata, redaction, human confirmation, and failure recovery pass in an approved interactive fixture.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| OBSERVED-BROWSER-PATH | `/slice observed-browser-path` | ⚪ Scheduled · **P2** | ~2 | RELEASE-RECOVERY | Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. |
+
+### PHASE-10-MEMORY-CURATION — ADR and temporal-memory curation · ⚪ Scheduled · ~2 sessions remaining
+> Sprints: GRAPHITI-CURATION ⚪
+> Exec plan: GRAPHITI-CURATION
+> Deps: PHASE-9-OBSERVED-BROWSER
+> Exit: Accepted and superseded ADR fixtures retain provenance, validity, domain labels, and history; graph outage cannot block core operation.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| GRAPHITI-CURATION | `/slice graphiti-curation` | ⚪ Scheduled · **P2** | ~2 | OBSERVED-BROWSER-PATH | Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. |
+
+### PHASE-11-RESTRICTED-FEDERATION — Separately authorized restricted-domain federation · 🔒 Gated · ~3 sessions remaining
+> Sprints: RESTRICTED-DOMAIN-FEDERATION 🔒
+> Exec plan: RESTRICTED-DOMAIN-FEDERATION
+> Deps: PHASE-10-MEMORY-CURATION
+> Exit: A dedicated accepted ADR, authority record, sanitizing protocol, separate identities, domain-scoped logs and memory, and negative dispatch tests exist before any restricted worker enrollment.
+
+| Sprint | Invoke | Status | Sessions | Deps | What |
+|---|---|---|---|---|---|
+| RESTRICTED-DOMAIN-FEDERATION | `/slice restricted-domain-federation` | 🔒 Gated · **P3** | ~3 | GRAPHITI-CURATION | Create a dedicated ADR and sanitizing status protocol, then perform only the separately authorized bounded federation canary. |
 
 ---
 
@@ -94,6 +242,237 @@ pnpm validate
 - **Resume / next action:** Wait for the private overlay to supply authorization and scoped references; never place them in this public repository.
 - **Gate:** Private overlay validation plus remote migration, RLS, advisor, and rollback evidence
 - **Gated on:** Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning (an agent prepares; it does not perform the gate).
+
+### `worker-runtime-core`
+- **What:** Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures.
+- **Status:** 🟡 Next (PHASE-3-WORKER-SAFETY · WORKER-RUNTIME-CORE)
+- **Priority:** P0 · weight 100 — This is the next autonomous local slice in the normative rollout order.
+- **Deps:** SUPABASE-CORE
+- **Read-order:**
+  1. docs/specs/catalog.yaml
+  2. docs/status/current.md
+  3. docs/status/blockers.md
+  4. docs/specs/SPEC-003-trust-security-and-federation.md
+  5. docs/specs/SPEC-005-commands-events-and-idempotency.md
+  6. docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
+  7. docs/specs/SPEC-009-hooks-health-and-safeguards.md
+  8. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Implement only the local supervisor and deterministic test harness; do not install a service or authenticate a host.
+- **Gate:** pnpm validate plus worker contract and preflight fixtures
+
+### `worker-safety-hooks`
+- **What:** Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling.
+- **Status:** ⚪ Scheduled (PHASE-3-WORKER-SAFETY · WORKER-SAFETY-HOOKS)
+- **Priority:** P0 · weight 95 — Real provider launch is forbidden until host safeguards are independently enforceable.
+- **Deps:** WORKER-RUNTIME-CORE
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-009-hooks-health-and-safeguards.md
+  3. docs/specs/SPEC-016-observability-operations-and-runbooks.md
+  4. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Add deterministic policy and fixtures after the worker runtime contract is stable.
+- **Gate:** Safety decision matrix and hung-agent monitor fixtures
+
+### `worker-service-packaging`
+- **What:** Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them.
+- **Status:** ⚪ Scheduled (PHASE-3-WORKER-SAFETY · WORKER-SERVICE-PACKAGING)
+- **Priority:** P1 · weight 85 — Reproducible packaging is required before a private canary.
+- **Deps:** WORKER-SAFETY-HOOKS
+- **Read-order:**
+  1. docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
+  2. docs/specs/SPEC-010-network-and-host-bootstrap.md
+  3. docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
+- **Resume / next action:** Produce generalized service artifacts only; private host installation is a separate authorization gate.
+- **Gate:** Static service-definition checks plus disposable reboot-idle fixtures
+
+### `private-worker-canary`
+- **What:** Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access.
+- **Status:** 🔒 Gated (PHASE-3-WORKER-SAFETY · PRIVATE-WORKER-CANARY)
+- **Priority:** P1 · weight 80 — A real canary is required before normal worker use.
+- **Deps:** WORKER-SERVICE-PACKAGING, HOST-BASELINE
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
+  3. docs/specs/SPEC-010-network-and-host-bootstrap.md
+  4. docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+  5. docs/architecture/remote-access.md
+- **Resume / next action:** Wait for a private overlay to identify an eligible host and explicitly authorize enrollment.
+- **Gate:** Private reboot, registration, capability-health, resource refusal, cancellation, headless RustDesk authorization and lock-screen access, and unenrollment evidence
+- **Gated on:** Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan (an agent prepares; it does not perform the gate).
+
+### `roadmap-adapter`
+- **What:** Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation.
+- **Status:** ⚪ Scheduled (PHASE-4-ROADMAP-PRINT-PROVIDER · ROADMAP-ADAPTER)
+- **Priority:** P0 · weight 95 — Repository-local readiness remains Roadmap authority.
+- **Deps:** WORKER-RUNTIME-CORE
+- **Read-order:**
+  1. docs/specs/SPEC-002-system-context-and-authority.md
+  2. docs/specs/SPEC-005-commands-events-and-idempotency.md
+  3. docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
+- **Resume / next action:** Implement against the documented Roadmap CLI contract without copying its dependency graph.
+- **Gate:** Roadmap adapter scenario and correlation contract tests
+
+### `print-provider`
+- **What:** Implement the common provider lifecycle, capability manifest, observation normalization, conformance kit, and no-execution PrintProvider.
+- **Status:** ⚪ Scheduled (PHASE-4-ROADMAP-PRINT-PROVIDER · PRINT-PROVIDER)
+- **Priority:** P0 · weight 95 — PrintProvider is the safe executable reference for all later providers.
+- **Deps:** ROADMAP-ADAPTER, WORKER-SAFETY-HOOKS
+- **Read-order:**
+  1. docs/specs/SPEC-005-commands-events-and-idempotency.md
+  2. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Make every provider operation explicit, typed, cancellable, and testable before adding a real provider.
+- **Gate:** Shared provider conformance suite and PrintProvider dry-run acceptance
+
+### `first-cli-provider-spike`
+- **What:** Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR.
+- **Status:** ⚪ Scheduled (PHASE-5-FIRST-CLI-PROVIDER · FIRST-CLI-PROVIDER-SPIKE)
+- **Priority:** P0 · weight 90 — The first real provider must have a stable supported control boundary.
+- **Deps:** PRINT-PROVIDER
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Evaluate only documented CLI or SDK surfaces; stop before credentials or unsafe UI automation.
+- **Gate:** Bounded integration spike, security review, and accepted provider ADR
+
+### `first-cli-provider`
+- **What:** Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection.
+- **Status:** ⚪ Scheduled (PHASE-5-FIRST-CLI-PROVIDER · FIRST-CLI-PROVIDER)
+- **Priority:** P0 · weight 90 — The first end-to-end delivery loop depends on a real bounded provider.
+- **Deps:** FIRST-CLI-PROVIDER-SPIKE
+- **Read-order:**
+  1. docs/adr/
+  2. docs/specs/SPEC-005-commands-events-and-idempotency.md
+  3. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  4. docs/specs/SPEC-009-hooks-health-and-safeguards.md
+- **Resume / next action:** Implement against the accepted provider ADR and use a disposable repository fixture.
+- **Gate:** Shared provider conformance, crash recovery, cancellation, and redaction tests
+
+### `coordinator-runtime`
+- **What:** Implement transport-neutral Coordinator application services around the durable ports, policy engine, scheduler, reconciler, and attention manager.
+- **Status:** ⚪ Scheduled (PHASE-6-ATTENTION-DELIVERY · COORDINATOR-RUNTIME)
+- **Priority:** P0 · weight 100 — Only the Coordinator may turn human intent into authorized work.
+- **Deps:** FIRST-CLI-PROVIDER, ROADMAP-ADAPTER
+- **Read-order:**
+  1. docs/specs/SPEC-002-system-context-and-authority.md
+  2. docs/specs/SPEC-003-trust-security-and-federation.md
+  3. docs/specs/SPEC-006-coordinator-runtime.md
+  4. docs/specs/SPEC-016-observability-operations-and-runbooks.md
+- **Resume / next action:** Build application orchestration around existing domain and durable boundaries without choosing a chat transport.
+- **Gate:** Command-to-job, scheduling audit, stale-session, and durable-attention fixtures
+
+### `slack-attention-adapter`
+- **What:** Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion.
+- **Status:** ⚪ Scheduled (PHASE-6-ATTENTION-DELIVERY · SLACK-ATTENTION-ADAPTER)
+- **Priority:** P0 · weight 95 — Attention management is the primary human-facing product.
+- **Deps:** COORDINATOR-RUNTIME
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-006-coordinator-runtime.md
+  3. docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
+  4. docs/specs/SPEC-016-observability-operations-and-runbooks.md
+- **Resume / next action:** Implement against fakes and secret references; private Slack app creation and tokens remain separately gated.
+- **Gate:** Slack signature/identity, duplicate-delivery, redaction, and attention-response contract tests
+
+### `verified-draft-delivery`
+- **What:** Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request.
+- **Status:** ⚪ Scheduled (PHASE-6-ATTENTION-DELIVERY · VERIFIED-DRAFT-DELIVERY)
+- **Priority:** P0 · weight 100 — BUILD-001 forbids broader automation until this loop is proven.
+- **Deps:** SLACK-ATTENTION-ADAPTER
+- **Read-order:**
+  1. docs/specs/SPEC-001-v1-scope-and-acceptance.md
+  2. docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+  4. docs/specs/SPEC-018-v1-rollout-and-milestones.md
+- **Resume / next action:** Use test doubles until a separately authorized disposable Slack workspace, provider identity, and GitHub repository are available.
+- **Gate:** Replayable ACC-ATTENTION-001, ACC-DELIVERY-001, and security-negative scenarios
+
+### `second-cli-provider`
+- **What:** Select and implement a second documented CLI provider through the same SDK and conformance suite.
+- **Status:** ⚪ Scheduled (PHASE-7-PROVIDER-PROJECTIONS · SECOND-CLI-PROVIDER)
+- **Priority:** P1 · weight 85 — Two equivalent adapters prove the provider-neutral boundary.
+- **Deps:** VERIFIED-DRAFT-DELIVERY
+- **Read-order:**
+  1. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  2. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Choose a documented control surface and add it without changing domain contracts for vendor-specific behavior.
+- **Gate:** Shared lifecycle, normalization, cancellation, and artifact conformance
+
+### `github-portfolio-projections`
+- **What:** Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery.
+- **Status:** ⚪ Scheduled (PHASE-7-PROVIDER-PROJECTIONS · GITHUB-PORTFOLIO-PROJECTIONS)
+- **Priority:** P1 · weight 80 — External systems remain useful projections, not operational truth.
+- **Deps:** SECOND-CLI-PROVIDER
+- **Read-order:**
+  1. docs/specs/SPEC-002-system-context-and-authority.md
+  2. docs/specs/SPEC-005-commands-events-and-idempotency.md
+  3. docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
+- **Resume / next action:** Implement against deterministic fakes before connecting real GitHub or portfolio credentials.
+- **Gate:** Projection replay, duplicate suppression, outage recovery, and noise-suppression fixtures
+
+### `skills-estimation-finops`
+- **What:** Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures.
+- **Status:** ⚪ Scheduled (PHASE-8-SKILLS-FINOPS-RELEASE · SKILLS-ESTIMATION-FINOPS)
+- **Priority:** P1 · weight 75 — Portable enforcement and calibrated cost lineage complete the v1 planning loop.
+- **Deps:** GITHUB-PORTFOLIO-PROJECTIONS
+- **Read-order:**
+  1. docs/specs/SPEC-012-agent-skills-and-primitives.md
+  2. docs/specs/SPEC-013-estimation-finops-and-planning-feedback.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Compose independently versioned skills and estimation tools rather than copying their logic.
+- **Gate:** Missing-skill refusal, redaction, estimate lineage, and allocation trace fixtures
+
+### `release-recovery`
+- **What:** Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement.
+- **Status:** ⚪ Scheduled (PHASE-8-SKILLS-FINOPS-RELEASE · RELEASE-RECOVERY)
+- **Priority:** P1 · weight 75 — Reinstallability and controlled recovery are v1 acceptance properties.
+- **Deps:** SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING
+- **Read-order:**
+  1. docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
+  2. docs/specs/SPEC-016-observability-operations-and-runbooks.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+  4. docs/specs/SPEC-018-v1-rollout-and-milestones.md
+- **Resume / next action:** Use simulated environments until explicit private canary and backup authorization exists.
+- **Gate:** Compatibility, promotion, migration, backup, and replacement acceptance suite
+
+### `observed-browser-path`
+- **What:** Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary.
+- **Status:** ⚪ Scheduled (PHASE-9-OBSERVED-BROWSER · OBSERVED-BROWSER-PATH)
+- **Priority:** P2 · weight 55 — Desktop automation is explicitly outside the initial headless proof.
+- **Deps:** RELEASE-RECOVERY
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Implement observation and confirmation contracts before any real interactive-host integration.
+- **Gate:** Browser classification, domain refusal, confirmation, and redaction fixtures
+
+### `graphiti-curation`
+- **What:** Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port.
+- **Status:** ⚪ Scheduled (PHASE-10-MEMORY-CURATION · GRAPHITI-CURATION)
+- **Priority:** P2 · weight 50 — Canonical truth remains in reviewed Git-backed records.
+- **Deps:** OBSERVED-BROWSER-PATH
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-014-memory-adrs-and-graph.md
+  3. docs/specs/SPEC-016-observability-operations-and-runbooks.md
+- **Resume / next action:** Implement the backend-neutral port and deterministic fake before deploying a persistent graph service.
+- **Gate:** Curation authorization, supersession, domain filtering, and outage fixtures
+
+### `restricted-domain-federation`
+- **What:** Create a dedicated ADR and sanitizing status protocol, then perform only the separately authorized bounded federation canary.
+- **Status:** 🔒 Gated (PHASE-11-RESTRICTED-FEDERATION · RESTRICTED-DOMAIN-FEDERATION)
+- **Priority:** P3 · weight 20 — Personal and restricted domains must remain isolated by default.
+- **Deps:** GRAPHITI-CURATION
+- **Read-order:**
+  1. docs/specs/SPEC-003-trust-security-and-federation.md
+  2. docs/specs/SPEC-014-memory-adrs-and-graph.md
+  3. docs/specs/SPEC-018-v1-rollout-and-milestones.md
+  4. docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+- **Resume / next action:** Remain disabled until external organizational authority and the owner explicitly approve a dedicated ADR.
+- **Gate:** Authority, sanitization, credential separation, domain isolation, and negative dispatch evidence
+- **Gated on:** Explicit organization and owner authorization plus accepted federation ADR (an agent prepares; it does not perform the gate).
 
 ---
 

@@ -11,8 +11,6 @@ requirements:
   - REQ-ROLL-001
   - REQ-ROLL-006
   - REQ-TEST-001
-  - REQ-TEST-005
-  - REQ-TEST-006
 artifacts:
   - docs/specs/catalog.yaml
   - docs/specs/BUILD-001-initial-implementation-prompt.md
