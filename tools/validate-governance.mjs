@@ -5,6 +5,7 @@ import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  collectHistoricalPaths,
   containsPrivateDenylistValue,
   findCredentialSignals,
   historicalObjectNeedsContentScan,
@@ -88,6 +89,19 @@ const scanContent = (content, location) => {
   }
 };
 
+const scanHistoricalPath = (historicalPath) => {
+  if (/\.(?:docx|docm|pdf|key|pem|p12|pfx|kdbx)$/i.test(historicalPath)) {
+    errors.push(`Forbidden artifact exists in public Git history: ${historicalPath}`);
+  }
+  if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
+    errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
+  }
+  scanContent(
+    Buffer.from(historicalPath),
+    `Git history path ${historicalPath}`
+  );
+};
+
 for (const relative of files) {
   const normalized = relative.replaceAll(path.sep, "/");
   if (/\.(docx|docm|pdf)$/i.test(normalized)) errors.push(`Private document artifact is not allowed: ${normalized}`);
@@ -113,7 +127,6 @@ const collectHistoricalObjectLocations = async () => {
     child.once("close", resolve);
   });
   const objectLocations = new Map();
-  const scannedHistoricalPaths = new Set();
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
   for await (const line of lines) {
     const { objectId, historicalPath } = parseHistoricalObjectLine(line);
@@ -122,19 +135,6 @@ const collectHistoricalObjectLocations = async () => {
         objectLocations.set(objectId, "<pathless object>");
       }
       continue;
-    }
-    if (/\.(?:docx|docm|pdf|key|pem|p12|pfx|kdbx)$/i.test(historicalPath)) {
-      errors.push(`Forbidden artifact exists in public Git history: ${historicalPath}`);
-    }
-    if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
-      errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
-    }
-    if (!scannedHistoricalPaths.has(historicalPath)) {
-      scannedHistoricalPaths.add(historicalPath);
-      scanContent(
-        Buffer.from(historicalPath),
-        `Git history path ${historicalPath}`
-      );
     }
     if (!objectLocations.has(objectId)) {
       objectLocations.set(objectId, historicalPath);
@@ -213,9 +213,16 @@ const scanHistoricalObjects = async (objectLocations) => {
 };
 
 try {
+  for (const historicalPath of await collectHistoricalPaths(root)) {
+    scanHistoricalPath(historicalPath);
+  }
   await scanHistoricalObjects(await collectHistoricalObjectLocations());
 } catch (error) {
-  errors.push(`Unable to inspect public Git history: ${error.message}`);
+  if (/not a git repository/i.test(error.message)) {
+    warnings.push("Public Git history inspection skipped because Git metadata is unavailable.");
+  } else {
+    errors.push(`Unable to inspect public Git history: ${error.message}`);
+  }
 }
 
 const specTexts = await Promise.all(documents.map(async (document) => ({

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import {
   mkdir,
   mkdtemp,
@@ -9,7 +10,9 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
+import { promisify } from "node:util";
 import {
+  collectHistoricalPaths,
   containsPrivateDenylistValue,
   findCredentialSignals,
   historicalObjectNeedsContentScan,
@@ -18,6 +21,7 @@ import {
 } from "./public-data-guard.mjs";
 
 const fixtureToken = () => ["ghp", "_", "a".repeat(20)].join("");
+const execFileAsync = promisify(execFile);
 
 describe("public data guard", () => {
   it("detects a credential in ordinary text", () => {
@@ -117,5 +121,43 @@ describe("public data guard", () => {
     assert.equal(historicalObjectNeedsContentScan("commit"), true);
     assert.equal(historicalObjectNeedsContentScan("tag"), true);
     assert.equal(historicalObjectNeedsContentScan("tree"), false);
+  });
+
+  it("retains a sensitive historical path after an unchanged rename", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-history-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, ".env"), "placeholder=true\n");
+      await runGit("add", "--force", ".env");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "Add fixture"
+      );
+      await runGit("mv", ".env", ".env.example");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "Rename fixture"
+      );
+
+      const historicalPaths = await collectHistoricalPaths(directory);
+      assert.equal(historicalPaths.has(".env"), true);
+      assert.equal(historicalPaths.has(".env.example"), true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });
