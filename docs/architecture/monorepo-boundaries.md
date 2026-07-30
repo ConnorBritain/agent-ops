@@ -23,3 +23,7 @@ deployment.
 
 No generated package directory is committed before its owning Roadmap slice is
 active. Service composition and provider execution remain later slices.
+
+The Roadmap adapter depends on the separately versioned read-only protocol in
+`config/roadmap-adapter.manifest.yaml`; it consumes Roadmap's readiness and
+worktree intent but does not recreate the repository graph.

@@ -26,6 +26,10 @@ importers:
       '@agent-ops/domain':
         specifier: workspace:*
         version: link:../domain
+    devDependencies:
+      '@agent-ops/test-kit':
+        specifier: workspace:*
+        version: link:../test-kit
 
   packages/contracts:
     dependencies:

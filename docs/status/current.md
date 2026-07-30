@@ -46,8 +46,9 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker core, safety hooks, and static service packaging are
-complete; Roadmap composition is next** as of 2026-07-30.
+Status: **Phase 3 worker core, safety hooks, static service packaging, and the
+read-only Roadmap adapter are complete; PrintProvider is next** as of
+2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -120,8 +121,24 @@ validate the static contract. The templates retain paths and secret references
 only; they neither create accounts nor download, install, start, or configure
 anything on a host.
 
-Next slice: `roadmap-adapter` composes repository-local Roadmap readiness and
-worktree intent through a typed, correlation-preserving adapter. `REQ-WORKER-001`,
-`REQ-WORKER-005`, real cryptographic verification, scoped runtime identity,
-durable actionable attention routing, and private canary evidence remain
-planned or gated rather than inferred from static packaging.
+`REQ-WORKER-001`, `REQ-WORKER-005`, real cryptographic verification, scoped
+runtime identity, durable actionable attention routing, and private canary
+evidence remain planned or gated rather than inferred from static packaging.
+
+## Phase 4 — Roadmap readiness and worktree intent
+
+Status: **local Roadmap adapter complete** on 2026-07-30; no physical worktree
+has been created and no agent has been launched by the adapter.
+
+`RoadmapReadAdapter` consumes Roadmap's typed read-only `plan` and `show`
+operations through a named MCP transport. It validates the current ready wave
+and gate, rejects non-ready, gated, blocked, mismatched, or secret-bearing
+responses, and retains stable correlation, task, run, security-domain, slice,
+branch, and worktree references. It returns only a `not-started` intent; it
+does not parse the Roadmap graph, create a worktree, launch an agent, or write
+back to Roadmap.
+
+The Roadmap dependency/protocol are versioned separately. A future integration
+must independently version primitive, estimator, and architecture references;
+therefore `REQ-CONTEXT-005` and full `ACC-PLANNING-001` remain planned. Next
+slice: `print-provider`, a deterministic no-execution provider reference.

@@ -6,7 +6,8 @@ The public repository is a clean reference implementation and governance templat
 
 The governed bootstrap, local durable operational core, transport-neutral
 worker supervisor, policy-only safety hooks, and static cross-platform service
-packaging are complete. The full specification-ordered v1 Roadmap is
+packaging, and the read-only Roadmap readiness/worktree-intent adapter are
+complete. The full specification-ordered v1 Roadmap is
 tracked in `docs/SLICES.md`, and the generated
 requirement-to-slice-to-acceptance-to-test report is in
 `docs/traceability/v1-requirements.yaml`. No host service or provider runtime

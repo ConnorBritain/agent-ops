@@ -33,7 +33,7 @@ acceptance_routes:
   - id: ACC-PLANNING-001
     slice: roadmap-adapter
     status: planned
-    test: "future Roadmap adapter scenario"
+    test: "pnpm run check:roadmap-adapter"
   - id: ACC-DELIVERY-001
     slice: verified-draft-delivery
     status: planned
@@ -199,9 +199,9 @@ requirements:
     owner: SPEC-002
     slice: roadmap-adapter
     acceptance: ACC-PLANNING-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future Roadmap adapter scenario"
+    test: "pnpm run check:roadmap-adapter"
     required_evidence: "Adapter boundary review."
   - id: REQ-CONTEXT-002
     owner: SPEC-002
@@ -233,7 +233,7 @@ requirements:
     acceptance: ACC-PLANNING-001
     status: planned
     route_role: completion
-    test: "future Roadmap adapter scenario"
+    test: "pnpm run check:roadmap-adapter"
     required_evidence: "Dependency manifest review."
   - id: REQ-CONTEXT-006
     owner: SPEC-002
@@ -639,17 +639,17 @@ requirements:
     owner: SPEC-011
     slice: roadmap-adapter
     acceptance: ACC-PLANNING-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future Roadmap adapter scenario"
+    test: "pnpm run check:roadmap-adapter"
     required_evidence: "Roadmap adapter scenario."
   - id: REQ-INT-002
     owner: SPEC-011
     slice: roadmap-adapter
     acceptance: ACC-PLANNING-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future Roadmap adapter scenario"
+    test: "pnpm run check:roadmap-adapter"
     required_evidence: "Correlation contract test."
   - id: REQ-INT-003
     owner: SPEC-011

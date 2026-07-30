@@ -5,6 +5,8 @@ import {
   assertNoInlineSecrets,
   commandSchema,
   normalizedEventSchema,
+  roadmapWorktreeIntentRequestSchema,
+  roadmapWorktreeIntentSchema,
   safetyAuditRecordSchema,
   signedJobEnvelopeSchema,
   workerHeartbeatSchema,
@@ -202,5 +204,33 @@ describe("versioned contracts", () => {
       ...audit,
       remediation: { ...audit.remediation, mode: "none" },
     }).success, false);
+  });
+
+  it("validates a correlated Roadmap worktree intent without treating it as a launch", () => {
+    const request = {
+      version: CONTRACT_VERSION,
+      correlationId: "00000000-0000-4000-8000-000000000011",
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      sliceKey: "roadmap-adapter",
+      requestedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(roadmapWorktreeIntentRequestSchema.parse(request).sliceKey, "roadmap-adapter");
+    assert.equal(roadmapWorktreeIntentSchema.parse({
+      version: request.version,
+      correlationId: request.correlationId,
+      taskId: request.taskId,
+      runId: request.runId,
+      securityDomain: request.securityDomain,
+      slice: { key: "roadmap-adapter", pi: "phase-4-roadmap", sprint: "roadmap-adapter", wave: 0 },
+      gate: { source: "roadmap", expression: "Correlation contract test" },
+      worktree: {
+        authority: "roadmap",
+        branch: "phase-4-roadmap/roadmap-adapter",
+        reference: "/workspace/agent-ops/worktrees/roadmap-adapter",
+        preparation: "not-started",
+      },
+    }).worktree.preparation, "not-started");
   });
 });

@@ -113,6 +113,22 @@ type AttentionItem = {
   verbatimQuestion?: string;
   response?: DurableResponse;
 };
+
+type RoadmapWorktreeIntent = {
+  version: string;
+  correlationId: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  slice: { key: string; pi: string; sprint: string; wave: number };
+  gate: { source: "roadmap"; expression: string };
+  worktree: {
+    authority: "roadmap";
+    branch: string;
+    reference: string;
+    preparation: "not-started";
+  };
+};
 ```
 
 The Phase 3 worker supervisor consumes these contracts through injected ports.
@@ -132,5 +148,11 @@ timer, host command, deletion, process kill, service, or provider-launch port.
 Cleanup is a dry-run proposal only; broad or recursive deletion requires a
 recorded approval and a replacement set of explicit targets before any future
 execution adapter may act.
+
+The Roadmap adapter uses only Roadmap's structured read-only `plan` and `show`
+operations. It validates a current ready wave and gate, preserves stable
+correlation/task/run/slice/worktree references, and emits a `not-started`
+worktree intent. It never parses the Roadmap graph directly, creates a
+worktree, launches an agent, or invokes a mutating Roadmap operation.
 
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

@@ -17,5 +17,8 @@
   "dependencies": {
     "@agent-ops/contracts": "workspace:*",
     "@agent-ops/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@agent-ops/test-kit": "workspace:*"
   }
 }

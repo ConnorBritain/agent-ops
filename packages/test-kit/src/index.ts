@@ -124,6 +124,42 @@ export class InMemoryWorkerControlPlane {
   }
 }
 
+export type RoadmapReadCall = {
+  readonly method: "plan" | "show";
+  readonly invoke?: string;
+};
+
+export class StaticRoadmapReadTransport {
+  readonly calls: RoadmapReadCall[] = [];
+  readonly planResult: unknown;
+  readonly sliceDetails: Readonly<Record<string, unknown>>;
+
+  constructor(
+    planResult: unknown,
+    sliceDetails: Readonly<Record<string, unknown>>,
+  ) {
+    this.planResult = planResult;
+    this.sliceDetails = sliceDetails;
+  }
+
+  async plan(options?: { readonly signal?: AbortSignal }): Promise<unknown> {
+    options?.signal?.throwIfAborted();
+    this.calls.push({ method: "plan" });
+    return this.planResult;
+  }
+
+  async showSlice(
+    input: { readonly invoke: string },
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<unknown> {
+    options?.signal?.throwIfAborted();
+    this.calls.push({ method: "show", invoke: input.invoke });
+    const detail = this.sliceDetails[input.invoke];
+    if (detail === undefined) throw new Error(`Missing static Roadmap detail: ${input.invoke}`);
+    return detail;
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({
