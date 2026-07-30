@@ -219,9 +219,9 @@ select throws_ok(
   'an idempotency key cannot hide changed placement'
 );
 
-select like(
+select matches(
   lower(pg_get_functiondef('agentops.create_job'::regproc)),
-  '%for update%',
+  'for update',
   'job creation locks the coordinator lease row through insertion'
 );
 
