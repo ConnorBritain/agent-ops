@@ -31,11 +31,24 @@ export const routes = {
   federation: route("restricted-domain-federation", "ACC-FEDERATION-001", "gated", "future authority, sanitization, isolation, and negative-dispatch suite")
 };
 
-const completedAcceptanceIds = new Set(["ACC-GOV-001", "ACC-CORE-001"]);
-export const acceptanceRoutes = Object.values(routes).map((entry) => ({
-  ...entry,
-  status: completedAcceptanceIds.has(entry.acceptance) ? "complete" : entry.status
-}));
+export const acceptanceRoutes = [
+  { ...routes.governance, status: "complete" },
+  { ...routes.core, status: "complete" },
+  routes.service,
+  routes.print,
+  routes.slack,
+  routes.security,
+  routes.host,
+  routes.roadmap,
+  routes.delivery,
+  routes.projections,
+  routes.skills,
+  routes.finops,
+  routes.release,
+  routes.browser,
+  routes.memory,
+  routes.federation
+];
 
 const completedRequirementIds = new Set([
   "REQ-CATALOG-001",

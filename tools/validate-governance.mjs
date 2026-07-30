@@ -108,6 +108,7 @@ for (const relative of files) {
   if (/\.(docx|docm|pdf)$/i.test(normalized)) errors.push(`Private document artifact is not allowed: ${normalized}`);
   if (/\.(?:key|pem|p12|pfx|kdbx)$/i.test(normalized)) errors.push(`Credential-bearing file type is not allowed: ${normalized}`);
   if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
+  scanContent(Buffer.from(normalized), `repository path ${normalized}`);
   const content = await readFile(path.join(root, relative));
   scanContent(content, normalized);
 }
@@ -127,6 +128,7 @@ const collectHistoricalBlobPaths = async () => {
     child.once("close", resolve);
   });
   const objectPaths = new Map();
+  const scannedHistoricalPaths = new Set();
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
   for await (const line of lines) {
     const firstSpace = line.indexOf(" ");
@@ -138,6 +140,13 @@ const collectHistoricalBlobPaths = async () => {
     }
     if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
       errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
+    }
+    if (!scannedHistoricalPaths.has(historicalPath)) {
+      scannedHistoricalPaths.add(historicalPath);
+      scanContent(
+        Buffer.from(historicalPath),
+        `Git history path ${historicalPath}`
+      );
     }
     if (!objectPaths.has(objectId)) {
       objectPaths.set(objectId, historicalPath);
@@ -268,6 +277,9 @@ if (!acceptance.includes("ACC-GOV-001")) errors.push("Acceptance catalog is miss
 
 const routedAcceptanceIds = new Set();
 for (const route of acceptanceRoutes) {
+  if (routedAcceptanceIds.has(route.acceptance)) {
+    errors.push(`Duplicate explicit acceptance route: ${route.acceptance}`);
+  }
   routedAcceptanceIds.add(route.acceptance);
   if (!acceptanceRequirements.has(route.acceptance)) {
     errors.push(`Acceptance route is absent from catalog: ${route.acceptance}`);
