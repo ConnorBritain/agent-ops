@@ -10,7 +10,10 @@ import {
   matchesPrivateGuardHmac
 } from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
-import { traceabilityEntries } from "./traceability.mjs";
+import {
+  acceptanceRoutes,
+  traceabilityEntries
+} from "./traceability.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -262,6 +265,32 @@ for (const requirement of ["REQ-BUILD-001", "REQ-BUILD-002", "REQ-BUILD-005", "R
   if (!traceability.includes(requirement)) errors.push(`Phase 0 traceability is missing ${requirement}`);
 }
 if (!acceptance.includes("ACC-GOV-001")) errors.push("Acceptance catalog is missing ACC-GOV-001");
+
+const routedAcceptanceIds = new Set();
+for (const route of acceptanceRoutes) {
+  routedAcceptanceIds.add(route.acceptance);
+  if (!acceptanceRequirements.has(route.acceptance)) {
+    errors.push(`Acceptance route is absent from catalog: ${route.acceptance}`);
+  }
+  if (!roadmap.includes(`invoke: ${route.slice}`)) {
+    errors.push(`Acceptance route slice is absent from Roadmap: ${route.slice}`);
+  }
+  for (const marker of [
+    `  - id: ${route.acceptance}`,
+    `    slice: ${route.slice}`,
+    `    status: ${route.status}`,
+    `    test: ${JSON.stringify(route.test)}`
+  ]) {
+    if (!v1Traceability.includes(marker)) {
+      errors.push(`Traceability report is missing acceptance route ${marker.trim()}`);
+    }
+  }
+}
+for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
+  if (!routedAcceptanceIds.has(acceptanceCatalogId)) {
+    errors.push(`Acceptance scenario has no explicit slice/test route: ${acceptanceCatalogId}`);
+  }
+}
 
 const tracedIds = new Set();
 const completedEvidence = `${traceability}\n${phase2Traceability}`;

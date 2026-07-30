@@ -29,15 +29,24 @@ export const matchesPrivateGuardHmac = (content, key, digests) => {
   if (!key || !digests.size) return false;
   const tokens = content.match(/[A-Za-z0-9][A-Za-z0-9@._-]*/g) ?? [];
   const candidates = new Set();
-  for (const token of tokens) {
-    candidates.add(token);
-    candidates.add(token.toLowerCase());
-  }
+  const addCandidate = (candidate) => {
+    if (!candidate) return;
+    candidates.add(candidate);
+    candidates.add(candidate.toLowerCase());
+  };
+  for (const token of tokens) addCandidate(token);
   for (let width = 2; width <= 4; width += 1) {
     for (let index = 0; index + width <= tokens.length; index += 1) {
-      const phrase = tokens.slice(index, index + width).join(" ");
-      candidates.add(phrase);
-      candidates.add(phrase.toLowerCase());
+      addCandidate(tokens.slice(index, index + width).join(" "));
+    }
+  }
+  const endpointCandidates = content.match(/[^\s"'`<>{}[\](),;]+/g) ?? [];
+  for (const candidate of endpointCandidates) {
+    addCandidate(candidate);
+    addCandidate(candidate.replace(/[.!?]+$/, ""));
+    for (const assignedValue of candidate.split("=")) {
+      addCandidate(assignedValue);
+      addCandidate(assignedValue.replace(/[.!?]+$/, ""));
     }
   }
   return [...candidates].some((candidate) => digests.has(

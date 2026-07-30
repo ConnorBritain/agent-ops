@@ -46,4 +46,22 @@ describe("public data guard", () => {
       true
     );
   });
+
+  it("matches exact endpoint identifiers containing punctuation", () => {
+    const key = "private-ci-fixture-key";
+    for (const identifier of [
+      "2001:db8::42",
+      "https://worker.example.test:8443/api"
+    ]) {
+      const digest = createHmac("sha256", key).update(identifier).digest("hex");
+      assert.equal(
+        matchesPrivateGuardHmac(
+          `endpoint=${identifier}`,
+          key,
+          new Set([digest])
+        ),
+        true
+      );
+    }
+  });
 });

@@ -27,8 +27,15 @@ export const routes = {
   release: route("release-recovery", "ACC-RELEASE-001", "planned", "future compatibility, promotion, backup, and replacement suite"),
   browser: route("observed-browser-path", "ACC-BROWSER-001", "planned", "future browser classification and confirmation suite"),
   memory: route("graphiti-curation", "ACC-MEMORY-001", "planned", "future curated-memory contract suite"),
+  security: route("verified-draft-delivery", "ACC-SECURITY-001", "planned", "future domain, resource, and destructive-action negative suite"),
   federation: route("restricted-domain-federation", "ACC-FEDERATION-001", "gated", "future authority, sanitization, isolation, and negative-dispatch suite")
 };
+
+const completedAcceptanceIds = new Set(["ACC-GOV-001", "ACC-CORE-001"]);
+export const acceptanceRoutes = Object.values(routes).map((entry) => ({
+  ...entry,
+  status: completedAcceptanceIds.has(entry.acceptance) ? "complete" : entry.status
+}));
 
 const completedRequirementIds = new Set([
   "REQ-CATALOG-001",
@@ -167,6 +174,13 @@ const scalar = (value) => JSON.stringify(value);
 export const renderTraceability = () => [
   "# Generated requirement-to-slice-to-test report; edit tools/traceability.mjs.",
   "schema_version: 1",
+  "acceptance_routes:",
+  ...acceptanceRoutes.flatMap((entry) => [
+    `  - id: ${entry.acceptance}`,
+    `    slice: ${entry.slice}`,
+    `    status: ${entry.status}`,
+    `    test: ${scalar(entry.test)}`
+  ]),
   "requirements:",
   ...traceabilityEntries.flatMap((entry) => [
     `  - id: ${entry.id}`,
