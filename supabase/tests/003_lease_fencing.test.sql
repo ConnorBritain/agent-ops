@@ -68,7 +68,7 @@ values (
   'The bounded test dispatch is permitted.'
 );
 
-select plan(13);
+select plan(15);
 
 create temp table first_lease as
 select * from agentops.acquire_coordinator_lease(
