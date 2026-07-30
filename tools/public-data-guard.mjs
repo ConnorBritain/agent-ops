@@ -48,20 +48,28 @@ export const findCredentialSignals = (content) => {
 };
 
 const canonicalizeGuardText = (value) =>
-  value.normalize("NFC").toLowerCase().normalize("NFC");
+  value.normalize("NFC");
+
+const literalPattern = (value) =>
+  new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "iu");
 
 export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
   const matchers = denylist.map((value) => ({
-    literal: value.toLowerCase(),
-    canonical: canonicalizeGuardText(value)
+    raw: value,
+    caseInsensitive: literalPattern(value),
+    canonicalCaseInsensitive: literalPattern(canonicalizeGuardText(value))
   }));
   for (const representation of decodeForGuard(content)) {
-    const literalRepresentation = representation.toLowerCase();
     const canonicalRepresentation = canonicalizeGuardText(representation);
-    if (matchers.some(({ literal, canonical }) =>
-      literalRepresentation.includes(literal) ||
-      canonicalRepresentation.includes(canonical)
+    if (matchers.some(({
+      raw,
+      caseInsensitive,
+      canonicalCaseInsensitive
+    }) =>
+      representation.includes(raw) ||
+      caseInsensitive.test(representation) ||
+      canonicalCaseInsensitive.test(canonicalRepresentation)
     )) {
       return true;
     }

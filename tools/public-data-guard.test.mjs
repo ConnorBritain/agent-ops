@@ -155,6 +155,21 @@ describe("public data guard", () => {
     );
   });
 
+  it("preserves literal and case-insensitive matches across Greek sigma context", () => {
+    assert.equal(
+      containsPrivateDenylistValue("ΟΣΑ", ["ΟΣ"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("ΟΣΑ", ["ος"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("οςα", ["ΟΣ"]),
+      true
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));
