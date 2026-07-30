@@ -52,11 +52,16 @@ const canonicalizeGuardText = (value) =>
 
 export const containsPrivateDenylistValue = (content, denylist) => {
   if (!denylist.length) return false;
-  const canonicalDenylist = denylist.map(canonicalizeGuardText);
+  const matchers = denylist.map((value) => ({
+    literal: value.toLowerCase(),
+    canonical: canonicalizeGuardText(value)
+  }));
   for (const representation of decodeForGuard(content)) {
+    const literalRepresentation = representation.toLowerCase();
     const canonicalRepresentation = canonicalizeGuardText(representation);
-    if (canonicalDenylist.some((value) =>
-      canonicalRepresentation.includes(value)
+    if (matchers.some(({ literal, canonical }) =>
+      literalRepresentation.includes(literal) ||
+      canonicalRepresentation.includes(canonical)
     )) {
       return true;
     }

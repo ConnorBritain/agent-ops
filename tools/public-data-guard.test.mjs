@@ -141,6 +141,20 @@ describe("public data guard", () => {
     }
   });
 
+  it("preserves a literal match before a trailing combining mark", () => {
+    const privateIdentifier = "Privaté";
+    const content = `${privateIdentifier}\u0327`;
+    assert.equal(content.includes(privateIdentifier), true);
+    assert.equal(
+      content.normalize("NFC").includes(privateIdentifier.normalize("NFC")),
+      false
+    );
+    assert.equal(
+      containsPrivateDenylistValue(content, [privateIdentifier]),
+      true
+    );
+  });
+
   it("incrementally matches a decomposed private value across chunks", () => {
     const scanner = createIncrementalGuardScanner(["Privaté-Worker"]);
     scanner.write(Buffer.from("host=Privat"));
