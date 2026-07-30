@@ -4,6 +4,7 @@ import { CONTRACT_VERSION } from "@agent-ops/contracts";
 import {
   DurableStoreError,
   SupabaseDurableOperationalStore,
+  type RpcOptions,
   type RpcTransport,
 } from "../src/index.ts";
 
@@ -100,6 +101,30 @@ describe("Supabase durable-store adapter", () => {
         assert.equal(error.message.includes("sensitive remote detail"), false);
         return true;
       },
+    );
+  });
+
+  it("threads caller cancellation through every bounded RPC", async () => {
+    const controller = new AbortController();
+    controller.abort(new Error("operator cancelled"));
+    const transport: RpcTransport = {
+      async rpc<T>(
+        _functionName: string,
+        _arguments: Readonly<Record<string, unknown>>,
+        options: RpcOptions,
+      ) {
+        options.signal.throwIfAborted();
+        return { data: null as T, error: null };
+      },
+    };
+    const store = new SupabaseDurableOperationalStore(transport);
+    await assert.rejects(
+      () => store.acquireCoordinatorLease({
+        leaseName: "primary-coordinator",
+        holderPrincipalId: coordinatorId,
+        ttlSeconds: 30,
+      }, { signal: controller.signal }),
+      /operator cancelled/,
     );
   });
 });

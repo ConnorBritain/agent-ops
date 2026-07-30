@@ -83,4 +83,20 @@ describe("reconciliation", () => {
       },
     );
   });
+
+  it("turns desired/observed drift into attention without automatic restart", () => {
+    assert.deepEqual(
+      reconcileObservedState({
+        desired: "cancelled",
+        observed: "running",
+        workerAvailable: true,
+        providerAvailable: true,
+      }),
+      {
+        kind: "attention-required",
+        reason: "state-mismatch",
+        automaticallyRestart: false,
+      },
+    );
+  });
 });

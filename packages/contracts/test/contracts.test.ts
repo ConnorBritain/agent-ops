@@ -41,6 +41,10 @@ describe("versioned contracts", () => {
       () => assertNoInlineSecrets({ nested: { password: "inline-value" } }),
       /Inline secret rejected/,
     );
+    assert.throws(
+      () => assertNoInlineSecrets({ nested: { accessToken: "inline-value" } }),
+      /Inline secret rejected/,
+    );
   });
 
   it("validates a signed, fenced job envelope", () => {

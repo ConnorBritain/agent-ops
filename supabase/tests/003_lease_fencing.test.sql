@@ -78,7 +78,7 @@ values (
   'The bounded test dispatch is permitted.'
 );
 
-select plan(23);
+select plan(24);
 
 create temp table first_lease as
 select * from agentops.acquire_coordinator_lease(
@@ -118,6 +118,40 @@ select * from agentops.acquire_coordinator_lease(
 );
 select ok((select acquired from second_lease), 'competitor acquires only after expiry');
 select is((select fencing_token from second_lease), 2::bigint, 'takeover increments fencing token');
+
+update agentops.workers
+set state = 'quarantined'
+where id = '00000000-0000-4000-8000-000000000030';
+
+select throws_ok(
+  $job$
+    select agentops.create_job(
+      '00000000-0000-4000-8000-000000000072',
+      '00000000-0000-4000-8000-000000000040',
+      '00000000-0000-4000-8000-000000000050',
+      '00000000-0000-4000-8000-000000000030',
+      '00000000-0000-4000-8000-000000000020',
+      'example-domain',
+      '00000000-0000-4000-8000-000000000060',
+      '00000000-0000-4000-8000-000000000002',
+      'primary-coordinator',
+      2,
+      'job-quarantine-0001',
+      '1.0',
+      '{"objective":"bounded test"}'::jsonb,
+      'secret://example/signing/coordinator',
+      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      '2099-01-01T00:00:00Z'
+    )
+  $job$,
+  '42501',
+  'task, run, worker, and provider domains and availability must permit dispatch',
+  'a quarantined worker cannot receive a durable job'
+);
+
+update agentops.workers
+set state = 'ready'
+where id = '00000000-0000-4000-8000-000000000030';
 
 select throws_ok(
   $job$

@@ -62,7 +62,9 @@ const privateSignals = [
   /connor\.r\.england/i,
   /connor\.england@/i,
   /tailscale\s+ip/i,
-  /magicdns/i
+  /magicdns/i,
+  /(xox[baprs]-[A-Za-z0-9-]{20,}|xapp-[A-Za-z0-9-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sb_secret_[A-Za-z0-9_-]{20,})/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/
 ];
 for (const relative of files) {
   const normalized = relative.replaceAll(path.sep, "/");
@@ -70,7 +72,10 @@ for (const relative of files) {
   if (normalized === "tools/validate-governance.mjs") continue;
   if (/\.(docx|docm|pdf)$/i.test(normalized)) errors.push(`Private document artifact is not allowed: ${normalized}`);
   if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
-  if (!/\.(md|ya?ml|json|mjs|ts|yml|sql|toml)$/i.test(normalized)) continue;
+  if (
+    normalized !== ".env.example"
+    && !/\.(md|ya?ml|json|mjs|ts|yml|sql|toml)$/i.test(normalized)
+  ) continue;
   const content = await readFile(path.join(root, relative), "utf8");
   for (const pattern of privateSignals) {
     if (pattern.test(content)) errors.push(`Private deployment signal ${pattern} found in ${normalized}`);

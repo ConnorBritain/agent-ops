@@ -111,21 +111,33 @@ export type CreateJobInput = {
   readonly idempotencyKey: string;
 };
 
+export type DurableOperationOptions = {
+  readonly signal?: AbortSignal;
+  readonly timeoutMs?: number;
+};
+
 export interface DurableOperationalStore {
   acquireCoordinatorLease(input: {
     readonly leaseName: string;
     readonly holderPrincipalId: string;
     readonly ttlSeconds: number;
-  }): Promise<LeaseGrant>;
-  createJob(input: CreateJobInput): Promise<string>;
-  recordWorkerEvent(event: NormalizedEvent): Promise<string>;
+  }, options?: DurableOperationOptions): Promise<LeaseGrant>;
+  createJob(input: CreateJobInput, options?: DurableOperationOptions): Promise<string>;
+  recordWorkerEvent(
+    event: NormalizedEvent,
+    options?: DurableOperationOptions,
+  ): Promise<string>;
 }
 
 export type ReconciliationDecision =
   | { readonly kind: "no-change" }
   | {
     readonly kind: "attention-required";
-    readonly reason: "provider-unavailable" | "worker-unavailable" | "state-unknown";
+    readonly reason:
+      | "provider-unavailable"
+      | "worker-unavailable"
+      | "state-unknown"
+      | "state-mismatch";
     readonly automaticallyRestart: false;
   };
 
@@ -143,6 +155,9 @@ export function reconcileObservedState(input: {
   }
   if (input.observed === "unknown") {
     return { kind: "attention-required", reason: "state-unknown", automaticallyRestart: false };
+  }
+  if (input.observed !== input.desired) {
+    return { kind: "attention-required", reason: "state-mismatch", automaticallyRestart: false };
   }
   return { kind: "no-change" };
 }

@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const CONTRACT_VERSION = "1.0" as const;
 
@@ -17,7 +17,7 @@ export const secretRefSchema = z
   .string()
   .regex(/^secret:\/\/[A-Za-z0-9/_-]+$/);
 
-const sensitiveKey = /^(password|passphrase|token|api[_-]?key|secret|private[_-]?key|service[_-]?role[_-]?key)$/i;
+const sensitiveKey = /(password|passphrase|token|api[_-]?key|secret|private[_-]?key|service[_-]?role[_-]?key)/i;
 const tokenLikeValue = /(xox[baprs]-|xapp-|ghp_|github_pat_|sb_secret_|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)/i;
 
 export type SecretFinding = {
@@ -155,15 +155,7 @@ export const signedJobEnvelopeSchema = z.object({
     keyRef: secretRefSchema,
     value: z.string().min(32).max(4096),
   }).strict(),
-}).strict().superRefine((value, context) => {
-  const finding = findInlineSecret(value.body);
-  if (!finding) return;
-  context.addIssue({
-    code: "custom",
-    message: finding.reason,
-    path: ["body", ...finding.path],
-  });
-});
+}).strict();
 
 export type SignedJobEnvelope = z.infer<typeof signedJobEnvelopeSchema>;
 

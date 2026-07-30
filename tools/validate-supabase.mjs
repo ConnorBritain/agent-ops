@@ -10,15 +10,15 @@ const migrationNames = (await readdir(migrationDirectory))
   .filter((name) => name.endsWith(".sql"))
   .sort();
 
-if (migrationNames.length === 0) errors.push("At least one Supabase migration is required.");
-if (!config.includes('schemas = ["agentops"]')) {
-  errors.push("Only the explicit agentops API schema may be exposed.");
-}
-
 const uncommentedConfig = config
   .split("\n")
   .filter((line) => !line.trimStart().startsWith("#"))
   .join("\n");
+
+if (migrationNames.length === 0) errors.push("At least one Supabase migration is required.");
+if (!uncommentedConfig.includes('schemas = ["agentops"]')) {
+  errors.push("Only the explicit agentops API schema may be exposed.");
+}
 if (/auto_expose_new_tables\s*=\s*true/.test(uncommentedConfig)) {
   errors.push("Supabase Data API auto-exposure must remain disabled.");
 }
@@ -89,14 +89,24 @@ for (const marker of [
   "security_invoker = true",
   "worker lease must expire in the future",
   "an applicable allow policy decision is required before dispatch",
-  "task, run, worker, and provider security domains must match",
+  "task, run, worker, and provider domains and availability must permit dispatch",
   "inline secret-like data is forbidden",
 ]) {
   if (!sql.includes(marker)) errors.push(`Supabase migration is missing required marker: ${marker}`);
 }
 
-if (/create\s+(?:or\s+replace\s+)?function[\s\S]*?security\s+definer(?![\s\S]*?set\s+search_path\s*=\s*''[\s\S]*?as\s+\$\$)/i.test(sql)) {
-  errors.push("Every SECURITY DEFINER function must set an empty search_path.");
+const functionDefinitions = sql
+  .split(/create\s+(?:or\s+replace\s+)?function/i)
+  .slice(1);
+for (const definition of functionDefinitions) {
+  const preamble = definition.split("$$", 1)[0] ?? "";
+  if (
+    /security\s+definer/i.test(preamble)
+    && !/set\s+search_path\s*=\s*''/i.test(preamble)
+  ) {
+    const name = preamble.trim().split(/[\s(]/, 1)[0] || "<unknown>";
+    errors.push(`SECURITY DEFINER function ${name} must set an empty search_path.`);
+  }
 }
 if (/create\s+extension[^;\n]*\bversion\b/i.test(sql)) {
   errors.push("Extension versions must not be pinned in migrations.");

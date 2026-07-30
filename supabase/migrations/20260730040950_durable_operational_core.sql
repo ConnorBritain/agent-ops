@@ -711,9 +711,11 @@ begin
       and r.security_domain_id = p_security_domain_id
       and t.security_domain_id = p_security_domain_id
       and w.security_domain_id = p_security_domain_id
+      and w.state in ('ready', 'busy')
       and p.security_domain_id = p_security_domain_id
+      and p.state in ('available', 'degraded')
   ) then
-    raise exception using errcode = '42501', message = 'task, run, worker, and provider security domains must match';
+    raise exception using errcode = '42501', message = 'task, run, worker, and provider domains and availability must permit dispatch';
   end if;
 
   insert into agentops.jobs (

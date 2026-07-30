@@ -14,7 +14,7 @@ Completion evidence:
 - Roadmap validation and rendering succeed.
 - The private implementation overlay was seeded independently from the merged public baseline and its private validation passed.
 
-Next slice: private host baseline and approved RustDesk enrollment planning. It is gated on owner authorization, a finalized relay/security design, and private-only configuration.
+Active public slice: the Phase 2 durable operational core described below. Private host baseline and RustDesk enrollment remain a separately gated private-overlay workstream requiring owner authorization, a finalized relay/security design, and private-only configuration.
 
 ## Phase 2 — durable operational core
 

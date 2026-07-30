@@ -5,6 +5,7 @@ import {
 } from "@agent-ops/contracts";
 import type {
   CreateJobInput,
+  DurableOperationOptions,
   DurableOperationalStore,
   LeaseGrant,
 } from "@agent-ops/domain";
@@ -14,10 +15,15 @@ export type RpcError = {
   readonly message: string;
 };
 
+export type RpcOptions = {
+  readonly signal: AbortSignal;
+};
+
 export interface RpcTransport {
   rpc<T>(
     functionName: string,
     arguments_: Readonly<Record<string, unknown>>,
+    options: RpcOptions,
   ): Promise<{ readonly data: T | null; readonly error: RpcError | null }>;
 }
 
@@ -41,6 +47,21 @@ type LeaseRow = {
   readonly expires_at: string;
 };
 
+const DEFAULT_RPC_TIMEOUT_MS = 30_000;
+
+function createRpcOptions(options?: DurableOperationOptions): RpcOptions {
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_RPC_TIMEOUT_MS;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 300_000) {
+    throw new RangeError("RPC timeout must be an integer between 1 and 300000 milliseconds");
+  }
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  return {
+    signal: options?.signal
+      ? AbortSignal.any([options.signal, timeoutSignal])
+      : timeoutSignal,
+  };
+}
+
 function requireData<T>(
   operation: string,
   result: { readonly data: T | null; readonly error: RpcError | null },
@@ -63,14 +84,14 @@ export class SupabaseDurableOperationalStore implements DurableOperationalStore 
     readonly leaseName: string;
     readonly holderPrincipalId: string;
     readonly ttlSeconds: number;
-  }): Promise<LeaseGrant> {
+  }, options?: DurableOperationOptions): Promise<LeaseGrant> {
     const rows = requireData(
       "acquireCoordinatorLease",
       await this.transport.rpc<readonly LeaseRow[]>("acquire_coordinator_lease", {
         p_lease_name: input.leaseName,
         p_holder_principal_id: input.holderPrincipalId,
         p_ttl_seconds: input.ttlSeconds,
-      }),
+      }, createRpcOptions(options)),
     );
     const row = rows[0];
     if (!row || !Number.isSafeInteger(row.fencing_token) || row.fencing_token < 1) {
@@ -88,7 +109,10 @@ export class SupabaseDurableOperationalStore implements DurableOperationalStore 
     };
   }
 
-  async createJob(input: CreateJobInput): Promise<string> {
+  async createJob(
+    input: CreateJobInput,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
     const envelope = signedJobEnvelopeSchema.parse(input.envelope);
     return requireData(
       "createJob",
@@ -109,11 +133,14 @@ export class SupabaseDurableOperationalStore implements DurableOperationalStore 
         p_signature_key_ref: envelope.signature.keyRef,
         p_signature: envelope.signature.value,
         p_lease_expires_at: envelope.lease.expiresAt,
-      }),
+      }, createRpcOptions(options)),
     );
   }
 
-  async recordWorkerEvent(eventInput: NormalizedEvent): Promise<string> {
+  async recordWorkerEvent(
+    eventInput: NormalizedEvent,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
     const event = normalizedEventSchema.parse(eventInput);
     return requireData(
       "recordWorkerEvent",
@@ -128,7 +155,7 @@ export class SupabaseDurableOperationalStore implements DurableOperationalStore 
         p_task_id: event.taskId,
         p_run_id: event.runId,
         p_payload: event.payload,
-      }),
+      }, createRpcOptions(options)),
     );
   }
 }
