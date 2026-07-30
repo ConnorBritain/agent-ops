@@ -19,18 +19,18 @@ export const credentialSignals = [
 
 export const decodeForGuard = (content) => {
   const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
+  const shifted = buffer.subarray(1);
   const representations = [
     buffer.toString("utf8"),
     buffer.toString("latin1"),
-    windows1252Decoder.decode(buffer)
+    windows1252Decoder.decode(buffer),
+    utf16leDecoder.decode(buffer),
+    utf16beDecoder.decode(buffer),
+    utf16leDecoder.decode(shifted),
+    utf16beDecoder.decode(shifted)
   ];
   if (buffer.includes(0)) {
-    const shifted = buffer.subarray(1);
     representations.push(
-      utf16leDecoder.decode(buffer),
-      utf16beDecoder.decode(buffer),
-      utf16leDecoder.decode(shifted),
-      utf16beDecoder.decode(shifted),
       ...representations.map((value) => value.replaceAll("\0", ""))
     );
   }

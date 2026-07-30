@@ -58,6 +58,7 @@ const scenarioCatalogCoverage = [
   routes.service,
   routes.canary,
   routes.remoteAcceptance,
+  routes.projections,
   routes.browser
 ];
 

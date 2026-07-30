@@ -47,7 +47,7 @@ scenarios:
     phase: 6
   - id: ACC-PROJECTION-001
     title: Replayable human-scale GitHub and portfolio projections
-    requirements: [REQ-CONTEXT-002, REQ-CONTEXT-004, REQ-CONTEXT-006, REQ-INT-003, REQ-INT-004, REQ-INT-006, REQ-OPS-006]
+    requirements: [REQ-CONTEXT-002, REQ-CONTEXT-004, REQ-CONTEXT-006, REQ-INT-003, REQ-INT-004, REQ-INT-006, REQ-OPS-006, REQ-TEST-005]
     evidence: future projection replay and noise-suppression suite
     phase: 7
   - id: ACC-SKILLS-001

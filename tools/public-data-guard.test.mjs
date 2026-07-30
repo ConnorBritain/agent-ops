@@ -51,6 +51,17 @@ describe("public data guard", () => {
     );
   });
 
+  it("matches non-ASCII UTF-16 text that contains no NUL bytes", () => {
+    for (const privateIdentifier of ["ПриватРабочий", "秘密作業者"]) {
+      const content = Buffer.from(privateIdentifier, "utf16le");
+      assert.equal(content.includes(0), false);
+      assert.equal(
+        containsPrivateDenylistValue(content, [privateIdentifier]),
+        true
+      );
+    }
+  });
+
   it("detects every GitHub bearer-token prefix, including refresh tokens", () => {
     for (const prefix of ["ghp", "gho", "ghu", "ghs", "ghr"]) {
       const token = [prefix, "_", "a".repeat(20)].join("");

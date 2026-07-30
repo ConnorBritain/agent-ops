@@ -868,6 +868,10 @@ requirements:
         acceptance: ACC-REMOTE-001
         status: gated
         test: "future private headless RemoteAccessPortal and worker-health canary"
+      - slice: github-portfolio-projections
+        acceptance: ACC-PROJECTION-001
+        status: planned
+        test: "future projection replay and noise-suppression suite"
       - slice: observed-browser-path
         acceptance: ACC-BROWSER-001
         status: planned
