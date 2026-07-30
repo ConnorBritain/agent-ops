@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
 import { describe, it } from "node:test";
 import {
+  containsPrivateDenylistValue,
   findCredentialSignals,
-  matchesPrivateGuardHmac
 } from "./public-data-guard.mjs";
 
 const fixtureToken = () => ["ghp", "_", "a".repeat(20)].join("");
@@ -33,35 +32,36 @@ describe("public data guard", () => {
     );
   });
 
-  it("matches a keyed digest of an exact mixed-case deployment identifier", () => {
-    const key = "private-ci-fixture-key";
-    const identifier = "Worker-Host-A";
-    const digest = createHmac("sha256", key).update(identifier).digest("hex");
-    assert.equal(
-      matchesPrivateGuardHmac(
-        `approved host: ${identifier}`,
-        key,
-        new Set([digest])
-      ),
-      true
-    );
+  it("detects every GitHub bearer-token prefix, including refresh tokens", () => {
+    for (const prefix of ["ghp", "gho", "ghu", "ghs", "ghr"]) {
+      const token = [prefix, "_", "a".repeat(20)].join("");
+      assert.equal(findCredentialSignals(Buffer.from(token)).length, 1);
+    }
   });
 
-  it("matches exact endpoint identifiers containing punctuation", () => {
-    const key = "private-ci-fixture-key";
-    for (const identifier of [
+  it("matches exact private values without publishing their shape", () => {
+    const fixtures = [
+      "Worker-Host-A",
       "2001:db8::42",
-      "https://worker.example.test:8443/api"
-    ]) {
-      const digest = createHmac("sha256", key).update(identifier).digest("hex");
+      "https://worker.example.test:8443/api",
+      "Acme Very Private Worker Organization"
+    ];
+    const content = `inventory: ${fixtures.join("\n")}`;
+    for (const value of fixtures) {
       assert.equal(
-        matchesPrivateGuardHmac(
-          `endpoint=${identifier}`,
-          key,
-          new Set([digest])
-        ),
+        containsPrivateDenylistValue(content, [value]),
         true
       );
     }
+  });
+
+  it("matches private values case-insensitively", () => {
+    assert.equal(
+      containsPrivateDenylistValue(
+        "approved host: worker-host-a",
+        ["Worker-Host-A"]
+      ),
+      true
+    );
   });
 });

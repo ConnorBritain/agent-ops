@@ -5,9 +5,8 @@ import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  decodeForGuard,
+  containsPrivateDenylistValue,
   findCredentialSignals,
-  matchesPrivateGuardHmac
 } from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
 import {
@@ -69,34 +68,17 @@ for (let index = 1; index <= 8; index += 1) await requireFile(`docs/adr/ADR-000$
 ][index - 1]}.md`);
 
 const files = await walk();
-const privateGuardKey = process.env.AGENTOPS_PRIVATE_GUARD_HMAC_KEY;
-const privateGuardDigests = new Set(
-  (process.env.AGENTOPS_PRIVATE_GUARD_HMACS ?? "")
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .map((digest) => digest.toLowerCase())
-);
-if (Boolean(privateGuardKey) !== Boolean(privateGuardDigests.size)) {
-  errors.push(
-    "Private guard configuration requires both AGENTOPS_PRIVATE_GUARD_HMAC_KEY and AGENTOPS_PRIVATE_GUARD_HMACS."
-  );
-}
-for (const digest of privateGuardDigests) {
-  if (!/^[0-9a-f]{64}$/i.test(digest)) {
-    errors.push("Private guard HMAC entries must be 64 hexadecimal characters.");
-  }
+const privateDenylist = (process.env.AGENTOPS_PRIVATE_DENYLIST ?? "")
+  .split(/\r?\n/)
+  .map((value) => value.trim())
+  .filter(Boolean);
+if (privateDenylist.some((value) => value.length < 3)) {
+  errors.push("Private guard denylist values must contain at least three characters.");
 }
 
 const scanContent = (content, location) => {
-  for (const representation of decodeForGuard(content)) {
-    if (matchesPrivateGuardHmac(
-      representation,
-      privateGuardKey,
-      privateGuardDigests
-    )) {
-      errors.push(`Private deployment HMAC found in ${location}`);
-      break;
-    }
+  if (containsPrivateDenylistValue(content, privateDenylist)) {
+    errors.push(`Private deployment denylist value found in ${location}`);
   }
   for (const signal of findCredentialSignals(content)) {
     errors.push(`Credential signal ${signal} found in ${location}`);
