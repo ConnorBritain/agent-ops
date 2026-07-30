@@ -69,6 +69,7 @@ export const collectHistoricalPaths = async (repositoryRoot) => {
     [
       "log",
       "--all",
+      "-m",
       "--format=",
       "--name-only",
       "--no-renames",

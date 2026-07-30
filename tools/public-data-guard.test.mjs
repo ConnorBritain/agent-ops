@@ -160,4 +160,56 @@ describe("public data guard", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+
+  it("retains a sensitive path introduced while creating a merge commit", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-merge-history-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    const commit = (message) =>
+      runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        message
+      );
+    try {
+      await runGit("init", "--quiet", "--initial-branch=main");
+      await writeFile(path.join(directory, "base.txt"), "base\n");
+      await runGit("add", "base.txt");
+      await commit("Add base");
+
+      await runGit("switch", "--quiet", "-c", "side");
+      await writeFile(path.join(directory, "side.txt"), "side\n");
+      await runGit("add", "side.txt");
+      await commit("Add side");
+
+      await runGit("switch", "--quiet", "main");
+      await writeFile(path.join(directory, "main.txt"), "main\n");
+      await runGit("add", "main.txt");
+      await commit("Add main");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "merge",
+        "--quiet",
+        "--no-ff",
+        "--no-commit",
+        "side"
+      );
+      await writeFile(path.join(directory, ".env"), "placeholder=true\n");
+      await runGit("add", "--force", ".env");
+      await commit("Merge side with fixture");
+
+      const historicalPaths = await collectHistoricalPaths(directory);
+      assert.equal(historicalPaths.has(".env"), true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 });
