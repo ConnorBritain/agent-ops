@@ -33,8 +33,8 @@ scenarios:
   - id: ACC-REMOTE-001
     title: Managed remote-access boundary
     requirements: [REQ-NET-005, REQ-FLEET-001, REQ-FLEET-002, REQ-FLEET-003, REQ-TEST-005]
-    evidence: future RemoteAccessPortal contract suite
-    phase: 1
+    evidence: future private headless RemoteAccessPortal and worker-health canary
+    phase: 3
   - id: ACC-PLANNING-001
     title: Roadmap readiness and stable worktree intent
     requirements: [REQ-CONTEXT-001, REQ-CONTEXT-005, REQ-INT-001, REQ-INT-002]

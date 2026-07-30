@@ -26,9 +26,9 @@ acceptance_routes:
     status: gated
     test: "future domain, resource, destructive-action, and restricted-dispatch negative suite"
   - id: ACC-REMOTE-001
-    slice: private-host-baseline
+    slice: private-worker-canary
     status: gated
-    test: "private host-baseline acceptance"
+    test: "future private headless RemoteAccessPortal and worker-health canary"
   - id: ACC-PLANNING-001
     slice: roadmap-adapter
     status: planned

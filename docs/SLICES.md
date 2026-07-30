@@ -62,7 +62,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 **Held on a human:**
 - `/slice private-host-baseline` — gated on **private owner authorization and relay-security decision** — Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
 - `/slice supabase-remote-verification` — gated on **Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning** — Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.
-- `/slice private-worker-canary` — gated on **Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan** — Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior.
+- `/slice private-worker-canary` — gated on **Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan** — Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access.
 - `/slice restricted-domain-federation` — gated on **Explicit organization and owner authorization plus accepted federation ADR** — Create a dedicated ADR and sanitizing status protocol, then perform only the separately authorized bounded federation canary.
 
 ---
@@ -110,7 +110,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | WORKER-RUNTIME-CORE | `/slice worker-runtime-core` | 🟡 Next · **P0** | ~2 | SUPABASE-CORE | Implement a transport-neutral worker state machine, capability and skill manifests, leased-job validation, heartbeats, and safe cancellation using deterministic ports and fixtures. |
 | WORKER-SAFETY-HOOKS | `/slice worker-safety-hooks` | ⚪ Scheduled · **P0** | ~2 | WORKER-RUNTIME-CORE | Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling. |
 | WORKER-SERVICE-PACKAGING | `/slice worker-service-packaging` | ⚪ Scheduled · **P1** | ~1 | WORKER-SAFETY-HOOKS | Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them. |
-| PRIVATE-WORKER-CANARY | `/slice private-worker-canary` | 🔒 Gated · **P1** | ~1 | WORKER-SERVICE-PACKAGING, HOST-BASELINE | Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior. |
+| PRIVATE-WORKER-CANARY | `/slice private-worker-canary` | 🔒 Gated · **P1** | ~1 | WORKER-SERVICE-PACKAGING, HOST-BASELINE | Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access. |
 
 ### PHASE-4-ROADMAP-PRINT-PROVIDER — Roadmap composition and PrintProvider · ⚪ Scheduled · ~3 sessions remaining
 > Sprints: ROADMAP-ADAPTER ⚪ · PRINT-PROVIDER ⚪
@@ -286,7 +286,7 @@ pnpm validate
 - **Gate:** Static service-definition checks plus disposable reboot-idle fixtures
 
 ### `private-worker-canary`
-- **What:** Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior.
+- **What:** Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access.
 - **Status:** 🔒 Gated (PHASE-3-WORKER-SAFETY · PRIVATE-WORKER-CANARY)
 - **Priority:** P1 · weight 80 — A real canary is required before normal worker use.
 - **Deps:** WORKER-SERVICE-PACKAGING, HOST-BASELINE
@@ -295,8 +295,9 @@ pnpm validate
   2. docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
   3. docs/specs/SPEC-010-network-and-host-bootstrap.md
   4. docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+  5. docs/architecture/remote-access.md
 - **Resume / next action:** Wait for a private overlay to identify an eligible host and explicitly authorize enrollment.
-- **Gate:** Private reboot, registration, resource refusal, cancellation, and unenrollment evidence
+- **Gate:** Private reboot, registration, capability-health, resource refusal, cancellation, headless RustDesk authorization and lock-screen access, and unenrollment evidence
 - **Gated on:** Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan (an agent prepares; it does not perform the gate).
 
 ### `roadmap-adapter`

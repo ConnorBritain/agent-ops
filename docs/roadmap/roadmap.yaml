@@ -260,17 +260,18 @@ pis:
         title: Private disposable worker enrollment and reboot proof
         status: gated
         invoke: private-worker-canary
-        what: Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior.
+        what: Through an authorized private overlay, enroll one safety-compliant personal host and prove restart-idle behavior plus human-operated headless remote access.
         est_sessions: 1
         weight: light
         deps: [worker-service-packaging, private-host-baseline]
         gated_on: Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan
-        gate: Private reboot, registration, resource refusal, cancellation, and unenrollment evidence
+        gate: Private reboot, registration, capability-health, resource refusal, cancellation, headless RustDesk authorization and lock-screen access, and unenrollment evidence
         read_order:
           - docs/specs/SPEC-003-trust-security-and-federation.md
           - docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
           - docs/specs/SPEC-010-network-and-host-bootstrap.md
           - docs/specs/SPEC-019-host-inventory-and-initial-fleet.md
+          - docs/architecture/remote-access.md
         resume_action: Wait for a private overlay to identify an eligible host and explicitly authorize enrollment.
         priority:
           tier: P1
