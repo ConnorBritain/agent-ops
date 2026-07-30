@@ -13,6 +13,7 @@ import {
   findCredentialSignals,
   historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
+  mayContainLegacyEncodedDenylistValue,
   parseHistoricalObjectLine,
   readRepositoryEntry
 } from "./public-data-guard.mjs";
@@ -204,13 +205,16 @@ const scanHistoricalObjects = async (objectLocations) => {
         errors.push(`Credential signal ${signal} found in ${location}`);
       }
     } else if (historicalObjectNeedsContentScan(pending.type)) {
-      scanContent(
-        historicalObjectContentForScan(
-          Buffer.concat(pending.parts, pending.size),
-          pending.type
-        ),
-        location
-      );
+      const content = Buffer.concat(pending.parts, pending.size);
+      if (
+        (pending.type === "commit" || pending.type === "tag") &&
+        mayContainLegacyEncodedDenylistValue(content, privateDenylist)
+      ) {
+        errors.push(
+          `Potential legacy-encoded private denylist value found in ${location}`
+        );
+      }
+      scanContent(historicalObjectContentForScan(content, pending.type), location);
     }
     pending.awaitingDelimiter = true;
   };

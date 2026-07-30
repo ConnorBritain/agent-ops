@@ -19,6 +19,7 @@ import {
   findCredentialSignals,
   historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
+  mayContainLegacyEncodedDenylistValue,
   parseHistoricalObjectLine,
   readRepositoryEntry
 } from "./public-data-guard.mjs";
@@ -482,7 +483,7 @@ describe("public data guard", () => {
     );
   });
 
-  it("scans a legacy-encoded annotated tag message", () => {
+  it("fails closed for an unlabelled legacy-encoded annotated tag", () => {
     const privateIdentifier = "秘密作業者";
     const tag = Buffer.concat([
       Buffer.from([
@@ -497,10 +498,20 @@ describe("public data guard", () => {
     ]);
 
     assert.equal(
-      containsPrivateDenylistValue(
-        historicalObjectContentForScan(tag, "tag"),
-        [privateIdentifier]
-      ),
+      mayContainLegacyEncodedDenylistValue(tag, [privateIdentifier]),
+      true
+    );
+  });
+
+  it("fails closed for legacy encodings outside TextDecoder's standard set", () => {
+    const privateIdentifier = "Ç-Private";
+    const tag = Buffer.concat([
+      Buffer.from("tag release-safe\n\n"),
+      Buffer.from([0x80]),
+      Buffer.from("-Private")
+    ]);
+    assert.equal(
+      mayContainLegacyEncodedDenylistValue(tag, [privateIdentifier]),
       true
     );
   });
