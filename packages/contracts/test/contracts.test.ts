@@ -5,6 +5,7 @@ import {
   assertNoInlineSecrets,
   commandSchema,
   normalizedEventSchema,
+  safetyAuditRecordSchema,
   signedJobEnvelopeSchema,
   workerHeartbeatSchema,
   workerManifestSchema,
@@ -168,5 +169,38 @@ describe("versioned contracts", () => {
       }).success,
       false,
     );
+  });
+
+  it("requires secret-safe audit evidence and dry-run-only cleanup proposals", () => {
+    const audit = {
+      version: CONTRACT_VERSION,
+      policyVersion: "0.1.0",
+      decision: "remediate",
+      workerTransition: "none",
+      findings: [{
+        code: "stale-session",
+        severity: "warning",
+        evidence: { sessionId: "session-001" },
+      }],
+      remediation: {
+        kind: "cleanup-proposal",
+        mode: "dry-run",
+        targets: ["/workspace/retired-worktree"],
+        evidencePreserved: true,
+        outcome: "proposed",
+      },
+    };
+    assert.equal(safetyAuditRecordSchema.parse(audit).decision, "remediate");
+    assert.equal(safetyAuditRecordSchema.safeParse({
+      ...audit,
+      findings: [{
+        ...audit.findings[0],
+        evidence: { token: "inline-value" },
+      }],
+    }).success, false);
+    assert.equal(safetyAuditRecordSchema.safeParse({
+      ...audit,
+      remediation: { ...audit.remediation, mode: "none" },
+    }).success, false);
   });
 });

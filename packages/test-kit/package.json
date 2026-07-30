@@ -15,6 +15,7 @@
     "test": "node --test test/*.test.ts"
   },
   "dependencies": {
-    "@agent-ops/contracts": "workspace:*"
+    "@agent-ops/contracts": "workspace:*",
+    "@agent-ops/policy": "workspace:*"
   }
 }

@@ -39,11 +39,20 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/policy:
+    dependencies:
+      '@agent-ops/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/test-kit:
     dependencies:
       '@agent-ops/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@agent-ops/policy':
+        specifier: workspace:*
+        version: link:../policy
 
   packages/worker:
     dependencies:
@@ -53,6 +62,9 @@ importers:
       '@agent-ops/domain':
         specifier: workspace:*
         version: link:../domain
+      '@agent-ops/policy':
+        specifier: workspace:*
+        version: link:../policy
     devDependencies:
       '@agent-ops/test-kit':
         specifier: workspace:*

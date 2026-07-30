@@ -1,10 +1,11 @@
 import { documents } from "./specifications.mjs";
 
-const route = (slice, acceptance, status, test) => ({
+const route = (slice, acceptance, status, test, requirementStatus = status) => ({
   slice,
   acceptance,
   status,
-  test
+  test,
+  requirementStatus
 });
 
 export const routes = {
@@ -13,7 +14,7 @@ export const routes = {
   host: route("private-host-baseline", "ACC-REMOTE-001", "gated", "private host-baseline acceptance"),
   remoteAcceptance: route("private-worker-canary", "ACC-REMOTE-001", "gated", "future private headless RemoteAccessPortal and worker-health canary"),
   worker: route("worker-runtime-core", "ACC-WORKER-001", "planned", "pnpm --filter @agent-ops/worker test"),
-  safety: route("worker-safety-hooks", "ACC-WORKER-001", "planned", "future safety decision and independent-monitor fixtures"),
+  safety: route("worker-safety-hooks", "ACC-WORKER-001", "complete", "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test", "planned"),
   service: route("worker-service-packaging", "ACC-WORKER-001", "planned", "future clean-host service and reboot-idle fixtures"),
   canary: route("private-worker-canary", "ACC-WORKER-001", "gated", "future private worker canary acceptance"),
   roadmap: route("roadmap-adapter", "ACC-PLANNING-001", "planned", "future Roadmap adapter scenario"),
@@ -92,7 +93,16 @@ const completedRequirementIds = new Set([
   "REQ-WORKER-002",
   "REQ-WORKER-003",
   "REQ-WORKER-004",
-  "REQ-WORKER-006"
+  "REQ-WORKER-006",
+  "REQ-V1-006",
+  "REQ-SEC-003",
+  "REQ-SAFE-001",
+  "REQ-SAFE-002",
+  "REQ-SAFE-003",
+  "REQ-SAFE-004",
+  "REQ-SAFE-005",
+  "REQ-SAFE-006",
+  "REQ-SAFE-007"
 ]);
 
 const prefixRoutes = new Map([
@@ -209,7 +219,7 @@ export const traceabilityEntries = documents.flatMap((document) =>
       ? "complete"
       : coverage?.some((entry) => entry.status === "gated")
         ? "gated"
-        : selected.status;
+        : selected.requirementStatus;
     return {
       id: requirement.id,
       owner: document.id,

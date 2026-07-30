@@ -2,7 +2,7 @@
 
 ## Active blockers
 
-None for generalized local worker-safety implementation and CI verification.
+None for generalized local service-packaging implementation and CI verification.
 
 ## Explicit authorization gates
 

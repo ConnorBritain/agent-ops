@@ -5,12 +5,14 @@ import {
   DeterministicClock,
   InMemoryWorkerControlPlane,
   StaticResourceInspector,
+  StaticSafetyInspector,
   buildJobEnvelope,
   buildWorkerManifest,
   testIds,
 } from "@agent-ops/test-kit";
 import {
   WorkerSupervisor,
+  WorkerSafetyMonitor,
   type WorkerRuntimeConfiguration,
   type WorkerRuntimePorts,
 } from "../src/index.ts";
@@ -480,5 +482,151 @@ describe("worker cancellation and inspection", () => {
       reasons: ["duplicate-job"],
     });
     assert.deepEqual(fixture.supervisor.inspect().activeJobIds, []);
+  });
+});
+
+describe("independent worker safety monitor", () => {
+  it("records a hung-agent safety sweep without relying on job admission or completion", async () => {
+    const fixture = createFixture();
+    const safety = new StaticSafetyInspector({
+      resources: {
+        freeDiskBytes: 100_000,
+        availableMemoryBytes: 50_000,
+        activeWorktreeCount: 0,
+        runningJobCount: 0,
+      },
+      sessions: [{
+        sessionId: "session-001",
+        active: true,
+        lastActivityEpochMs: Date.parse("2026-07-30T03:58:59Z"),
+        evidenceTarget: "/evidence/session-001",
+      }],
+      processes: [{
+        processId: "process-001",
+        orphaned: true,
+        evidenceTarget: "/evidence/process-001",
+      }],
+      cleanupCandidates: [{
+        target: "/workspace/retired-worktree",
+        kind: "worktree",
+        active: false,
+        preservesEvidence: false,
+      }],
+    });
+    const monitor = new WorkerSafetyMonitor({
+      policy: {
+        version: "0.1.0",
+        minimumFreeDiskBytes: 20_000,
+        quarantineFreeDiskBytes: 5_000,
+        maximumActiveWorktrees: 2,
+        maximumRunningJobs: 1,
+        maximumStaleSessionAgeMs: 60_000,
+      },
+      clock: fixture.clock,
+      inspector: safety,
+      supervisor: fixture.supervisor,
+    });
+    await fixture.supervisor.start();
+
+    const result = await monitor.sweep();
+
+    assert.equal(result.audit.decision, "remediate");
+    assert.deepEqual(result.audit.findings.map((finding) => finding.code), [
+      "stale-session",
+      "orphaned-process",
+    ]);
+    assert.deepEqual(result.audit.remediation, {
+      kind: "cleanup-proposal",
+      mode: "dry-run",
+      targets: ["/workspace/retired-worktree"],
+      evidencePreserved: true,
+      outcome: "proposed",
+    });
+    assert.deepEqual(result.inspection.activeJobIds, []);
+    assert.equal(fixture.controlPlane.events.at(-1)?.type, "worker.safety-decision");
+  });
+
+  it("quarantines before a later job admission and retains that state when audit recording fails", async () => {
+    class InterruptedControlPlane extends InMemoryWorkerControlPlane {
+      failSafetyAuditOnce = true;
+
+      override async recordEvent(event: NormalizedEvent): Promise<void> {
+        if (event.type === "worker.safety-decision" && this.failSafetyAuditOnce) {
+          this.failSafetyAuditOnce = false;
+          throw new Error("simulated safety-audit interruption");
+        }
+        await super.recordEvent(event);
+      }
+    }
+    const controlPlane = new InterruptedControlPlane();
+    const fixture = createFixture({ controlPlane });
+    const monitor = new WorkerSafetyMonitor({
+      policy: {
+        version: "0.1.0",
+        minimumFreeDiskBytes: 20_000,
+        quarantineFreeDiskBytes: 5_000,
+        maximumActiveWorktrees: 2,
+        maximumRunningJobs: 1,
+        maximumStaleSessionAgeMs: 60_000,
+      },
+      clock: fixture.clock,
+      inspector: new StaticSafetyInspector({
+        resources: {
+          freeDiskBytes: 4_999,
+          availableMemoryBytes: 50_000,
+          activeWorktreeCount: 0,
+          runningJobCount: 0,
+        },
+        sessions: [],
+        processes: [],
+        cleanupCandidates: [],
+      }),
+      supervisor: fixture.supervisor,
+    });
+    await fixture.supervisor.start();
+
+    await assert.rejects(monitor.sweep(), /simulated safety-audit interruption/);
+    assert.equal(fixture.supervisor.inspect().mode, "quarantined");
+    assert.deepEqual(await fixture.supervisor.admit(buildJobEnvelope()), {
+      accepted: false,
+      reasons: ["worker-not-accepting"],
+    });
+  });
+
+  it("drains after a resource-floor violation before a later job admission", async () => {
+    const fixture = createFixture();
+    const monitor = new WorkerSafetyMonitor({
+      policy: {
+        version: "0.1.0",
+        minimumFreeDiskBytes: 20_000,
+        quarantineFreeDiskBytes: 5_000,
+        maximumActiveWorktrees: 2,
+        maximumRunningJobs: 1,
+        maximumStaleSessionAgeMs: 60_000,
+      },
+      clock: fixture.clock,
+      inspector: new StaticSafetyInspector({
+        resources: {
+          freeDiskBytes: 10_000,
+          availableMemoryBytes: 50_000,
+          activeWorktreeCount: 0,
+          runningJobCount: 0,
+        },
+        sessions: [],
+        processes: [],
+        cleanupCandidates: [],
+      }),
+      supervisor: fixture.supervisor,
+    });
+    await fixture.supervisor.start();
+
+    const result = await monitor.sweep();
+
+    assert.equal(result.audit.workerTransition, "drain");
+    assert.equal(result.inspection.mode, "draining");
+    assert.deepEqual(await fixture.supervisor.admit(buildJobEnvelope()), {
+      accepted: false,
+      reasons: ["worker-not-accepting"],
+    });
   });
 });

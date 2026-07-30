@@ -15,7 +15,7 @@ meta:
   links:
     narrative: docs/specs/SPEC-000-program-charter.md
     status: docs/status/current.md
-    tracker: docs/traceability/phase-3-worker-runtime-core.yaml
+    tracker: docs/traceability/phase-3-worker-safety-hooks.yaml
     bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
 pis:
   - id: phase-0-governance
@@ -209,13 +209,14 @@ pis:
         prompt: Keep the worker outbound-only, deny incompatible or expired work before launch, emit idempotent normalized observations, and remain idle after reboot until the Coordinator authorizes recovery.
       - id: worker-safety-hooks
         title: Independent safety collectors, drain, and quarantine
-        status: next
+        status: complete
         invoke: worker-safety-hooks
         what: Implement resource, worktree, process, stale-session, and unsafe-delete policy hooks with dry-run remediation and independent monitor scheduling.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [worker-runtime-core]
         gate: Safety decision matrix and hung-agent monitor fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/domain/
           - packages/worker/
@@ -227,7 +228,7 @@ pis:
           - docs/specs/SPEC-009-hooks-health-and-safeguards.md
           - docs/specs/SPEC-016-observability-operations-and-runbooks.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
-        resume_action: Add deterministic policy and fixtures after the worker runtime contract is stable.
+        resume_action: Preserve the policy-only boundary; use the reviewed static service-definition slice before any private enrollment.
         priority:
           tier: P0
           weight: 95

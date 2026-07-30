@@ -183,9 +183,9 @@ requirements:
     owner: SPEC-001
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Resource-gate test."
   - id: REQ-V1-007
     owner: SPEC-001
@@ -263,9 +263,9 @@ requirements:
     owner: SPEC-003
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Redaction fixture."
   - id: REQ-SEC-004
     owner: SPEC-003
@@ -281,7 +281,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Approval negative tests."
   - id: REQ-SEC-006
     owner: SPEC-003
@@ -535,57 +535,57 @@ requirements:
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Disk and worktree gate tests."
   - id: REQ-SAFE-002
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Hung-agent monitor test."
   - id: REQ-SAFE-003
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Deletion-guard matrix."
   - id: REQ-SAFE-004
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Cleanup dry-run test."
   - id: REQ-SAFE-005
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Orphan-process fixture."
   - id: REQ-SAFE-006
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Quarantine routing test."
   - id: REQ-SAFE-007
     owner: SPEC-009
     slice: worker-safety-hooks
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Hook-audit query."
   - id: REQ-NET-001
     owner: SPEC-010
@@ -897,7 +897,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future safety decision and independent-monitor fixtures"
+    test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
     required_evidence: "Alert scenario suite."
   - id: REQ-OPS-004
     owner: SPEC-016
@@ -967,8 +967,8 @@ requirements:
     coverage:
       - slice: worker-safety-hooks
         acceptance: ACC-WORKER-001
-        status: planned
-        test: "future safety decision and independent-monitor fixtures"
+        status: complete
+        test: "pnpm --filter @agent-ops/policy test && pnpm --filter @agent-ops/worker test"
       - slice: worker-service-packaging
         acceptance: ACC-WORKER-001
         status: planned

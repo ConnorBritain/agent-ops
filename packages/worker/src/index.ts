@@ -2,11 +2,13 @@ import {
   CONTRACT_VERSION,
   normalizedEventSchema,
   signedJobEnvelopeSchema,
+  safetyAuditRecordSchema,
   workerHeartbeatSchema,
   workerManifestSchema,
   workerRegistrationSchema,
   workerResourceSnapshotSchema,
   type NormalizedEvent,
+  type SafetyAuditRecord,
   type SignedJobEnvelope,
   type WorkerHeartbeat,
   type WorkerManifest,
@@ -14,6 +16,11 @@ import {
   type WorkerRegistration,
   type WorkerResourceSnapshot,
 } from "@agent-ops/contracts";
+import {
+  evaluateWorkerSafety,
+  type WorkerSafetyPolicy,
+  type WorkerSafetySnapshot,
+} from "@agent-ops/policy";
 import {
   evaluateWorkerPreflight,
   type WorkerPreflightRejectionReason,
@@ -39,6 +46,14 @@ export interface WorkerClock {
 
 export interface WorkerResourceInspector {
   inspect(): Promise<WorkerResourceSnapshot>;
+}
+
+/**
+ * A separate collector for the periodic safety monitor. Implementations may
+ * observe a host, but this runtime never mutates a host or schedules a timer.
+ */
+export interface WorkerSafetyInspector {
+  inspectSafety(): Promise<WorkerSafetySnapshot>;
 }
 
 export interface WorkerEnvelopeVerifier {
@@ -100,6 +115,11 @@ export type WorkerInspection = {
   readonly activeJobIds: readonly string[];
 };
 
+export type WorkerSafetySweepResult = {
+  readonly audit: SafetyAuditRecord;
+  readonly inspection: WorkerInspection;
+};
+
 const canonicalJson = (value: unknown): string => {
   if (value === null || typeof value !== "object") {
     return JSON.stringify(value) ?? "null";
@@ -124,6 +144,7 @@ export class WorkerSupervisor {
     readonly envelope: SignedJobEnvelope;
   }>();
   #started = false;
+  #safetyState: "normal" | "draining" | "quarantined" = "normal";
   #eventSequence = 0;
   #heartbeatSequence = 0;
   #operationTail: Promise<void> = Promise.resolve();
@@ -153,6 +174,8 @@ export class WorkerSupervisor {
   }
 
   #mode(): WorkerMode {
+    if (this.#safetyState === "quarantined") return "quarantined";
+    if (this.#safetyState === "draining") return "draining";
     return this.#activeJobs.size ? "busy" : "idle";
   }
 
@@ -396,6 +419,33 @@ export class WorkerSupervisor {
     return this.#runExclusive(() => this.#cancel(jobId));
   }
 
+  /**
+   * Records a policy decision and applies its safe transition. A failed audit
+   * write deliberately does not roll back a drain or quarantine transition.
+   */
+  applySafetyAudit(audit: SafetyAuditRecord): Promise<WorkerInspection> {
+    return this.#runExclusive(() => this.#applySafetyAudit(audit));
+  }
+
+  async #applySafetyAudit(audit: SafetyAuditRecord): Promise<WorkerInspection> {
+    if (!this.#started) {
+      throw new Error("Worker supervisor must start before applying a safety audit.");
+    }
+    const parsed = safetyAuditRecordSchema.parse(audit);
+    if (parsed.workerTransition === "quarantine") {
+      this.#safetyState = "quarantined";
+    } else if (parsed.workerTransition === "drain" && this.#safetyState === "normal") {
+      this.#safetyState = "draining";
+    }
+    await this.#recordEvent({
+      type: "worker.safety-decision",
+      entityType: "worker",
+      entityId: this.#configuration.manifest.workerId,
+      payload: parsed,
+    });
+    return this.inspect();
+  }
+
   async #cancel(jobId: string): Promise<WorkerCancellationResult> {
     if (!this.#started) {
       return { cancelled: false, jobId, reason: "supervisor-not-started" };
@@ -453,5 +503,40 @@ export class WorkerSupervisor {
     });
     await this.#ports.controlPlane.recordEvent(event);
     if (!input.sourceEventId) this.#eventSequence += 1;
+  }
+}
+
+/**
+ * An externally scheduled, independently invocable health sweep. It does not
+ * create a timer, run commands, delete data, or contact a host on its own.
+ */
+export class WorkerSafetyMonitor {
+  readonly #policy: WorkerSafetyPolicy;
+  readonly #clock: WorkerClock;
+  readonly #inspector: WorkerSafetyInspector;
+  readonly #supervisor: WorkerSupervisor;
+
+  constructor(input: {
+    readonly policy: WorkerSafetyPolicy;
+    readonly clock: WorkerClock;
+    readonly inspector: WorkerSafetyInspector;
+    readonly supervisor: WorkerSupervisor;
+  }) {
+    this.#policy = input.policy;
+    this.#clock = input.clock;
+    this.#inspector = input.inspector;
+    this.#supervisor = input.supervisor;
+  }
+
+  async sweep(): Promise<WorkerSafetySweepResult> {
+    const audit = evaluateWorkerSafety({
+      policy: this.#policy,
+      snapshot: await this.#inspector.inspectSafety(),
+      nowEpochMs: Date.parse(this.#clock.now()),
+    });
+    return {
+      audit,
+      inspection: await this.#supervisor.applySafetyAudit(audit),
+    };
   }
 }
