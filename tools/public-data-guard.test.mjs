@@ -208,6 +208,14 @@ describe("public data guard", () => {
       containsPrivateDenylistValue("private-strasse", ["PRIVATE-STRAẞE"]),
       true
     );
+    assert.equal(
+      containsPrivateDenylistValue("private-straße", ["PRIVATE-STRASSE"]),
+      true
+    );
+    assert.equal(
+      containsPrivateDenylistValue("private-oﬃce", ["PRIVATE-OFFICE"]),
+      true
+    );
   });
 
   it("incrementally matches a decomposed private value across chunks", () => {

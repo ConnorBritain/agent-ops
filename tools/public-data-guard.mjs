@@ -154,6 +154,7 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   });
   for (const representation of decodeForGuard(content)) {
     const canonicalRepresentation = canonicalizeGuardText(representation);
+    const representationHasNonAscii = nonAsciiPattern.test(representation);
     if (matchers.some(({
       raw,
       caseInsensitive,
@@ -165,7 +166,7 @@ export const containsPrivateDenylistValue = (content, denylist) => {
       caseInsensitive.test(representation) ||
       canonicalCaseInsensitive.test(canonicalRepresentation) ||
       (
-        requiresBoundarySafeScan &&
+        (requiresBoundarySafeScan || representationHasNonAscii) &&
         hasBoundarySafeCanonicalMatch(representation, matcher)
       )
     )) {
