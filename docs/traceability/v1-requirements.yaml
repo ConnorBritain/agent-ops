@@ -10,21 +10,21 @@ acceptance_routes:
     status: complete
     test: "pnpm test:unit && pnpm test:db"
   - id: ACC-WORKER-001
-    slice: worker-service-packaging
-    status: planned
-    test: "future clean-host service and reboot-idle fixtures"
+    slice: private-worker-canary
+    status: gated
+    test: "future private worker canary acceptance"
   - id: ACC-PROVIDER-001
-    slice: print-provider
+    slice: second-cli-provider
     status: planned
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "future shared conformance suite across PrintProvider and two CLI providers"
   - id: ACC-ATTENTION-001
-    slice: slack-attention-adapter
-    status: planned
-    test: "future Slack attention adapter contract suite"
-  - id: ACC-SECURITY-001
     slice: verified-draft-delivery
     status: planned
-    test: "future domain, resource, and destructive-action negative suite"
+    test: "future replayable attention and verified draft-delivery scenario"
+  - id: ACC-SECURITY-001
+    slice: restricted-domain-federation
+    status: gated
+    test: "future domain, resource, destructive-action, and restricted-dispatch negative suite"
   - id: ACC-REMOTE-001
     slice: private-host-baseline
     status: gated

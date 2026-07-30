@@ -17,8 +17,10 @@ export const routes = {
   canary: route("private-worker-canary", "ACC-WORKER-001", "gated", "future private worker canary acceptance"),
   roadmap: route("roadmap-adapter", "ACC-PLANNING-001", "planned", "future Roadmap adapter scenario"),
   print: route("print-provider", "ACC-PROVIDER-001", "planned", "future shared provider and PrintProvider conformance suite"),
+  providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future shared conformance suite across PrintProvider and two CLI providers"),
   coordinator: route("coordinator-runtime", "ACC-ATTENTION-001", "planned", "future Coordinator application-service fixtures"),
   slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "planned", "future Slack attention adapter contract suite"),
+  attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "planned", "future replayable attention and verified draft-delivery scenario"),
   delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "planned", "future disposable-repository end-to-end scenario"),
   secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future second CLI provider conformance suite"),
   projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "future projection replay and noise-suppression suite"),
@@ -27,16 +29,16 @@ export const routes = {
   release: route("release-recovery", "ACC-RELEASE-001", "planned", "future compatibility, promotion, backup, and replacement suite"),
   browser: route("observed-browser-path", "ACC-BROWSER-001", "planned", "future browser classification and confirmation suite"),
   memory: route("graphiti-curation", "ACC-MEMORY-001", "planned", "future curated-memory contract suite"),
-  security: route("verified-draft-delivery", "ACC-SECURITY-001", "planned", "future domain, resource, and destructive-action negative suite"),
+  security: route("restricted-domain-federation", "ACC-SECURITY-001", "gated", "future domain, resource, destructive-action, and restricted-dispatch negative suite"),
   federation: route("restricted-domain-federation", "ACC-FEDERATION-001", "gated", "future authority, sanitization, isolation, and negative-dispatch suite")
 };
 
 export const acceptanceRoutes = [
   { ...routes.governance, status: "complete" },
   { ...routes.core, status: "complete" },
-  routes.service,
-  routes.print,
-  routes.slack,
+  routes.canary,
+  routes.providerAcceptance,
+  routes.attentionAcceptance,
   routes.security,
   routes.host,
   routes.roadmap,

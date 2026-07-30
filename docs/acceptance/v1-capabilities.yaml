@@ -19,7 +19,7 @@ scenarios:
     title: Provider conformance and dry-run planning
     requirements: [REQ-V1-003, REQ-PROVIDER-001, REQ-PROVIDER-002, REQ-PROVIDER-003, REQ-PROVIDER-004, REQ-TEST-002]
     evidence: future provider contract suite
-    phase: 4
+    phase: 7
   - id: ACC-ATTENTION-001
     title: Attention and verified draft delivery loop
     requirements: [REQ-CHARTER-001, REQ-CHARTER-002, REQ-V1-002, REQ-V1-004, REQ-V1-005, REQ-CONTEXT-003, REQ-DATA-003, REQ-COORD-003, REQ-COORD-004, REQ-COORD-005, REQ-COORD-006, REQ-INT-005, REQ-OPS-004, REQ-TEST-003, REQ-TEST-004]
@@ -29,7 +29,7 @@ scenarios:
     title: Domain, resource, and destructive-action refusal
     requirements: [REQ-V1-006, REQ-V1-007, REQ-SEC-002, REQ-SEC-005, REQ-SAFE-003]
     evidence: future negative scenario suite
-    phase: 6
+    phase: 11
   - id: ACC-REMOTE-001
     title: Managed remote-access boundary
     requirements: [REQ-NET-005, REQ-FLEET-001, REQ-FLEET-002, REQ-FLEET-003, REQ-TEST-005]
