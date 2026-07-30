@@ -113,7 +113,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Denied self-escalation fixture."
   - id: REQ-CHARTER-004
     owner: SPEC-000
@@ -145,7 +145,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Worker health scenario."
   - id: REQ-V1-002
     owner: SPEC-001
@@ -273,7 +273,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Credential-scope review."
   - id: REQ-SEC-005
     owner: SPEC-003
@@ -353,7 +353,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Signature and lease validation."
   - id: REQ-CONTRACT-003
     owner: SPEC-005
@@ -447,25 +447,25 @@ requirements:
     owner: SPEC-007
     slice: worker-runtime-core
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Preflight rejection matrix."
   - id: REQ-WORKER-003
     owner: SPEC-007
     slice: worker-runtime-core
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Manifest conformance test."
   - id: REQ-WORKER-004
     owner: SPEC-007
     slice: worker-runtime-core
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Event-client test."
   - id: REQ-WORKER-005
     owner: SPEC-007
@@ -479,9 +479,9 @@ requirements:
     owner: SPEC-007
     slice: worker-runtime-core
     acceptance: ACC-WORKER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Cancellation recovery test."
   - id: REQ-PROVIDER-001
     owner: SPEC-008
@@ -881,7 +881,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Correlation query."
   - id: REQ-OPS-002
     owner: SPEC-016
@@ -889,7 +889,7 @@ requirements:
     acceptance: ACC-WORKER-001
     status: planned
     route_role: contributing
-    test: "future worker contract and preflight fixtures"
+    test: "pnpm --filter @agent-ops/worker test"
     required_evidence: "Redaction test."
   - id: REQ-OPS-003
     owner: SPEC-016

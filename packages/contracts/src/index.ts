@@ -136,6 +136,15 @@ export const skillRequirementSchema = z.object({
   versionRange: z.string().min(1).max(120),
 }).strict();
 
+export const resourceBudgetSchema = z.object({
+  minimumFreeDiskBytes: z.number().int().nonnegative().safe(),
+  memoryReservationBytes: z.number().int().positive().safe(),
+  worktreeSlots: z.number().int().nonnegative().max(100),
+  maximumRuntimeSeconds: z.number().int().positive().safe(),
+}).strict();
+
+export type ResourceBudget = z.infer<typeof resourceBudgetSchema>;
+
 export const signedJobEnvelopeSchema = z.object({
   version: contractVersionSchema,
   jobId: uuidSchema,
@@ -147,6 +156,7 @@ export const signedJobEnvelopeSchema = z.object({
   policyDecisionId: uuidSchema,
   lease: expiringLeaseSchema,
   safeWorkingDirectory: z.string().min(1).max(4096),
+  resourceBudget: resourceBudgetSchema.optional(),
   redactionPolicyRef: z.string().min(1).max(200),
   callbackIdentityRef: secretRefSchema,
   body: secretSafeObjectSchema,
@@ -158,6 +168,96 @@ export const signedJobEnvelopeSchema = z.object({
 }).strict();
 
 export type SignedJobEnvelope = z.infer<typeof signedJobEnvelopeSchema>;
+
+const semanticVersionSchema = z.string().regex(
+  /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/,
+  "expected a semantic version",
+);
+
+export const workerSkillManifestEntrySchema = z.object({
+  key: z.string().min(1).max(160),
+  version: semanticVersionSchema,
+}).strict();
+
+export const workerProviderManifestEntrySchema = z.object({
+  providerId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  version: semanticVersionSchema,
+  capabilities: z.array(capabilitySchema).max(100),
+}).strict();
+
+const addDuplicateIssues = (
+  values: readonly string[],
+  field: string,
+  context: z.RefinementCtx,
+) => {
+  const seen = new Set<string>();
+  for (const [index, value] of values.entries()) {
+    if (seen.has(value)) {
+      context.addIssue({
+        code: "custom",
+        message: `duplicate ${field}: ${value}`,
+        path: [field, index],
+      });
+    }
+    seen.add(value);
+  }
+};
+
+export const workerManifestSchema = z.object({
+  version: contractVersionSchema,
+  workerId: uuidSchema,
+  principalId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  runtimeVersion: semanticVersionSchema,
+  capabilities: z.array(capabilitySchema).max(100),
+  skills: z.array(workerSkillManifestEntrySchema).max(100),
+  providers: z.array(workerProviderManifestEntrySchema).max(100),
+  generatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.capabilities, "capabilities", context);
+  addDuplicateIssues(value.skills.map((skill) => skill.key), "skills", context);
+  addDuplicateIssues(value.providers.map((provider) => provider.providerId), "providers", context);
+});
+
+export type WorkerManifest = z.infer<typeof workerManifestSchema>;
+
+export const workerResourceSnapshotSchema = z.object({
+  freeDiskBytes: z.number().int().nonnegative().safe(),
+  availableMemoryBytes: z.number().int().nonnegative().safe(),
+  activeWorktreeCount: z.number().int().nonnegative().safe(),
+  runningJobCount: z.number().int().nonnegative().safe(),
+}).strict();
+
+export type WorkerResourceSnapshot = z.infer<typeof workerResourceSnapshotSchema>;
+
+export const workerModeSchema = z.enum(["idle", "busy", "draining", "quarantined"]);
+export type WorkerMode = z.infer<typeof workerModeSchema>;
+
+export const workerRegistrationSchema = z.object({
+  version: contractVersionSchema,
+  registrationId: uuidSchema,
+  bootId: uuidSchema,
+  manifest: workerManifestSchema,
+  resources: workerResourceSnapshotSchema,
+  mode: workerModeSchema,
+  automaticResume: z.literal(false),
+  occurredAt: rfc3339Schema,
+}).strict();
+
+export type WorkerRegistration = z.infer<typeof workerRegistrationSchema>;
+
+export const workerHeartbeatSchema = z.object({
+  version: contractVersionSchema,
+  workerId: uuidSchema,
+  bootId: uuidSchema,
+  sequence: z.number().int().nonnegative().safe(),
+  mode: workerModeSchema,
+  activeJobIds: z.array(uuidSchema).max(1_000),
+  resources: workerResourceSnapshotSchema,
+  occurredAt: rfc3339Schema,
+}).strict();
+
+export type WorkerHeartbeat = z.infer<typeof workerHeartbeatSchema>;
 
 export const normalizedEventSchema = z.object({
   version: contractVersionSchema,

@@ -41,6 +41,7 @@ const required = [
   "docs/acceptance/v1-capabilities.yaml",
   "docs/traceability/phase-0.yaml",
   "docs/traceability/phase-2-durable-core.yaml",
+  "docs/traceability/phase-3-worker-runtime-core.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -327,6 +328,7 @@ for (const document of documents) {
 const acceptance = await readFile(path.join(root, "docs/acceptance/v1-capabilities.yaml"), "utf8");
 const traceability = await readFile(path.join(root, "docs/traceability/phase-0.yaml"), "utf8");
 const phase2Traceability = await readFile(path.join(root, "docs/traceability/phase-2-durable-core.yaml"), "utf8");
+const phase3Traceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-runtime-core.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -384,7 +386,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);

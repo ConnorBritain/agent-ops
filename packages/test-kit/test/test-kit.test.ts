@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import {
+  DeterministicClock,
+  InMemoryWorkerControlPlane,
+  StaticResourceInspector,
+  buildJobEnvelope,
+  buildWorkerManifest,
+} from "../src/index.ts";
+
+describe("deterministic worker test kit", () => {
+  it("provides stable time, resources, contracts, and recordings", async () => {
+    const clock = new DeterministicClock();
+    const resources = new StaticResourceInspector();
+    const controlPlane = new InMemoryWorkerControlPlane();
+    const first = clock.now();
+    clock.advance(1_000);
+
+    assert.equal(first, "2026-07-30T04:00:00.000Z");
+    assert.equal(clock.now(), "2026-07-30T04:00:01.000Z");
+    assert.equal((await resources.inspect()).runningJobCount, 0);
+    assert.equal(buildWorkerManifest().securityDomain, "example-domain");
+    assert.equal(buildJobEnvelope().resourceBudget?.worktreeSlots, 1);
+    assert.deepEqual(controlPlane.events, []);
+  });
+});

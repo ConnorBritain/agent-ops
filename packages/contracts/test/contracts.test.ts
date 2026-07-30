@@ -6,6 +6,9 @@ import {
   commandSchema,
   normalizedEventSchema,
   signedJobEnvelopeSchema,
+  workerHeartbeatSchema,
+  workerManifestSchema,
+  workerRegistrationSchema,
 } from "../src/index.ts";
 
 const ids = {
@@ -16,6 +19,9 @@ const ids = {
   run: "00000000-0000-4000-8000-000000000005",
   policy: "00000000-0000-4000-8000-000000000006",
   holder: "00000000-0000-4000-8000-000000000007",
+  worker: "00000000-0000-4000-8000-000000000008",
+  boot: "00000000-0000-4000-8000-000000000009",
+  registration: "00000000-0000-4000-8000-000000000010",
 };
 
 describe("versioned contracts", () => {
@@ -64,6 +70,12 @@ describe("versioned contracts", () => {
         expiresAt: "2026-07-30T05:00:00Z",
       },
       safeWorkingDirectory: "/workspace/example",
+      resourceBudget: {
+        minimumFreeDiskBytes: 10_000,
+        memoryReservationBytes: 1_000,
+        worktreeSlots: 1,
+        maximumRuntimeSeconds: 900,
+      },
       redactionPolicyRef: "policy://redaction/default",
       callbackIdentityRef: "secret://agentops/callback/worker",
       body: { objective: "Run the bounded validation gate." },
@@ -81,6 +93,59 @@ describe("versioned contracts", () => {
       }).success,
       false,
     );
+  });
+
+  it("validates unique worker manifests, registrations, and heartbeats", () => {
+    const manifest = {
+      version: CONTRACT_VERSION,
+      workerId: ids.worker,
+      principalId: ids.holder,
+      securityDomain: "example-domain",
+      runtimeVersion: "0.1.0",
+      capabilities: ["terminal", "git"],
+      skills: [{ key: "repository-inspection", version: "1.0.0" }],
+      providers: [{
+        providerId: "print-provider",
+        version: "0.1.0",
+        capabilities: ["terminal"],
+      }],
+      generatedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(workerManifestSchema.parse(manifest).capabilities.length, 2);
+    assert.equal(
+      workerManifestSchema.safeParse({
+        ...manifest,
+        capabilities: ["terminal", "terminal"],
+      }).success,
+      false,
+    );
+
+    const resources = {
+      freeDiskBytes: 100_000,
+      availableMemoryBytes: 50_000,
+      activeWorktreeCount: 0,
+      runningJobCount: 0,
+    };
+    assert.equal(workerRegistrationSchema.parse({
+      version: CONTRACT_VERSION,
+      registrationId: ids.registration,
+      bootId: ids.boot,
+      manifest,
+      resources,
+      mode: "idle",
+      automaticResume: false,
+      occurredAt: "2026-07-30T04:00:00Z",
+    }).automaticResume, false);
+    assert.equal(workerHeartbeatSchema.parse({
+      version: CONTRACT_VERSION,
+      workerId: ids.worker,
+      bootId: ids.boot,
+      sequence: 1,
+      mode: "idle",
+      activeJobIds: [],
+      resources,
+      occurredAt: "2026-07-30T04:00:01Z",
+    }).sequence, 1);
   });
 
   it("rejects secret-like normalized event payloads", () => {

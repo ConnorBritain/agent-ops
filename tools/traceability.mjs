@@ -12,7 +12,7 @@ export const routes = {
   core: route("supabase-durable-core", "ACC-CORE-001", "planned", "pnpm test:unit && pnpm test:db"),
   host: route("private-host-baseline", "ACC-REMOTE-001", "gated", "private host-baseline acceptance"),
   remoteAcceptance: route("private-worker-canary", "ACC-REMOTE-001", "gated", "future private headless RemoteAccessPortal and worker-health canary"),
-  worker: route("worker-runtime-core", "ACC-WORKER-001", "planned", "future worker contract and preflight fixtures"),
+  worker: route("worker-runtime-core", "ACC-WORKER-001", "planned", "pnpm --filter @agent-ops/worker test"),
   safety: route("worker-safety-hooks", "ACC-WORKER-001", "planned", "future safety decision and independent-monitor fixtures"),
   service: route("worker-service-packaging", "ACC-WORKER-001", "planned", "future clean-host service and reboot-idle fixtures"),
   canary: route("private-worker-canary", "ACC-WORKER-001", "gated", "future private worker canary acceptance"),
@@ -88,7 +88,11 @@ const completedRequirementIds = new Set([
   "REQ-CONTRACT-004",
   "REQ-CONTRACT-005",
   "REQ-COORD-001",
-  "REQ-COORD-002"
+  "REQ-COORD-002",
+  "REQ-WORKER-002",
+  "REQ-WORKER-003",
+  "REQ-WORKER-004",
+  "REQ-WORKER-006"
 ]);
 
 const prefixRoutes = new Map([

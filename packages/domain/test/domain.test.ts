@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { reconcileObservedState, selectPlacement } from "../src/index.ts";
+import {
+  evaluateWorkerPreflight,
+  reconcileObservedState,
+  selectPlacement,
+  type WorkerPreflightFacts,
+} from "../src/index.ts";
 
 describe("placement policy", () => {
   it("rejects domain mismatches before preference scoring", () => {
@@ -98,5 +103,103 @@ describe("reconciliation", () => {
         automaticallyRestart: false,
       },
     );
+  });
+});
+
+const validPreflightFacts = (): WorkerPreflightFacts => ({
+  mode: "idle",
+  duplicateJob: false,
+  contractCompatible: true,
+  securityDomainMatches: true,
+  policyVerified: true,
+  signatureVerified: true,
+  leaseAuthorityVerified: true,
+  leaseExpiresAtEpochMs: Date.parse("2026-07-30T04:05:00Z"),
+  nowEpochMs: Date.parse("2026-07-30T04:00:00Z"),
+  pathAllowed: true,
+  missingCapabilities: [],
+  missingSkills: [],
+  budget: {
+    minimumFreeDiskBytes: 10_000,
+    memoryReservationBytes: 5_000,
+    worktreeSlots: 1,
+    maximumRuntimeSeconds: 900,
+  },
+  resources: {
+    freeDiskBytes: 100_000,
+    availableMemoryBytes: 50_000,
+    activeWorktreeCount: 0,
+    runningJobCount: 0,
+  },
+  minimumFreeDiskBytes: 20_000,
+  maximumActiveWorktrees: 2,
+  maximumRunningJobs: 1,
+  maximumRuntimeSeconds: 1_800,
+});
+
+describe("worker preflight", () => {
+  it("accepts a compatible, signed, leased job within resource limits", () => {
+    assert.deepEqual(evaluateWorkerPreflight(validPreflightFacts()), {
+      accepted: true,
+    });
+  });
+
+  it("returns a deterministic rejection matrix before launch", () => {
+    const result = evaluateWorkerPreflight({
+      ...validPreflightFacts(),
+      mode: "quarantined",
+      contractCompatible: false,
+      securityDomainMatches: false,
+      policyVerified: false,
+      signatureVerified: false,
+      leaseAuthorityVerified: false,
+      leaseExpiresAtEpochMs: Date.parse("2026-07-30T03:59:59Z"),
+      pathAllowed: false,
+      missingCapabilities: ["terminal"],
+      missingSkills: ["repository-inspection"],
+      budget: {
+        minimumFreeDiskBytes: 10_000,
+        memoryReservationBytes: 5_000,
+        worktreeSlots: 1,
+        maximumRuntimeSeconds: 3_600,
+      },
+      resources: {
+        freeDiskBytes: 1,
+        availableMemoryBytes: 1,
+        activeWorktreeCount: 2,
+        runningJobCount: 1,
+      },
+    });
+    assert.deepEqual(result, {
+      accepted: false,
+      reasons: [
+        "worker-not-accepting",
+        "incompatible-contract",
+        "security-domain-mismatch",
+        "policy-not-verified",
+        "signature-not-verified",
+        "lease-authority-not-verified",
+        "lease-expired",
+        "path-out-of-scope",
+        "missing-capability",
+        "missing-skill",
+        "insufficient-disk",
+        "insufficient-memory",
+        "worktree-limit",
+        "runtime-limit",
+        "job-capacity",
+      ],
+    });
+  });
+
+  it("rejects a missing resource budget and duplicate delivery", () => {
+    assert.deepEqual(evaluateWorkerPreflight({
+      ...validPreflightFacts(),
+      duplicateJob: true,
+      budget: undefined,
+    }), {
+      accepted: false,
+      reasons: ["duplicate-job", "missing-resource-budget"],
+    });
   });
 });

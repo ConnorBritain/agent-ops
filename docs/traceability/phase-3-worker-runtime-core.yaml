@@ -1,0 +1,28 @@
+slice: worker-runtime-core
+status: complete
+requirements:
+  - REQ-WORKER-002
+  - REQ-WORKER-003
+  - REQ-WORKER-004
+  - REQ-WORKER-006
+artifacts:
+  - packages/contracts
+  - packages/domain
+  - packages/worker
+  - packages/test-kit
+tests:
+  - pnpm typecheck
+  - pnpm test:unit
+acceptance: ACC-WORKER-001
+evidence:
+  transport_neutral_supervisor: passed
+  manifest_contract: passed
+  preflight_rejection_matrix: passed
+  normalized_health_and_lifecycle_events: passed
+  duplicate_admission_without_duplicate_event: passed
+  canonical_duplicate_identity: passed
+  concurrent_admission_serialization: passed
+  uncertain_admission_and_cancellation_write_recovery: passed
+  safe_cancellation_and_inspection: passed
+  service_installation: separately-gated
+  real_worker_enrollment: separately-gated

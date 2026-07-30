@@ -1,0 +1,121 @@
+import {
+  CONTRACT_VERSION,
+  type NormalizedEvent,
+  type SignedJobEnvelope,
+  type WorkerHeartbeat,
+  type WorkerManifest,
+  type WorkerRegistration,
+  type WorkerResourceSnapshot,
+} from "@agent-ops/contracts";
+
+export const testIds = {
+  worker: "00000000-0000-4000-8000-000000000101",
+  principal: "00000000-0000-4000-8000-000000000102",
+  registration: "00000000-0000-4000-8000-000000000103",
+  boot: "00000000-0000-4000-8000-000000000104",
+  job: "00000000-0000-4000-8000-000000000105",
+  task: "00000000-0000-4000-8000-000000000106",
+  run: "00000000-0000-4000-8000-000000000107",
+  policy: "00000000-0000-4000-8000-000000000108",
+} as const;
+
+export class DeterministicClock {
+  #epochMs: number;
+
+  constructor(initial = "2026-07-30T04:00:00Z") {
+    this.#epochMs = Date.parse(initial);
+  }
+
+  now(): string {
+    return new Date(this.#epochMs).toISOString();
+  }
+
+  advance(milliseconds: number): void {
+    this.#epochMs += milliseconds;
+  }
+}
+
+export class StaticResourceInspector {
+  snapshot: WorkerResourceSnapshot;
+
+  constructor(snapshot: WorkerResourceSnapshot = {
+    freeDiskBytes: 100_000,
+    availableMemoryBytes: 50_000,
+    activeWorktreeCount: 0,
+    runningJobCount: 0,
+  }) {
+    this.snapshot = snapshot;
+  }
+
+  async inspect(): Promise<WorkerResourceSnapshot> {
+    return { ...this.snapshot };
+  }
+}
+
+export class InMemoryWorkerControlPlane {
+  readonly registrations: WorkerRegistration[] = [];
+  readonly heartbeats: WorkerHeartbeat[] = [];
+  readonly events: NormalizedEvent[] = [];
+
+  async register(registration: WorkerRegistration): Promise<void> {
+    this.registrations.push(registration);
+  }
+
+  async heartbeat(heartbeat: WorkerHeartbeat): Promise<void> {
+    this.heartbeats.push(heartbeat);
+  }
+
+  async recordEvent(event: NormalizedEvent): Promise<void> {
+    this.events.push(event);
+  }
+}
+
+export const buildWorkerManifest = (
+  overrides: Partial<WorkerManifest> = {},
+): WorkerManifest => ({
+  version: CONTRACT_VERSION,
+  workerId: testIds.worker,
+  principalId: testIds.principal,
+  securityDomain: "example-domain",
+  runtimeVersion: "0.1.0",
+  capabilities: ["terminal", "git"],
+  skills: [{ key: "repository-inspection", version: "1.2.0" }],
+  providers: [],
+  generatedAt: "2026-07-30T04:00:00Z",
+  ...overrides,
+});
+
+export const buildJobEnvelope = (
+  overrides: Partial<SignedJobEnvelope> = {},
+): SignedJobEnvelope => ({
+  version: CONTRACT_VERSION,
+  jobId: testIds.job,
+  taskId: testIds.task,
+  runId: testIds.run,
+  securityDomain: "example-domain",
+  requiredCapabilities: ["terminal"],
+  requiredSkills: [{ key: "repository-inspection", versionRange: "^1" }],
+  policyDecisionId: testIds.policy,
+  lease: {
+    leaseName: "worker-job",
+    holderId: testIds.principal,
+    fencingToken: 1,
+    expiresAt: "2026-07-30T04:05:00Z",
+  },
+  safeWorkingDirectory: "/workspace/example",
+  resourceBudget: {
+    minimumFreeDiskBytes: 10_000,
+    memoryReservationBytes: 5_000,
+    worktreeSlots: 1,
+    maximumRuntimeSeconds: 900,
+  },
+  redactionPolicyRef: "policy://redaction/default",
+  callbackIdentityRef: "secret://agentops/callback/worker",
+  body: { objective: "Run a harmless deterministic fixture." },
+  signature: {
+    algorithm: "ed25519",
+    keyRef: "secret://agentops/signing/coordinator",
+    value: "a".repeat(64),
+  },
+  ...overrides,
+});
