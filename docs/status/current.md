@@ -46,8 +46,8 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker core and safety hooks are complete; static service
-packaging is next** as of 2026-07-30.
+Status: **Phase 3 worker core, safety hooks, and static service packaging are
+complete; Roadmap composition is next** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -87,8 +87,8 @@ definition, host identity, secret, or remote connection.
 
 ## Phase 3 — worker safety hooks
 
-Status: **local safety implementation complete** on 2026-07-30; service
-packaging and private enrollment are not started.
+Status: **local safety implementation complete** on 2026-07-30; private
+enrollment is not started.
 
 `packages/policy` now evaluates bounded resource, stale-session, orphaned
 process, cleanup, and unsafe-delete facts without host mutation. Its
@@ -106,8 +106,22 @@ quarantine-before-later-admission. The slice creates no timer, host command,
 process termination, filesystem deletion, service definition, credential,
 provider launcher, or remote connection.
 
-Next slice: `worker-service-packaging` prepares generalized reviewed launchd,
-systemd, and Windows service definitions without installing any of them.
-`REQ-WORKER-001`, `REQ-WORKER-005`, real cryptographic verification, scoped
-runtime identity, durable actionable attention routing, and private canary
-evidence remain planned or gated rather than inferred from the local runtime.
+## Phase 3 — worker service packaging
+
+Status: **local static service packaging complete** on 2026-07-30; no template
+has been installed or activated.
+
+The repository now contains versioned systemd, launchd, and Windows-wrapper
+definitions that run only an outbound `supervisor-only` process at boot under a
+dedicated account. They may recover a failed supervisor but cannot resume an
+agent workload, start a provider, open an inbound listener, or depend on
+RustDesk. Read-only verification scripts and deterministic reboot-idle fixtures
+validate the static contract. The templates retain paths and secret references
+only; they neither create accounts nor download, install, start, or configure
+anything on a host.
+
+Next slice: `roadmap-adapter` composes repository-local Roadmap readiness and
+worktree intent through a typed, correlation-preserving adapter. `REQ-WORKER-001`,
+`REQ-WORKER-005`, real cryptographic verification, scoped runtime identity,
+durable actionable attention routing, and private canary evidence remain
+planned or gated rather than inferred from static packaging.

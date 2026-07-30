@@ -1,0 +1,20 @@
+<service>
+  <id>AgentOpsWorkerSupervisor</id>
+  <name>AgentOps Worker Supervisor</name>
+  <description>Outbound-only AgentOps worker supervisor; it never resumes an agent workload after boot.</description>
+  <executable>%BASE%\agentops-worker-supervisor.exe</executable>
+  <arguments>--mode supervisor-only --config "%ProgramData%\AgentOps\worker-supervisor.json"</arguments>
+  <workingdirectory>%BASE%</workingdirectory>
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+  <startmode>Automatic</startmode>
+  <onfailure action="restart" delay="10 sec" />
+  <serviceaccount>
+    <prompt>console</prompt>
+    <allowservicelogon>true</allowservicelogon>
+  </serviceaccount>
+  <interactive>false</interactive>
+</service>

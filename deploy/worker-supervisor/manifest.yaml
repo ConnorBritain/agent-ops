@@ -1,0 +1,20 @@
+schema_version: 1
+name: agentops-worker-supervisor
+contract_version: "1.0"
+runtime_version_range: ">=0.1.0 <0.2.0"
+mode: supervisor-only
+network: outbound-only
+automatic_workload_resume: false
+secret_values_in_repository: forbidden
+supported_service_managers:
+  - systemd
+  - launchd
+  - windows-service-wrapper
+artifacts:
+  systemd: linux/agentops-worker-supervisor.service
+  launchd: macos/com.agentops.worker-supervisor.plist
+  windows: windows/AgentOpsWorkerSupervisor.xml
+verification:
+  - verify/linux-worker-supervisor.sh
+  - verify/macos-worker-supervisor.sh
+  - verify/windows-worker-supervisor.ps1

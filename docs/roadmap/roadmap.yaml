@@ -15,7 +15,7 @@ meta:
   links:
     narrative: docs/specs/SPEC-000-program-charter.md
     status: docs/status/current.md
-    tracker: docs/traceability/phase-3-worker-safety-hooks.yaml
+    tracker: docs/traceability/phase-3-worker-service-packaging.yaml
     bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
 pis:
   - id: phase-0-governance
@@ -166,7 +166,7 @@ pis:
         prompt: Work only through an authorized private overlay. Never store project references, URLs, credentials, account identities, or deployment topology in public.
   - id: phase-3-worker-safety
     title: Outbound worker runtime and host safeguards
-    status: active
+    status: gated
     deps: [phase-0-governance, phase-2-durable-core]
     summary: Build the transport-neutral worker supervisor, deterministic preflight policy, health collectors, and service packaging without enrolling a real host.
     exit_criteria: Deterministic fixtures prove registration, heartbeats, resource refusal, cancellation, quarantine, and reboot-idle recovery; private canary enrollment remains separately gated.
@@ -236,13 +236,14 @@ pis:
         prompt: Default cleanup to dry-run, resolve destructive targets explicitly, preserve evidence, and make critical findings drain or quarantine the worker.
       - id: worker-service-packaging
         title: Versioned launchd, systemd, and Windows service definitions
-        status: scheduled
+        status: complete
         invoke: worker-service-packaging
         what: Package reviewed service definitions and clean-host verification scripts for supported operating systems without installing them.
-        est_sessions: 1
+        est_sessions: 0
         weight: light
         deps: [worker-safety-hooks]
         gate: Static service-definition checks plus disposable reboot-idle fixtures
+        completed_on: "2026-07-30"
         touches:
           - deploy/
           - config/
@@ -252,7 +253,7 @@ pis:
           - docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
           - docs/specs/SPEC-010-network-and-host-bootstrap.md
           - docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
-        resume_action: Produce generalized service artifacts only; private host installation is a separate authorization gate.
+        resume_action: Preserve static-template boundaries; private canary installation remains separately authorized.
         priority:
           tier: P1
           weight: 85

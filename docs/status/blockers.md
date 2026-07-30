@@ -2,12 +2,12 @@
 
 ## Active blockers
 
-None for generalized local service-packaging implementation and CI verification.
+None for generalized local Roadmap-adapter implementation and CI verification.
 
 ## Explicit authorization gates
 
 - No host bootstrap or worker installation is authorized by this repository bootstrap.
-- The local worker supervisor is not a service package and has no real
+- Static worker service definitions are not installed services and have no real
   connection, credential, cryptographic verifier, or provider-launch authority.
 - No hosted Supabase migration, production environment, secret, RustDesk relay,
   account, device enrollment, or unattended-access configuration is authorized

@@ -4,6 +4,7 @@ import {
   DeterministicClock,
   InMemoryWorkerControlPlane,
   StaticResourceInspector,
+  assertRebootIdleServiceFixture,
   buildJobEnvelope,
   buildWorkerManifest,
 } from "../src/index.ts";
@@ -22,5 +23,28 @@ describe("deterministic worker test kit", () => {
     assert.equal(buildWorkerManifest().securityDomain, "example-domain");
     assert.equal(buildJobEnvelope().resourceBudget?.worktreeSlots, 1);
     assert.deepEqual(controlPlane.events, []);
+  });
+
+  it("models a reboot that restores only the supervisor", () => {
+    assert.deepEqual(assertRebootIdleServiceFixture({
+      platform: "systemd",
+      startsWithoutInteractiveLogin: true,
+      startsSupervisorOnly: true,
+      automaticWorkloadResume: false,
+      restartsSupervisorOnFailure: true,
+    }), {
+      platform: "systemd",
+      startsWithoutInteractiveLogin: true,
+      startsSupervisorOnly: true,
+      automaticWorkloadResume: false,
+      restartsSupervisorOnFailure: true,
+    });
+    assert.throws(() => assertRebootIdleServiceFixture({
+      platform: "launchd",
+      startsWithoutInteractiveLogin: true,
+      startsSupervisorOnly: true,
+      automaticWorkloadResume: true,
+      restartsSupervisorOnFailure: true,
+    }), /never automatically resume/);
   });
 });

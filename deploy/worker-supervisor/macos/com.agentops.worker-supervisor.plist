@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.agentops.worker-supervisor</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/agentops/current/bin/agentops-worker-supervisor</string>
+    <string>--mode</string>
+    <string>supervisor-only</string>
+    <string>--config</string>
+    <string>/Library/Application Support/AgentOps/worker-supervisor.json</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>UserName</key>
+  <string>agentops</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/var/log/agentops/worker-supervisor.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/agentops/worker-supervisor.error.log</string>
+</dict>
+</plist>

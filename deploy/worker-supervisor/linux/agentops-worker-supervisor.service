@@ -1,0 +1,24 @@
+[Unit]
+Description=AgentOps Worker Supervisor
+Documentation=https://github.com/ConnorBritain/agent-ops/tree/main/deploy/worker-supervisor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=exec
+User=agentops
+Group=agentops
+Environment=AGENTOPS_WORKER_MODE=supervisor-only
+EnvironmentFile=-/etc/agentops/worker-supervisor.env
+ExecStart=/opt/agentops/current/bin/agentops-worker-supervisor --mode supervisor-only --config /etc/agentops/worker-supervisor.json
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=30s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/agentops/worker /var/log/agentops/worker
+
+[Install]
+WantedBy=multi-user.target
