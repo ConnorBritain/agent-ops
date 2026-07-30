@@ -18,6 +18,7 @@ import {
 const createFixture = (input: {
   readonly signatureVerified?: boolean;
   readonly policyVerified?: boolean;
+  readonly leaseAuthorityVerified?: boolean;
   readonly pathAllowed?: boolean;
   readonly resources?: StaticResourceInspector;
   readonly controlPlane?: InMemoryWorkerControlPlane;
@@ -48,6 +49,9 @@ const createFixture = (input: {
       },
       async verifyPolicy() {
         return input.policyVerified ?? true;
+      },
+      async verifyCoordinatorLease() {
+        return input.leaseAuthorityVerified ?? true;
       },
     },
     pathScope: {
@@ -188,6 +192,35 @@ describe("worker job admission", () => {
     });
   });
 
+  it("uses trusted coordinator-lease evidence instead of the worker principal", async () => {
+    const fixture = createFixture();
+    await fixture.supervisor.start();
+    const coordinatorPrincipal = "00000000-0000-4000-8000-000000000999";
+
+    assert.deepEqual(await fixture.supervisor.admit(buildJobEnvelope({
+      lease: {
+        ...buildJobEnvelope().lease,
+        holderId: coordinatorPrincipal,
+      },
+    })), {
+      accepted: true,
+      jobId: testIds.job,
+      duplicate: false,
+    });
+
+    const rejected = createFixture({ leaseAuthorityVerified: false });
+    await rejected.supervisor.start();
+    assert.deepEqual(await rejected.supervisor.admit(buildJobEnvelope({
+      lease: {
+        ...buildJobEnvelope().lease,
+        holderId: coordinatorPrincipal,
+      },
+    })), {
+      accepted: false,
+      reasons: ["lease-authority-not-verified"],
+    });
+  });
+
   it("serializes concurrent duplicate admission without duplicate events", async () => {
     const fixture = createFixture();
     await fixture.supervisor.start();
@@ -288,6 +321,7 @@ describe("worker job admission", () => {
     const fixture = createFixture({
       signatureVerified: false,
       policyVerified: false,
+      leaseAuthorityVerified: false,
       pathAllowed: false,
       resources,
     });
@@ -316,7 +350,7 @@ describe("worker job admission", () => {
         "security-domain-mismatch",
         "policy-not-verified",
         "signature-not-verified",
-        "lease-holder-mismatch",
+        "lease-authority-not-verified",
         "lease-expired",
         "path-out-of-scope",
         "missing-capability",

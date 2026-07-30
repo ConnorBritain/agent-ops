@@ -44,6 +44,7 @@ export interface WorkerResourceInspector {
 export interface WorkerEnvelopeVerifier {
   verifySignature(envelope: SignedJobEnvelope): Promise<boolean>;
   verifyPolicy(envelope: SignedJobEnvelope): Promise<boolean>;
+  verifyCoordinatorLease(envelope: SignedJobEnvelope): Promise<boolean>;
 }
 
 export interface WorkerPathScope {
@@ -310,9 +311,16 @@ export class WorkerSupervisor {
       return { accepted: false, reasons: ["duplicate-job"] };
     }
 
-    const [policyVerified, signatureVerified, pathAllowed, resources] = await Promise.all([
+    const [
+      policyVerified,
+      signatureVerified,
+      leaseAuthorityVerified,
+      pathAllowed,
+      resources,
+    ] = await Promise.all([
       this.#ports.verifier.verifyPolicy(envelope),
       this.#ports.verifier.verifySignature(envelope),
+      this.#ports.verifier.verifyCoordinatorLease(envelope),
       this.#ports.pathScope.isAllowed(envelope.safeWorkingDirectory),
       this.#inspectResources(),
     ]);
@@ -337,8 +345,7 @@ export class WorkerSupervisor {
         envelope.securityDomain === this.#configuration.manifest.securityDomain,
       policyVerified,
       signatureVerified,
-      leaseHolderMatches:
-        envelope.lease.holderId === this.#configuration.manifest.principalId,
+      leaseAuthorityVerified,
       leaseExpiresAtEpochMs: Date.parse(envelope.lease.expiresAt),
       nowEpochMs: Date.parse(this.#ports.clock.now()),
       pathAllowed,

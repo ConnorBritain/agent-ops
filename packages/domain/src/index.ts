@@ -175,7 +175,7 @@ export type WorkerPreflightRejectionReason =
   | "security-domain-mismatch"
   | "policy-not-verified"
   | "signature-not-verified"
-  | "lease-holder-mismatch"
+  | "lease-authority-not-verified"
   | "lease-expired"
   | "path-out-of-scope"
   | "missing-capability"
@@ -194,7 +194,7 @@ export type WorkerPreflightFacts = {
   readonly securityDomainMatches: boolean;
   readonly policyVerified: boolean;
   readonly signatureVerified: boolean;
-  readonly leaseHolderMatches: boolean;
+  readonly leaseAuthorityVerified: boolean;
   readonly leaseExpiresAtEpochMs: number;
   readonly nowEpochMs: number;
   readonly pathAllowed: boolean;
@@ -227,7 +227,7 @@ export function evaluateWorkerPreflight(
   if (!facts.securityDomainMatches) reasons.push("security-domain-mismatch");
   if (!facts.policyVerified) reasons.push("policy-not-verified");
   if (!facts.signatureVerified) reasons.push("signature-not-verified");
-  if (!facts.leaseHolderMatches) reasons.push("lease-holder-mismatch");
+  if (!facts.leaseAuthorityVerified) reasons.push("lease-authority-not-verified");
   if (
     !Number.isFinite(facts.leaseExpiresAtEpochMs)
     || facts.leaseExpiresAtEpochMs <= facts.nowEpochMs
