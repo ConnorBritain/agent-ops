@@ -551,10 +551,10 @@ requirements:
     required_evidence: "In-person checklist."
   - id: REQ-NET-005
     owner: SPEC-010
-    slice: private-host-baseline
+    slice: private-worker-canary
     acceptance: ACC-REMOTE-001
     status: gated
-    test: "private host-baseline acceptance"
+    test: "future private headless RemoteAccessPortal and worker-health canary"
     required_evidence: "Headless visual-access test."
   - id: REQ-NET-006
     owner: SPEC-010
@@ -908,17 +908,17 @@ requirements:
     required_evidence: "Fleet-config validation."
   - id: REQ-FLEET-002
     owner: SPEC-019
-    slice: private-host-baseline
+    slice: private-worker-canary
     acceptance: ACC-REMOTE-001
     status: gated
-    test: "private host-baseline acceptance"
+    test: "future private headless RemoteAccessPortal and worker-health canary"
     required_evidence: "Capability-health test."
   - id: REQ-FLEET-003
     owner: SPEC-019
-    slice: private-host-baseline
+    slice: private-worker-canary
     acceptance: ACC-REMOTE-001
     status: gated
-    test: "private host-baseline acceptance"
+    test: "future private headless RemoteAccessPortal and worker-health canary"
     required_evidence: "Worker readiness test."
   - id: REQ-FLEET-004
     owner: SPEC-019

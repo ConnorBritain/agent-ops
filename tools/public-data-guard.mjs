@@ -64,6 +64,38 @@ export const parseHistoricalObjectLine = (line) => {
 export const historicalObjectNeedsContentScan = (type) =>
   type === "blob" || type === "commit" || type === "tag";
 
+const stripSignatureBlocks = (value) =>
+  value.replace(
+    /-----BEGIN [A-Z0-9 ]*SIGNATURE-----[\s\S]*?-----END [A-Z0-9 ]*SIGNATURE-----/g,
+    ""
+  );
+
+const identityWithoutTimestamp = (line) => {
+  const match = /^(author|committer|tagger) (.+?) -?\d+ [+-]\d{4}$/.exec(line);
+  return match ? `${match[1]} ${match[2]}` : line;
+};
+
+export const historicalObjectContentForScan = (content, type) => {
+  if (type === "blob") return content;
+  if (type !== "commit" && type !== "tag") return Buffer.alloc(0);
+
+  const lines = Buffer.from(content).toString("utf8").split("\n");
+  const separator = lines.indexOf("");
+  const headers = separator < 0 ? lines : lines.slice(0, separator);
+  const message = separator < 0 ? "" : lines.slice(separator + 1).join("\n");
+  const textualHeaders = headers
+    .filter((line) => (
+      type === "commit"
+        ? /^(?:author|committer|encoding) /.test(line)
+        : /^(?:type|tag|tagger) /.test(line)
+    ))
+    .map(identityWithoutTimestamp);
+
+  return Buffer.from(
+    [...textualHeaders, stripSignatureBlocks(message)].join("\n")
+  );
+};
+
 export const collectHistoricalPaths = async (repositoryRoot) => {
   const child = spawn(
     "git",

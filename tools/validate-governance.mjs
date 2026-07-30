@@ -9,6 +9,7 @@ import {
   collectRefNames,
   containsPrivateDenylistValue,
   findCredentialSignals,
+  historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
   parseHistoricalObjectLine,
   readRepositoryEntry
@@ -196,7 +197,7 @@ const scanHistoricalObjects = async (objectLocations) => {
       if (historicalObjectNeedsContentScan(pending.type)) {
         const historicalPath = objectLocations.get(pending.objectId) ?? "<unknown>";
         scanContent(
-          content,
+          historicalObjectContentForScan(content, pending.type),
           `Git history ${pending.type} ${pending.objectId} (${historicalPath})`
         );
       }

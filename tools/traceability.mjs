@@ -137,7 +137,7 @@ const overrides = new Map(Object.entries({
   "REQ-WORKER-005": "service",
   "REQ-PROVIDER-005": "browser",
   "REQ-PROVIDER-006": "browser",
-  "REQ-NET-005": "host",
+  "REQ-NET-005": "remoteAcceptance",
   "REQ-INT-001": "roadmap",
   "REQ-INT-002": "roadmap",
   "REQ-INT-005": "slack",
@@ -158,8 +158,8 @@ const overrides = new Map(Object.entries({
   "REQ-ROLL-005": "federation",
   "REQ-ROLL-006": "governance",
   "REQ-FLEET-001": "host",
-  "REQ-FLEET-002": "host",
-  "REQ-FLEET-003": "host",
+  "REQ-FLEET-002": "remoteAcceptance",
+  "REQ-FLEET-003": "remoteAcceptance",
   "REQ-FLEET-006": "federation"
 }));
 

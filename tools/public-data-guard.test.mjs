@@ -16,6 +16,7 @@ import {
   collectRefNames,
   containsPrivateDenylistValue,
   findCredentialSignals,
+  historicalObjectContentForScan,
   historicalObjectNeedsContentScan,
   parseHistoricalObjectLine,
   readRepositoryEntry
@@ -142,6 +143,41 @@ describe("public data guard", () => {
     assert.equal(historicalObjectNeedsContentScan("commit"), true);
     assert.equal(historicalObjectNeedsContentScan("tag"), true);
     assert.equal(historicalObjectNeedsContentScan("tree"), false);
+  });
+
+  it("scans commit and tag text without structural object hashes", () => {
+    const privateIdentifier = "cff19";
+    const commit = Buffer.from([
+      `tree ${privateIdentifier}${"a".repeat(35)}`,
+      `parent ${privateIdentifier}${"b".repeat(35)}`,
+      "author Example Operator <operator@example.invalid> 1 +0000",
+      "committer Example Operator <operator@example.invalid> 1 +0000",
+      "",
+      "Safe commit message"
+    ].join("\n"));
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(commit, "commit"),
+        [privateIdentifier]
+      ),
+      false
+    );
+
+    const tag = Buffer.from([
+      `object ${privateIdentifier}${"c".repeat(35)}`,
+      "type commit",
+      `tag release-${privateIdentifier}`,
+      "tagger Example Operator <operator@example.invalid> 1 +0000",
+      "",
+      `Release for ${privateIdentifier}`
+    ].join("\n"));
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(tag, "tag"),
+        [privateIdentifier]
+      ),
+      true
+    );
   });
 
   it("retains a sensitive historical path after an unchanged rename", async () => {
