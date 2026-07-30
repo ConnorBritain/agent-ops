@@ -102,7 +102,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 ### PHASE-3-WORKER-SAFETY — Outbound worker runtime and host safeguards · 🟢 Active · ~6 sessions remaining
 > Sprints: WORKER-RUNTIME-CORE 🟡 · WORKER-SAFETY-HOOKS ⚪ · WORKER-SERVICE-PACKAGING ⚪ · PRIVATE-WORKER-CANARY 🔒
 > Exec plan: WORKER-RUNTIME-CORE→WORKER-SAFETY-HOOKS→WORKER-SERVICE-PACKAGING→PRIVATE-WORKER-CANARY
-> Deps: PHASE-0-GOVERNANCE
+> Deps: PHASE-0-GOVERNANCE, PHASE-2-DURABLE-CORE
 > Exit: Deterministic fixtures prove registration, heartbeats, resource refusal, cancellation, quarantine, and reboot-idle recovery; private canary enrollment remains separately gated.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
@@ -115,7 +115,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 ### PHASE-4-ROADMAP-PRINT-PROVIDER — Roadmap composition and PrintProvider · ⚪ Scheduled · ~3 sessions remaining
 > Sprints: ROADMAP-ADAPTER ⚪ · PRINT-PROVIDER ⚪
 > Exec plan: ROADMAP-ADAPTER→PRINT-PROVIDER
-> Deps: PHASE-0-GOVERNANCE
+> Deps: PHASE-0-GOVERNANCE, PHASE-3-WORKER-SAFETY
 > Exit: A bounded fixture resolves a ready slice, retains stable correlation references, and produces a complete no-execution launch plan through the shared provider conformance suite.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |

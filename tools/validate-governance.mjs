@@ -1,6 +1,8 @@
 import { readdir, readFile, stat } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
+import { once } from "node:events";
+import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { documents } from "./specifications.mjs";
@@ -8,6 +10,7 @@ import { traceabilityEntries } from "./traceability.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
+const warnings = [];
 const requireFile = async (relative) => {
   try {
     await stat(path.join(root, relative));
@@ -133,14 +136,23 @@ for (const relative of files) {
   scanContent(content, normalized);
 }
 
-try {
-  const historicalObjects = execFileSync("git", ["rev-list", "--objects", "--all"], {
+const collectHistoricalBlobPaths = async () => {
+  const child = spawn("git", ["rev-list", "--objects", "--all"], {
     cwd: root,
-    encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   });
-  const scannedBlobs = new Set();
-  for (const line of historicalObjects.split("\n")) {
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+  });
+  const completion = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", resolve);
+  });
+  const objectPaths = new Map();
+  const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
+  for await (const line of lines) {
     const firstSpace = line.indexOf(" ");
     if (firstSpace < 0) continue;
     const objectId = line.slice(0, firstSpace);
@@ -151,25 +163,84 @@ try {
     if (/(^|\/)\.env($|\.)/i.test(historicalPath) && !historicalPath.endsWith(".env.example")) {
       errors.push(`Raw environment file exists in public Git history: ${historicalPath}`);
     }
-    if (
-      scannedBlobs.has(objectId)
-      || !isScannableTextPath(historicalPath)
-    ) continue;
-    scannedBlobs.add(objectId);
-    const blobType = execFileSync("git", ["cat-file", "-t", objectId], {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"]
-    }).trim();
-    if (blobType !== "blob") continue;
-    const content = execFileSync("git", ["cat-file", "-p", objectId], {
-      cwd: root,
-      encoding: "utf8",
-      maxBuffer: 4 * 1024 * 1024,
-      stdio: ["ignore", "pipe", "pipe"]
-    });
-    scanContent(content, `Git history blob ${objectId} (${historicalPath})`);
+    if (isScannableTextPath(historicalPath) && !objectPaths.has(objectId)) {
+      objectPaths.set(objectId, historicalPath);
+    }
   }
+  const exitCode = await completion;
+  if (exitCode === 0) return objectPaths;
+  if (/not a git repository/i.test(stderr)) {
+    warnings.push("Public Git history inspection skipped because Git metadata is unavailable.");
+    return new Map();
+  }
+  throw new Error(stderr.trim() || `git rev-list exited with code ${exitCode}`);
+};
+
+const scanHistoricalBlobs = async (objectPaths) => {
+  if (!objectPaths.size) return;
+  const child = spawn("git", ["cat-file", "--batch"], {
+    cwd: root,
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+  });
+  const completion = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", resolve);
+  });
+  const feed = (async () => {
+    for (const objectId of objectPaths.keys()) {
+      if (!child.stdin.write(`${objectId}\n`)) await once(child.stdin, "drain");
+    }
+    child.stdin.end();
+  })();
+
+  let buffer = Buffer.alloc(0);
+  let pending;
+  for await (const chunk of child.stdout) {
+    buffer = Buffer.concat([buffer, chunk]);
+    while (true) {
+      if (!pending) {
+        const newline = buffer.indexOf(0x0a);
+        if (newline < 0) break;
+        const header = buffer.subarray(0, newline).toString("utf8");
+        buffer = buffer.subarray(newline + 1);
+        const match = /^([0-9a-f]+) ([a-z]+) (\d+)$/.exec(header);
+        if (!match) throw new Error(`Unexpected git cat-file header: ${header}`);
+        pending = {
+          objectId: match[1],
+          type: match[2],
+          size: Number.parseInt(match[3], 10)
+        };
+      }
+      if (buffer.length < pending.size + 1) break;
+      const content = buffer.subarray(0, pending.size);
+      buffer = buffer.subarray(pending.size + 1);
+      if (pending.type === "blob") {
+        const historicalPath = objectPaths.get(pending.objectId) ?? "<unknown>";
+        scanContent(
+          content.toString("utf8"),
+          `Git history blob ${pending.objectId} (${historicalPath})`
+        );
+      }
+      pending = undefined;
+    }
+  }
+  await feed;
+  const exitCode = await completion;
+  if (exitCode !== 0) {
+    throw new Error(stderr.trim() || `git cat-file exited with code ${exitCode}`);
+  }
+  if (pending || buffer.length) {
+    throw new Error("Incomplete response from git cat-file --batch");
+  }
+};
+
+try {
+  await scanHistoricalBlobs(await collectHistoricalBlobPaths());
 } catch (error) {
   errors.push(`Unable to inspect public Git history: ${error.message}`);
 }
@@ -253,6 +324,7 @@ if (tracedIds.size !== requirementIds.size) {
   errors.push(`Traceability covers ${tracedIds.size} requirements but specifications declare ${requirementIds.size}`);
 }
 
+for (const warning of warnings) console.warn(`Governance validation warning: ${warning}`);
 if (errors.length) {
   console.error("Governance validation failed:");
   for (const error of errors) console.error(`- ${error}`);

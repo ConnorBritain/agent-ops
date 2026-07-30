@@ -167,7 +167,7 @@ pis:
   - id: phase-3-worker-safety
     title: Outbound worker runtime and host safeguards
     status: active
-    deps: [phase-0-governance]
+    deps: [phase-0-governance, phase-2-durable-core]
     summary: Build the transport-neutral worker supervisor, deterministic preflight policy, health collectors, and service packaging without enrolling a real host.
     exit_criteria: Deterministic fixtures prove registration, heartbeats, resource refusal, cancellation, quarantine, and reboot-idle recovery; private canary enrollment remains separately gated.
     detail: docs/specs/SPEC-007-worker-runtime-and-reboot-recovery.md
@@ -280,7 +280,7 @@ pis:
   - id: phase-4-roadmap-print-provider
     title: Roadmap composition and PrintProvider
     status: scheduled
-    deps: [phase-0-governance]
+    deps: [phase-0-governance, phase-3-worker-safety]
     summary: Compose Roadmap for readiness and worktree intent, then prove the provider lifecycle through a deterministic no-execution provider.
     exit_criteria: A bounded fixture resolves a ready slice, retains stable correlation references, and produces a complete no-execution launch plan through the shared provider conformance suite.
     detail: docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderTraceability } from "./traceability.mjs";
+import { renderTraceability, traceabilityEntries } from "./traceability.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = path.join(root, "docs/traceability/v1-requirements.yaml");
@@ -21,7 +21,7 @@ if (current !== expected) {
     process.exitCode = 1;
   } else {
     await writeFile(target, expected);
-    console.log("Generated traceability for 130 requirements.");
+    console.log(`Generated traceability for ${traceabilityEntries.length} requirements.`);
   }
 } else if (!check) {
   console.log("Traceability report is current.");
