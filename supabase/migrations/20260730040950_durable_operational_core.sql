@@ -572,7 +572,7 @@ begin
     p_lease_name, p_holder_principal_id, 1, v_now,
     v_now + make_interval(secs => p_ttl_seconds), v_now
   )
-  on conflict (lease_name) do update
+  on conflict on constraint coordinator_leases_pkey do update
   set holder_principal_id = excluded.holder_principal_id,
       fencing_token = case when current_lease.expires_at <= v_now then current_lease.fencing_token + 1 else current_lease.fencing_token end,
       acquired_at = case when current_lease.expires_at <= v_now then v_now else current_lease.acquired_at end,
