@@ -64,11 +64,40 @@ export const parseHistoricalObjectLine = (line) => {
 export const historicalObjectNeedsContentScan = (type) =>
   type === "blob" || type === "commit" || type === "tag";
 
-const stripSignatureBlocks = (value) =>
-  value.replace(
-    /-----BEGIN [A-Z0-9 ]*SIGNATURE-----[\s\S]*?-----END [A-Z0-9 ]*SIGNATURE-----/g,
-    ""
-  );
+const signatureTextForScan = (value) => {
+  const retained = [];
+  let inSignature = false;
+  let acceptingArmorHeaders = false;
+  for (const line of value.split("\n")) {
+    if (/^-----BEGIN [A-Z0-9 ]*SIGNATURE-----$/.test(line)) {
+      retained.push(line);
+      inSignature = true;
+      acceptingArmorHeaders = true;
+      continue;
+    }
+    if (!inSignature) {
+      retained.push(line);
+      continue;
+    }
+    if (/^-----END [A-Z0-9 ]*SIGNATURE-----$/.test(line)) {
+      retained.push(line);
+      inSignature = false;
+      acceptingArmorHeaders = false;
+      continue;
+    }
+    if (!acceptingArmorHeaders) continue;
+    if (!line.trim()) {
+      acceptingArmorHeaders = false;
+      continue;
+    }
+    if (/^[A-Za-z][A-Za-z0-9-]*:\s*/.test(line)) {
+      retained.push(line);
+    } else {
+      acceptingArmorHeaders = false;
+    }
+  }
+  return retained.join("\n");
+};
 
 const identityWithoutTimestamp = (line) => {
   const match = /^(author|committer|tagger) (.+?) -?\d+ [+-]\d{4}$/.exec(line);
@@ -113,7 +142,7 @@ export const historicalObjectContentForScan = (content, type) => {
     [
       ...textualHeaders,
       ...embeddedTagText,
-      stripSignatureBlocks(message)
+      signatureTextForScan(message)
     ].join("\n")
   );
 };
