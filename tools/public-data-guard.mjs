@@ -41,6 +41,20 @@ export const readRepositoryEntry = async (absolutePath) => {
   }
   return readFile(absolutePath);
 };
+
+export const parseHistoricalObjectLine = (line) => {
+  const firstSpace = line.indexOf(" ");
+  if (firstSpace < 0) {
+    return { objectId: line, historicalPath: undefined };
+  }
+  return {
+    objectId: line.slice(0, firstSpace),
+    historicalPath: line.slice(firstSpace + 1)
+  };
+};
+
+export const historicalObjectNeedsContentScan = (type) =>
+  type === "blob" || type === "commit" || type === "tag";
 import {
   lstat,
   readFile,

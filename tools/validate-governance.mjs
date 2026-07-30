@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import {
   containsPrivateDenylistValue,
   findCredentialSignals,
+  historicalObjectNeedsContentScan,
+  parseHistoricalObjectLine,
   readRepositoryEntry
 } from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
@@ -96,7 +98,7 @@ for (const relative of files) {
   scanContent(content, normalized);
 }
 
-const collectHistoricalBlobPaths = async () => {
+const collectHistoricalObjectLocations = async () => {
   const child = spawn("git", ["rev-list", "--objects", "--all"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"]
@@ -110,14 +112,17 @@ const collectHistoricalBlobPaths = async () => {
     child.once("error", reject);
     child.once("close", resolve);
   });
-  const objectPaths = new Map();
+  const objectLocations = new Map();
   const scannedHistoricalPaths = new Set();
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
   for await (const line of lines) {
-    const firstSpace = line.indexOf(" ");
-    if (firstSpace < 0) continue;
-    const objectId = line.slice(0, firstSpace);
-    const historicalPath = line.slice(firstSpace + 1);
+    const { objectId, historicalPath } = parseHistoricalObjectLine(line);
+    if (!historicalPath) {
+      if (!objectLocations.has(objectId)) {
+        objectLocations.set(objectId, "<pathless object>");
+      }
+      continue;
+    }
     if (/\.(?:docx|docm|pdf|key|pem|p12|pfx|kdbx)$/i.test(historicalPath)) {
       errors.push(`Forbidden artifact exists in public Git history: ${historicalPath}`);
     }
@@ -131,12 +136,12 @@ const collectHistoricalBlobPaths = async () => {
         `Git history path ${historicalPath}`
       );
     }
-    if (!objectPaths.has(objectId)) {
-      objectPaths.set(objectId, historicalPath);
+    if (!objectLocations.has(objectId)) {
+      objectLocations.set(objectId, historicalPath);
     }
   }
   const exitCode = await completion;
-  if (exitCode === 0) return objectPaths;
+  if (exitCode === 0) return objectLocations;
   if (/not a git repository/i.test(stderr)) {
     warnings.push("Public Git history inspection skipped because Git metadata is unavailable.");
     return new Map();
@@ -144,8 +149,8 @@ const collectHistoricalBlobPaths = async () => {
   throw new Error(stderr.trim() || `git rev-list exited with code ${exitCode}`);
 };
 
-const scanHistoricalBlobs = async (objectPaths) => {
-  if (!objectPaths.size) return;
+const scanHistoricalObjects = async (objectLocations) => {
+  if (!objectLocations.size) return;
   const child = spawn("git", ["cat-file", "--batch"], {
     cwd: root,
     stdio: ["pipe", "pipe", "pipe"]
@@ -160,7 +165,7 @@ const scanHistoricalBlobs = async (objectPaths) => {
     child.once("close", resolve);
   });
   const feed = (async () => {
-    for (const objectId of objectPaths.keys()) {
+    for (const objectId of objectLocations.keys()) {
       if (!child.stdin.write(`${objectId}\n`)) await once(child.stdin, "drain");
     }
     child.stdin.end();
@@ -187,11 +192,11 @@ const scanHistoricalBlobs = async (objectPaths) => {
       if (buffer.length < pending.size + 1) break;
       const content = buffer.subarray(0, pending.size);
       buffer = buffer.subarray(pending.size + 1);
-      if (pending.type === "blob") {
-        const historicalPath = objectPaths.get(pending.objectId) ?? "<unknown>";
+      if (historicalObjectNeedsContentScan(pending.type)) {
+        const historicalPath = objectLocations.get(pending.objectId) ?? "<unknown>";
         scanContent(
           content,
-          `Git history blob ${pending.objectId} (${historicalPath})`
+          `Git history ${pending.type} ${pending.objectId} (${historicalPath})`
         );
       }
       pending = undefined;
@@ -208,7 +213,7 @@ const scanHistoricalBlobs = async (objectPaths) => {
 };
 
 try {
-  await scanHistoricalBlobs(await collectHistoricalBlobPaths());
+  await scanHistoricalObjects(await collectHistoricalObjectLocations());
 } catch (error) {
   errors.push(`Unable to inspect public Git history: ${error.message}`);
 }

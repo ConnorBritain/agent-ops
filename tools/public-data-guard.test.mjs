@@ -12,6 +12,8 @@ import { describe, it } from "node:test";
 import {
   containsPrivateDenylistValue,
   findCredentialSignals,
+  historicalObjectNeedsContentScan,
+  parseHistoricalObjectLine,
   readRepositoryEntry
 } from "./public-data-guard.mjs";
 
@@ -99,5 +101,21 @@ describe("public data guard", () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it("retains pathless commit and tag objects for content scanning", () => {
+    const objectId = "a".repeat(40);
+    assert.deepEqual(parseHistoricalObjectLine(objectId), {
+      objectId,
+      historicalPath: undefined
+    });
+    assert.deepEqual(parseHistoricalObjectLine(`${objectId} deploy.sh`), {
+      objectId,
+      historicalPath: "deploy.sh"
+    });
+    assert.equal(historicalObjectNeedsContentScan("blob"), true);
+    assert.equal(historicalObjectNeedsContentScan("commit"), true);
+    assert.equal(historicalObjectNeedsContentScan("tag"), true);
+    assert.equal(historicalObjectNeedsContentScan("tree"), false);
   });
 });
