@@ -25,9 +25,12 @@ export const decodeForGuard = (content) => {
     windows1252Decoder.decode(buffer)
   ];
   if (buffer.includes(0)) {
+    const shifted = buffer.subarray(1);
     representations.push(
       utf16leDecoder.decode(buffer),
       utf16beDecoder.decode(buffer),
+      utf16leDecoder.decode(shifted),
+      utf16beDecoder.decode(shifted),
       ...representations.map((value) => value.replaceAll("\0", ""))
     );
   }
@@ -203,15 +206,115 @@ const historicalObjectTextForScan = (value, type) => {
   ].join("\n");
 };
 
+const declaredCommitText = (content) => {
+  const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
+  const separator = buffer.indexOf(Buffer.from("\n\n"));
+  const headers = buffer
+    .subarray(0, separator < 0 ? buffer.length : separator)
+    .toString("latin1");
+  const match = /^encoding ([^\r\n]+)$/m.exec(headers);
+  if (!match) return undefined;
+  const encoding = match[1].trim();
+  try {
+    return new TextDecoder(encoding).decode(buffer);
+  } catch (error) {
+    throw new Error(
+      `Unsupported declared Git commit encoding ${JSON.stringify(encoding)}: ${error.message}`
+    );
+  }
+};
+
 export const historicalObjectContentForScan = (content, type) => {
   if (type === "blob") return content;
   if (type !== "commit" && type !== "tag") return Buffer.alloc(0);
+  const declaredText = type === "commit"
+    ? declaredCommitText(content)
+    : undefined;
   return Buffer.from(
     [...new Set(
-      decodeForGuard(content)
+      [
+        ...decodeForGuard(content),
+        ...(declaredText === undefined ? [] : [declaredText])
+      ]
         .map((value) => historicalObjectTextForScan(value, type))
     )].join("\n")
   );
+};
+
+const collectReachableObjectPaths = async (repositoryRoot) => {
+  const child = spawn("git", ["rev-list", "--objects", "--all"], {
+    cwd: repositoryRoot,
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+  });
+  const completion = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", resolve);
+  });
+  const paths = new Set();
+  const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
+  for await (const line of lines) {
+    const { historicalPath } = parseHistoricalObjectLine(line);
+    if (historicalPath) paths.add(historicalPath);
+  }
+  const exitCode = await completion;
+  if (exitCode !== 0) {
+    throw new Error(stderr.trim() || `git rev-list exited with code ${exitCode}`);
+  }
+  return paths;
+};
+
+const collectRefTreePaths = async (repositoryRoot) => {
+  const paths = new Set();
+  for (const refName of await collectRefNames(repositoryRoot)) {
+    const child = spawn(
+      "git",
+      ["ls-tree", "-r", "-z", "--name-only", refName],
+      {
+        cwd: repositoryRoot,
+        stdio: ["ignore", "pipe", "pipe"]
+      }
+    );
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    const completion = new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("close", resolve);
+    });
+    let remainder = Buffer.alloc(0);
+    for await (const chunk of child.stdout) {
+      const content = remainder.length
+        ? Buffer.concat([remainder, chunk])
+        : chunk;
+      let offset = 0;
+      while (true) {
+        const separator = content.indexOf(0, offset);
+        if (separator < 0) break;
+        if (separator > offset) {
+          paths.add(content.subarray(offset, separator).toString("utf8"));
+        }
+        offset = separator + 1;
+      }
+      remainder = Buffer.from(content.subarray(offset));
+    }
+    if (remainder.length) {
+      throw new Error(`Incomplete git ls-tree output for ${refName}`);
+    }
+    const exitCode = await completion;
+    if (exitCode === 0) continue;
+    if (/not a tree object/i.test(stderr)) continue;
+    throw new Error(
+      stderr.trim() || `git ls-tree exited with code ${exitCode} for ${refName}`
+    );
+  }
+  return paths;
 };
 
 export const collectHistoricalPaths = async (repositoryRoot) => {
@@ -262,6 +365,12 @@ export const collectHistoricalPaths = async (repositoryRoot) => {
   const exitCode = await completion;
   if (exitCode !== 0) {
     throw new Error(stderr.trim() || `git log exited with code ${exitCode}`);
+  }
+  for (const reachablePath of await collectReachableObjectPaths(repositoryRoot)) {
+    paths.add(reachablePath);
+  }
+  for (const refTreePath of await collectRefTreePaths(repositoryRoot)) {
+    paths.add(refTreePath);
   }
   return paths;
 };

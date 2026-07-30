@@ -153,6 +153,23 @@ describe("public data guard", () => {
     assert.ok(scanner.retainedByteLength <= scanner.overlapBytes);
   });
 
+  it("preserves UTF-16 alignment across streamed chunks", () => {
+    const privateIdentifier = "Приват-Worker";
+    const content = Buffer.concat([
+      Buffer.alloc(480),
+      Buffer.from(`host=${privateIdentifier}`, "utf16le")
+    ]);
+    assert.equal(
+      containsPrivateDenylistValue(content, [privateIdentifier]),
+      true
+    );
+
+    const scanner = createIncrementalGuardScanner([privateIdentifier]);
+    scanner.write(content.subarray(0, 501));
+    scanner.write(content.subarray(501));
+    assert.equal(scanner.finish().privateValue, true);
+  });
+
   it("scans symlink text without following missing, file, or directory targets", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "agentops-guard-"));
     try {
@@ -233,6 +250,29 @@ describe("public data guard", () => {
       "",
       `Deploy ${privateIdentifier}`
     ].join("\n"), "latin1");
+
+    assert.equal(
+      containsPrivateDenylistValue(
+        historicalObjectContentForScan(commit, "commit"),
+        [privateIdentifier]
+      ),
+      true
+    );
+  });
+
+  it("uses a commit's declared Shift_JIS encoding", () => {
+    const privateIdentifier = "秘密作業者";
+    const commit = Buffer.concat([
+      Buffer.from([
+        `tree ${"a".repeat(40)}`,
+        "author Example Operator <operator@example.invalid> 1 +0000",
+        "committer Example Operator <operator@example.invalid> 1 +0000",
+        "encoding Shift_JIS",
+        "",
+        "Deploy "
+      ].join("\n")),
+      Buffer.from("94e996a78dec8bc68ed2", "hex")
+    ]);
 
     assert.equal(
       containsPrivateDenylistValue(
@@ -381,6 +421,36 @@ describe("public data guard", () => {
       await writeFile(path.join(directory, ".env"), "placeholder=true\n");
       await runGit("add", "--force", ".env");
       await commit("Merge side with fixture");
+
+      const historicalPaths = await collectHistoricalPaths(directory);
+      assert.equal(historicalPaths.has(".env"), true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("retains a path reachable only from a tree tag", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-tree-history-"));
+    const runGit = (...arguments_) =>
+      execFileAsync("git", arguments_, { cwd: directory });
+    try {
+      await runGit("init", "--quiet");
+      await writeFile(path.join(directory, "base.txt"), "shared fixture\n");
+      await runGit("add", "base.txt");
+      await runGit(
+        "-c",
+        "user.name=AgentOps Guard",
+        "-c",
+        "user.email=guard@example.invalid",
+        "commit",
+        "--quiet",
+        "-m",
+        "Add base"
+      );
+      await writeFile(path.join(directory, ".env"), "shared fixture\n");
+      await runGit("add", "--force", ".env");
+      const { stdout } = await runGit("write-tree");
+      await runGit("tag", "tree-fixture", stdout.trim());
 
       const historicalPaths = await collectHistoricalPaths(directory);
       assert.equal(historicalPaths.has(".env"), true);
