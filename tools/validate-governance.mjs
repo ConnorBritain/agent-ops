@@ -1,10 +1,14 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { once } from "node:events";
 import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  decodeForGuard,
+  findCredentialSignals
+} from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
 import { traceabilityEntries } from "./traceability.mjs";
 
@@ -62,43 +66,26 @@ for (let index = 1; index <= 8; index += 1) await requireFile(`docs/adr/ADR-000$
 ][index - 1]}.md`);
 
 const files = await walk();
-const credentialSignals = [
-  /(xox[baprs]-[A-Za-z0-9-]{20,}|xapp-[A-Za-z0-9-]{20,}|gh[opsu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sb_(?:secret|publishable)_[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16}|sk-(?:proj-)?[A-Za-z0-9_-]{20,})/,
-  /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\b/,
-  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/
-];
+const privateGuardKey = process.env.AGENTOPS_PRIVATE_GUARD_HMAC_KEY;
+const privateGuardDigests = new Set(
+  (process.env.AGENTOPS_PRIVATE_GUARD_HMACS ?? "")
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((digest) => digest.toLowerCase())
+);
+if (Boolean(privateGuardKey) !== Boolean(privateGuardDigests.size)) {
+  errors.push(
+    "Private guard configuration requires both AGENTOPS_PRIVATE_GUARD_HMAC_KEY and AGENTOPS_PRIVATE_GUARD_HMACS."
+  );
+}
+for (const digest of privateGuardDigests) {
+  if (!/^[0-9a-f]{64}$/i.test(digest)) {
+    errors.push("Private guard HMAC entries must be 64 hexadecimal characters.");
+  }
+}
 
-// Deployment-specific denylist values are represented only by normalized
-// SHA-256 fingerprints. The private overlay owns the source values.
-const privateSignalFingerprints = new Set([
-  "af25ae8e5f5026e24e5f1d6a5834228c79520d1a559de1097474b9a51e7089c7",
-  "29efa084da14779d9c8d7c17b157a39987bc1f2227b536add114a8db275a5224",
-  "86c1fbc9d7781525b7668ee5797ef660ba6dcb18936e777df44373eb20ab8ea1",
-  "5fc06bb31288eeaba15803fb684498db326b1f95889c6d7f2c4dc4e75138b0a7",
-  "ccabfc457cc4fd38652cbc5217b90f03d209d5c7fc2153cd1f810a067b43a436",
-  "7c539ac81c9e3b52fdb1802a7676ff00437237a3839a4daf1d6a082dd83fe07f",
-  "05191d308ae293f6128269fc11c48b9091871495991e7fb20dee27e4907af107",
-  "0eea074b8171553ca883be8b79fcd129bb8660c64b5189d0d7aa3e32ec7de6c3",
-  "dc355ec75a2dc4a1d29582933b52f9f2ed71061432d72e1991d8b15445b2ff03",
-  "1fc0d6b40ff1d136db81bdd2f0dcc803e68e0230bfe4ecd3ab3bc40d7ebe71c8",
-  "cb02ec4f7e1eb7d02d444c5107c920baa0fde2a8e9e4abec48b2b387aa7e3ca9",
-  "eba4ae33f54ae0f96bed25bfc13abd887ae157380330cd3fd3f0a4d054ce3a3f",
-  "4bcb7b0550a1a810e74944ef9df09ebb3c46e55ca4eee7c0da79afa4a400be59",
-  "df62d37bc4ece0a73537b7481196b2321d18390ae71144363c418d3e04806075",
-  "62cd5577077ca14b4c7565ad28ad38273dbfd1e92d335e587835f0bed596a99e",
-  "55b27f954fbe193902b62810dd17dafb168345fad5e730cc4daca5999e102380",
-  "33a8a1c7b8675b32c0df5affc9457dfa6c8d2d12a6320c7a0302accf468332e6",
-  "da0ce86fb18621436abd4574e4487392b65abdb53f6fc1f6f49ddd79d546e3ad",
-  "7343292dde607b078c62daa569e37624f8b1ada008694832f8b1cc73575e57d6",
-  "b3b81badf886d8e1284e1601b1d28b29a8fb32e65db610a0093548110f09e34c",
-  "0d7d9de64367c75500472e075dffbcb750e613cb0844b3605a64197f88b46893",
-  "be22f6c2ddc00fe49526b8bc7d3ab7bd84a03d27b76be2179ab289f1f72c3625",
-  "97a46360b29018a66634e76a18163b63e8e375c04818b2af39fe84cde451adbf",
-  "27ec170c79ce3c87f43a8e9e60c3e524368068187f8922601ad7608c90526c67"
-]);
-
-const fingerprint = (value) => createHash("sha256").update(value).digest("hex");
-const privateFingerprintMatches = (content) => {
+const privateHmacMatches = (content) => {
+  if (!privateGuardKey || !privateGuardDigests.size) return false;
   const tokens = content.toLowerCase().match(/[a-z0-9][a-z0-9@._-]*/g) ?? [];
   const candidates = new Set(tokens);
   for (let width = 2; width <= 4; width += 1) {
@@ -106,17 +93,22 @@ const privateFingerprintMatches = (content) => {
       candidates.add(tokens.slice(index, index + width).join(" "));
     }
   }
-  return [...candidates].some((candidate) => privateSignalFingerprints.has(fingerprint(candidate)));
+  return [...candidates].some((candidate) => privateGuardDigests.has(
+    createHmac("sha256", privateGuardKey).update(candidate).digest("hex")
+  ));
 };
 
 const scanContent = (content, location) => {
-  if (privateFingerprintMatches(content)) errors.push(`Private deployment fingerprint found in ${location}`);
-  for (const pattern of credentialSignals) {
-    if (pattern.test(content)) errors.push(`Credential signal ${pattern} found in ${location}`);
+  for (const representation of decodeForGuard(content)) {
+    if (privateHmacMatches(representation)) {
+      errors.push(`Private deployment HMAC found in ${location}`);
+      break;
+    }
+  }
+  for (const signal of findCredentialSignals(content)) {
+    errors.push(`Credential signal ${signal} found in ${location}`);
   }
 };
-
-const isLikelyText = (content) => !content.includes(0);
 
 for (const relative of files) {
   const normalized = relative.replaceAll(path.sep, "/");
@@ -124,7 +116,7 @@ for (const relative of files) {
   if (/\.(?:key|pem|p12|pfx|kdbx)$/i.test(normalized)) errors.push(`Credential-bearing file type is not allowed: ${normalized}`);
   if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
   const content = await readFile(path.join(root, relative));
-  if (isLikelyText(content)) scanContent(content.toString("utf8"), normalized);
+  scanContent(content, normalized);
 }
 
 const collectHistoricalBlobPaths = async () => {
@@ -210,10 +202,10 @@ const scanHistoricalBlobs = async (objectPaths) => {
       if (buffer.length < pending.size + 1) break;
       const content = buffer.subarray(0, pending.size);
       buffer = buffer.subarray(pending.size + 1);
-      if (pending.type === "blob" && isLikelyText(content)) {
+      if (pending.type === "blob") {
         const historicalPath = objectPaths.get(pending.objectId) ?? "<unknown>";
         scanContent(
-          content.toString("utf8"),
+          content,
           `Git history blob ${pending.objectId} (${historicalPath})`
         );
       }

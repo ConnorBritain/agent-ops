@@ -15,7 +15,7 @@
     "generate:traceability": "node tools/generate-traceability.mjs",
     "check:specs": "node tools/generate-public-specs.mjs --check",
     "check:traceability": "node tools/generate-traceability.mjs --check",
-    "check:governance": "node tools/validate-governance.mjs",
+    "check:governance": "node --test tools/public-data-guard.test.mjs && node tools/validate-governance.mjs",
     "check:supabase": "node tools/validate-supabase.mjs",
     "roadmap:validate": "roadmap validate",
     "roadmap:render": "roadmap render",
