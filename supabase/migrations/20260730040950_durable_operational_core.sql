@@ -333,6 +333,7 @@ create index events_entity_idx on agentops_audit.events(entity_type, entity_id, 
 create index events_type_ingested_idx on agentops_audit.events(event_type, ingested_at);
 create index outbox_event_row_id_idx on agentops_audit.outbox_items(event_row_id);
 create index outbox_pending_idx on agentops_audit.outbox_items(available_at, id) where state = 'pending';
+create index outbox_processing_lock_idx on agentops_audit.outbox_items(locked_at, id) where state = 'processing';
 
 create or replace function agentops_private.payload_contains_secret(p_value jsonb)
 returns boolean language plpgsql immutable strict set search_path = ''
@@ -485,6 +486,8 @@ returns uuid language plpgsql security definer set search_path = ''
 as $$
 declare
   v_principal agentops.principals%rowtype;
+  v_worker agentops.workers%rowtype;
+  v_job agentops.jobs%rowtype;
   v_event agentops_audit.events%rowtype;
 begin
   select * into v_principal
@@ -494,6 +497,51 @@ begin
   if not found then raise exception using errcode = '42501', message = 'active worker principal required'; end if;
   if v_principal.security_domain_id <> p_security_domain_id then
     raise exception using errcode = '42501', message = 'security-domain mismatch';
+  end if;
+  select * into v_worker
+  from agentops.workers w
+  where w.principal_id = v_principal.id
+    and w.security_domain_id = p_security_domain_id;
+  if not found then
+    raise exception using errcode = '42501', message = 'active worker registration required';
+  end if;
+
+  if p_task_id is null and p_run_id is null then
+    if p_entity_type <> 'worker' or p_entity_id <> v_worker.id then
+      raise exception using errcode = '42501', message = 'worker health events must identify the calling worker';
+    end if;
+  elsif p_task_id is null or p_run_id is null then
+    raise exception using errcode = '42501', message = 'task and run lineage must be supplied together';
+  else
+    select j.* into v_job
+    from agentops.jobs j
+    where j.worker_id = v_worker.id
+      and j.task_id = p_task_id
+      and j.run_id = p_run_id
+      and j.security_domain_id = p_security_domain_id
+      and (
+        (p_entity_type = 'worker' and p_entity_id = v_worker.id)
+        or (p_entity_type = 'job' and p_entity_id = j.id)
+        or (p_entity_type = 'task' and p_entity_id = j.task_id)
+        or (p_entity_type = 'run' and p_entity_id = j.run_id)
+        or (
+          p_entity_type = 'session'
+          and exists (
+            select 1
+            from agentops.sessions s
+            where s.id = p_entity_id
+              and s.run_id = j.run_id
+              and s.provider_id = j.provider_id
+              and s.security_domain_id = p_security_domain_id
+          )
+        )
+      )
+    order by j.created_at desc
+    limit 1;
+
+    if not found then
+      raise exception using errcode = '42501', message = 'event lineage is not assigned to the calling worker';
+    end if;
   end if;
   if p_occurred_at > clock_timestamp() + interval '5 minutes' then
     raise exception using errcode = '22023', message = 'event occurrence time is implausibly far in the future';
@@ -629,8 +677,18 @@ returns uuid language plpgsql security definer set search_path = ''
 as $$
 declare
   v_job agentops.jobs%rowtype;
+  v_coordinator_lease agentops.coordinator_leases%rowtype;
 begin
-  if not agentops.validate_fencing_token(p_coordinator_lease_name, p_coordinator_principal_id, p_fencing_token) then
+  select * into v_coordinator_lease
+  from agentops.coordinator_leases l
+  where l.lease_name = p_coordinator_lease_name
+  for update;
+
+  if not found
+    or v_coordinator_lease.holder_principal_id <> p_coordinator_principal_id
+    or v_coordinator_lease.fencing_token <> p_fencing_token
+    or v_coordinator_lease.expires_at <= clock_timestamp()
+  then
     raise exception using errcode = '40001', message = 'stale or expired coordinator fencing token';
   end if;
   if p_lease_expires_at <= clock_timestamp() then
@@ -675,9 +733,21 @@ begin
     select * into strict v_job from agentops.jobs j
     where j.run_id = p_run_id and j.idempotency_key = p_idempotency_key;
     if v_job.id is distinct from p_job_id
-      or v_job.envelope is distinct from p_envelope
-      or v_job.signature is distinct from p_signature
+      or v_job.task_id is distinct from p_task_id
+      or v_job.run_id is distinct from p_run_id
+      or v_job.worker_id is distinct from p_worker_id
+      or v_job.provider_id is distinct from p_provider_id
+      or v_job.security_domain_id is distinct from p_security_domain_id
+      or v_job.policy_decision_id is distinct from p_policy_decision_id
+      or v_job.coordinator_principal_id is distinct from p_coordinator_principal_id
+      or v_job.coordinator_lease_name is distinct from p_coordinator_lease_name
       or v_job.fencing_token is distinct from p_fencing_token
+      or v_job.idempotency_key is distinct from p_idempotency_key
+      or v_job.envelope_version is distinct from p_envelope_version
+      or v_job.envelope is distinct from p_envelope
+      or v_job.signature_key_ref is distinct from p_signature_key_ref
+      or v_job.signature is distinct from p_signature
+      or v_job.lease_expires_at is distinct from p_lease_expires_at
     then
       raise exception using errcode = '23505', message = 'job idempotency key was reused with different content';
     end if;
@@ -698,21 +768,58 @@ begin
 end;
 $$;
 
-create or replace function agentops.claim_outbox_items(p_lock_owner text, p_limit integer)
+create or replace function agentops.claim_outbox_items(
+  p_lock_owner text,
+  p_limit integer,
+  p_max_attempts integer default 10
+)
 returns setof agentops_audit.outbox_items
-language sql security definer set search_path = ''
+language plpgsql security definer set search_path = ''
 as $$
+begin
+  if p_lock_owner is null or length(trim(p_lock_owner)) < 1 or length(p_lock_owner) > 200 then
+    raise exception using errcode = '22023', message = 'lock owner must contain between 1 and 200 characters';
+  end if;
+  if p_limit is null or p_limit < 1 or p_limit > 100 then
+    raise exception using errcode = '22023', message = 'claim limit must be between 1 and 100';
+  end if;
+  if p_max_attempts is null or p_max_attempts < 1 or p_max_attempts > 100 then
+    raise exception using errcode = '22023', message = 'max attempts must be between 1 and 100';
+  end if;
+
   update agentops_audit.outbox_items o
-  set state = 'processing', locked_by = p_lock_owner, locked_at = clock_timestamp(), attempts = o.attempts + 1
+  set state = 'dead-letter',
+      locked_by = null,
+      locked_at = null,
+      last_error_code = 'DELIVERY_TIMEOUT'
+  where o.state = 'processing'
+    and o.locked_at <= clock_timestamp() - interval '5 minutes'
+    and o.attempts >= p_max_attempts;
+
+  return query
+  update agentops_audit.outbox_items o
+  set state = 'processing',
+      locked_by = p_lock_owner,
+      locked_at = clock_timestamp(),
+      attempts = o.attempts + 1
   where o.id in (
     select candidate.id
     from agentops_audit.outbox_items candidate
-    where candidate.state = 'pending' and candidate.available_at <= clock_timestamp()
+    where (
+        candidate.state = 'pending'
+        and candidate.available_at <= clock_timestamp()
+      )
+      or (
+        candidate.state = 'processing'
+        and candidate.locked_at <= clock_timestamp() - interval '5 minutes'
+        and candidate.attempts < p_max_attempts
+      )
     order by candidate.available_at, candidate.id
-    limit greatest(1, least(p_limit, 100))
+    limit p_limit
     for update skip locked
   )
-  returning o.*
+  returning o.*;
+end;
 $$;
 
 create or replace function agentops.complete_outbox_item(
@@ -754,12 +861,12 @@ $$;
 revoke all on function agentops.acquire_coordinator_lease(text, uuid, integer) from public, anon, authenticated;
 revoke all on function agentops.validate_fencing_token(text, uuid, bigint) from public, anon, authenticated;
 revoke all on function agentops.create_job(uuid, uuid, uuid, uuid, uuid, text, uuid, uuid, text, bigint, text, text, jsonb, text, text, timestamptz) from public, anon, authenticated;
-revoke all on function agentops.claim_outbox_items(text, integer) from public, anon, authenticated;
+revoke all on function agentops.claim_outbox_items(text, integer, integer) from public, anon, authenticated;
 revoke all on function agentops.complete_outbox_item(bigint, text, boolean, text, integer) from public, anon, authenticated;
 grant execute on function agentops.acquire_coordinator_lease(text, uuid, integer) to service_role;
 grant execute on function agentops.validate_fencing_token(text, uuid, bigint) to service_role;
 grant execute on function agentops.create_job(uuid, uuid, uuid, uuid, uuid, text, uuid, uuid, text, bigint, text, text, jsonb, text, text, timestamptz) to service_role;
-grant execute on function agentops.claim_outbox_items(text, integer) to service_role;
+grant execute on function agentops.claim_outbox_items(text, integer, integer) to service_role;
 grant execute on function agentops.complete_outbox_item(bigint, text, boolean, text, integer) to service_role;
 
 alter table agentops.security_domains enable row level security;

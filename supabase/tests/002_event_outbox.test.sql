@@ -19,9 +19,32 @@ values (
   'worker',
   'example-domain',
   'Example worker principal'
+), (
+  '00000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000102',
+  'worker',
+  'example-domain',
+  'Other worker principal'
 );
 
-select plan(7);
+insert into agentops.workers (id, principal_id, security_domain_id, worker_key, state)
+values
+  (
+    '00000000-0000-4000-8000-000000000030',
+    '00000000-0000-4000-8000-000000000001',
+    'example-domain',
+    'example-worker',
+    'ready'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000031',
+    '00000000-0000-4000-8000-000000000002',
+    'example-domain',
+    'other-worker',
+    'ready'
+  );
+
+select plan(8);
 
 set local role authenticated;
 set local "request.jwt.claim.sub" = '00000000-0000-4000-8000-000000000101';
@@ -32,7 +55,7 @@ select lives_ok(
       '1.0',
       'worker.health',
       'worker',
-      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000030',
       'health-0001',
       '2026-07-30T04:00:00Z',
       'example-domain',
@@ -50,7 +73,7 @@ select lives_ok(
       '1.0',
       'worker.health',
       'worker',
-      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000030',
       'health-0001',
       '2026-07-30T04:00:00Z',
       'example-domain',
@@ -68,7 +91,7 @@ select throws_ok(
       '1.0',
       'worker.health',
       'worker',
-      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000030',
       'health-0001',
       '2026-07-30T04:00:00Z',
       'example-domain',
@@ -88,7 +111,7 @@ select throws_ok(
       '1.0',
       'worker.health',
       'worker',
-      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000030',
       'health-0002',
       '2026-07-30T04:00:00Z',
       'example-domain',
@@ -100,6 +123,26 @@ select throws_ok(
   '22023',
   'inline secret-like data is forbidden; store an approved secret reference',
   'inline secret-like event data is rejected'
+);
+
+select throws_ok(
+  $event$
+    select agentops.record_worker_event(
+      '1.0',
+      'worker.health',
+      'worker',
+      '00000000-0000-4000-8000-000000000031',
+      'health-0003',
+      '2026-07-30T04:00:00Z',
+      'example-domain',
+      null,
+      null,
+      '{"state":"ready"}'::jsonb
+    )
+  $event$,
+  '42501',
+  'worker health events must identify the calling worker',
+  'a worker cannot spoof another worker health entity'
 );
 
 reset role;

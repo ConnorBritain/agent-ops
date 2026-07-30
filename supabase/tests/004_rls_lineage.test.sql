@@ -161,7 +161,7 @@ values (
   'test-unit'
 );
 
-select plan(4);
+select plan(6);
 
 set local role authenticated;
 set local "request.jwt.claim.sub" = '00000000-0000-4000-8000-000000000102';
@@ -169,6 +169,42 @@ set local "request.jwt.claim.sub" = '00000000-0000-4000-8000-000000000102';
 select is((select count(*) from agentops.principals), 1::bigint, 'worker sees only its own principal');
 select is((select count(*) from agentops.workers), 1::bigint, 'worker sees only its own worker record');
 select is((select count(*) from agentops.jobs), 1::bigint, 'worker sees only its assigned job');
+select lives_ok(
+  $event$
+    select agentops.record_worker_event(
+      '1.0',
+      'job.running',
+      'job',
+      '00000000-0000-4000-8000-000000000070',
+      'job-worker-one-running',
+      '2026-07-30T04:00:00Z',
+      'example-domain',
+      '00000000-0000-4000-8000-000000000040',
+      '00000000-0000-4000-8000-000000000050',
+      '{"state":"running"}'::jsonb
+    )
+  $event$,
+  'a worker records lifecycle state for its assigned job'
+);
+select throws_ok(
+  $event$
+    select agentops.record_worker_event(
+      '1.0',
+      'job.running',
+      'job',
+      '00000000-0000-4000-8000-000000000071',
+      'job-worker-two-spoofed',
+      '2026-07-30T04:00:00Z',
+      'example-domain',
+      '00000000-0000-4000-8000-000000000040',
+      '00000000-0000-4000-8000-000000000050',
+      '{"state":"running"}'::jsonb
+    )
+  $event$,
+  '42501',
+  'event lineage is not assigned to the calling worker',
+  'a worker cannot emit lifecycle state for another worker job'
+);
 
 reset role;
 
