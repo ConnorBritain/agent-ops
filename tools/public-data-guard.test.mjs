@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { describe, it } from "node:test";
-import { findCredentialSignals } from "./public-data-guard.mjs";
+import {
+  findCredentialSignals,
+  matchesPrivateGuardHmac
+} from "./public-data-guard.mjs";
 
 const fixtureToken = () => ["ghp", "_", "a".repeat(20)].join("");
 
@@ -26,6 +30,20 @@ describe("public data guard", () => {
     assert.equal(
       findCredentialSignals(Buffer.from(`token=${fixtureToken()}`, "utf16le")).length,
       1
+    );
+  });
+
+  it("matches a keyed digest of an exact mixed-case deployment identifier", () => {
+    const key = "private-ci-fixture-key";
+    const identifier = "Worker-Host-A";
+    const digest = createHmac("sha256", key).update(identifier).digest("hex");
+    assert.equal(
+      matchesPrivateGuardHmac(
+        `approved host: ${identifier}`,
+        key,
+        new Set([digest])
+      ),
+      true
     );
   });
 });

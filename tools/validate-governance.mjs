@@ -1,13 +1,13 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { createHmac } from "node:crypto";
 import { once } from "node:events";
 import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   decodeForGuard,
-  findCredentialSignals
+  findCredentialSignals,
+  matchesPrivateGuardHmac
 } from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
 import { traceabilityEntries } from "./traceability.mjs";
@@ -84,23 +84,13 @@ for (const digest of privateGuardDigests) {
   }
 }
 
-const privateHmacMatches = (content) => {
-  if (!privateGuardKey || !privateGuardDigests.size) return false;
-  const tokens = content.toLowerCase().match(/[a-z0-9][a-z0-9@._-]*/g) ?? [];
-  const candidates = new Set(tokens);
-  for (let width = 2; width <= 4; width += 1) {
-    for (let index = 0; index + width <= tokens.length; index += 1) {
-      candidates.add(tokens.slice(index, index + width).join(" "));
-    }
-  }
-  return [...candidates].some((candidate) => privateGuardDigests.has(
-    createHmac("sha256", privateGuardKey).update(candidate).digest("hex")
-  ));
-};
-
 const scanContent = (content, location) => {
   for (const representation of decodeForGuard(content)) {
-    if (privateHmacMatches(representation)) {
+    if (matchesPrivateGuardHmac(
+      representation,
+      privateGuardKey,
+      privateGuardDigests
+    )) {
       errors.push(`Private deployment HMAC found in ${location}`);
       break;
     }
