@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
+import {
+  mkdir,
+  mkdtemp,
+  rm,
+  symlink,
+  writeFile
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, it } from "node:test";
 import {
   containsPrivateDenylistValue,
   findCredentialSignals,
+  readRepositoryEntry
 } from "./public-data-guard.mjs";
 
 const fixtureToken = () => ["ghp", "_", "a".repeat(20)].join("");
@@ -63,5 +73,24 @@ describe("public data guard", () => {
       ),
       true
     );
+  });
+
+  it("scans symlink text without following missing, file, or directory targets", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "agentops-guard-"));
+    try {
+      await writeFile(path.join(directory, "target.txt"), "outside target");
+      await mkdir(path.join(directory, "target-directory"));
+      for (const [name, target] of [
+        ["missing-link", "missing-target"],
+        ["file-link", "target.txt"],
+        ["directory-link", "target-directory"]
+      ]) {
+        const link = path.join(directory, name);
+        await symlink(target, link);
+        assert.equal((await readRepositoryEntry(link)).toString("utf8"), target);
+      }
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });

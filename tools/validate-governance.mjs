@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import {
   containsPrivateDenylistValue,
   findCredentialSignals,
+  readRepositoryEntry
 } from "./public-data-guard.mjs";
 import { documents } from "./specifications.mjs";
 import {
@@ -91,7 +92,7 @@ for (const relative of files) {
   if (/\.(?:key|pem|p12|pfx|kdbx)$/i.test(normalized)) errors.push(`Credential-bearing file type is not allowed: ${normalized}`);
   if (/(^|\/)\.env($|\.)/i.test(normalized) && !normalized.endsWith(".env.example")) errors.push(`Raw environment file is not allowed: ${normalized}`);
   scanContent(Buffer.from(normalized), `repository path ${normalized}`);
-  const content = await readFile(path.join(root, relative));
+  const content = await readRepositoryEntry(path.join(root, relative));
   scanContent(content, normalized);
 }
 

@@ -33,3 +33,16 @@ export const containsPrivateDenylistValue = (content, denylist) => {
   }
   return false;
 };
+
+export const readRepositoryEntry = async (absolutePath) => {
+  const metadata = await lstat(absolutePath);
+  if (metadata.isSymbolicLink()) {
+    return Buffer.from(await readlink(absolutePath));
+  }
+  return readFile(absolutePath);
+};
+import {
+  lstat,
+  readFile,
+  readlink
+} from "node:fs/promises";
