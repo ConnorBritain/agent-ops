@@ -157,20 +157,33 @@ export const historicalObjectContentForScan = (content, type) => {
     ))
     .map(identityWithoutTimestamp);
   const embeddedTagText = [];
+  const commitSignatureText = [];
   if (type === "commit") {
     for (let index = 0; index < headers.length; index += 1) {
       const line = headers[index];
-      if (!line.startsWith("mergetag ")) continue;
-      const embeddedTag = [line.slice("mergetag ".length)];
+      if (line.startsWith("mergetag ")) {
+        const embeddedTag = [line.slice("mergetag ".length)];
+        while (headers[index + 1]?.startsWith(" ")) {
+          index += 1;
+          embeddedTag.push(headers[index].slice(1));
+        }
+        embeddedTagText.push(
+          historicalObjectContentForScan(
+            Buffer.from(embeddedTag.join("\n")),
+            "tag"
+          ).toString("utf8")
+        );
+        continue;
+      }
+      const signatureMatch = /^gpgsig(?:-sha256)? (.*)$/.exec(line);
+      if (!signatureMatch) continue;
+      const signature = [signatureMatch[1]];
       while (headers[index + 1]?.startsWith(" ")) {
         index += 1;
-        embeddedTag.push(headers[index].slice(1));
+        signature.push(headers[index].slice(1));
       }
-      embeddedTagText.push(
-        historicalObjectContentForScan(
-          Buffer.from(embeddedTag.join("\n")),
-          "tag"
-        ).toString("utf8")
+      commitSignatureText.push(
+        signatureTextForScan(signature.join("\n"))
       );
     }
   }
@@ -179,6 +192,7 @@ export const historicalObjectContentForScan = (content, type) => {
     [
       ...textualHeaders,
       ...embeddedTagText,
+      ...commitSignatureText,
       signatureTextForScan(message)
     ].join("\n")
   );

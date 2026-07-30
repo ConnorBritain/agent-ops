@@ -227,6 +227,32 @@ describe("public data guard", () => {
     );
   });
 
+  it("scans armor metadata in signed-commit headers", () => {
+    const privateIdentifier = "private-host-zephyr";
+    for (const signatureHeader of ["gpgsig", "gpgsig-sha256"]) {
+      const commit = Buffer.from([
+        `tree ${"a".repeat(40)}`,
+        "author Example Operator <operator@example.invalid> 1 +0000",
+        "committer Example Operator <operator@example.invalid> 1 +0000",
+        `${signatureHeader} -----BEGIN PGP SIGNATURE-----`,
+        ` Comment: ${privateIdentifier}`,
+        " ",
+        " structural-signature-payload",
+        " -----END PGP SIGNATURE-----",
+        "",
+        "Signed commit"
+      ].join("\n"));
+
+      assert.equal(
+        containsPrivateDenylistValue(
+          historicalObjectContentForScan(commit, "commit"),
+          [privateIdentifier]
+        ),
+        true
+      );
+    }
+  });
+
   it("retains a sensitive historical path after an unchanged rename", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "agentops-history-"));
     const runGit = (...arguments_) =>
