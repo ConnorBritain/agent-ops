@@ -1,0 +1,27 @@
+slice: print-provider
+status: complete
+requirements:
+  - REQ-PROVIDER-001
+  - REQ-PROVIDER-002
+  - REQ-PROVIDER-003
+  - REQ-PROVIDER-004
+  - REQ-TEST-002
+artifacts:
+  - packages/contracts
+  - packages/provider-sdk
+  - packages/providers/print
+  - packages/test-kit
+  - docs/adr/ADR-0012-print-provider-no-execution-reference.md
+tests:
+  - pnpm run check:print-provider
+  - pnpm --filter @agent-ops/contracts test
+  - pnpm validate
+acceptance: ACC-PROVIDER-001
+evidence:
+  complete_typed_provider_lifecycle: passed
+  capability_only_routing_and_explicit_preference: passed
+  correlated_observation_normalization: passed
+  no_execution_plan_for_every_lifecycle_operation: passed
+  secret_and_process_execution_refusal: passed
+  cross_provider_cli_conformance: planned
+catalog_version: 1

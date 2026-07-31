@@ -45,6 +45,7 @@ const required = [
   "docs/traceability/phase-3-worker-safety-hooks.yaml",
   "docs/traceability/phase-3-worker-service-packaging.yaml",
   "docs/traceability/phase-4-roadmap-adapter.yaml",
+  "docs/traceability/phase-4-print-provider.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -57,6 +58,7 @@ const required = [
   "docs/adr/ADR-0009-independent-safety-monitor-and-dry-run-remediation.md",
   "docs/adr/ADR-0010-supervisor-only-service-packaging.md",
   "docs/adr/ADR-0011-roadmap-readiness-and-worktree-intent.md",
+  "docs/adr/ADR-0012-print-provider-no-execution-reference.md",
   "config/roadmap-adapter.manifest.yaml",
   ".github/workflows/ci.yml"
 ];
@@ -339,6 +341,7 @@ const phase3Traceability = await readFile(path.join(root, "docs/traceability/pha
 const phase3SafetyTraceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-safety-hooks.yaml"), "utf8");
 const phase3ServiceTraceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-service-packaging.yaml"), "utf8");
 const phase4RoadmapTraceability = await readFile(path.join(root, "docs/traceability/phase-4-roadmap-adapter.yaml"), "utf8");
+const phase4PrintTraceability = await readFile(path.join(root, "docs/traceability/phase-4-print-provider.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -396,7 +399,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);

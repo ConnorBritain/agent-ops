@@ -12,5 +12,9 @@
 - The Roadmap read adapter resolves only ready-wave and worktree intent. It
   does not create worktrees, launch agents, mutate Roadmap, or satisfy the
   remaining independently versioned primitive, estimator, and architecture
-  dependency references. `print-provider` is the next autonomous local slice.
+  dependency references.
+- PrintProvider proves the lifecycle contract without launching anything. No
+  real CLI provider has been selected, authenticated, installed by AgentOps,
+  or exercised; the next research-only spike must choose a documented control
+  surface before that execution adapter is designed.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

@@ -46,9 +46,9 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker core, safety hooks, static service packaging, and the
-read-only Roadmap adapter are complete; PrintProvider is next** as of
-2026-07-30.
+Status: **Phase 3 worker core, safety hooks, static service packaging, and all
+Phase 4 Roadmap/PrintProvider work are complete; the documented first
+CLI-provider selection spike is next** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -125,7 +125,7 @@ anything on a host.
 runtime identity, durable actionable attention routing, and private canary
 evidence remain planned or gated rather than inferred from static packaging.
 
-## Phase 4 — Roadmap readiness and worktree intent
+## Phase 4 — Roadmap readiness and no-execution provider conformance
 
 Status: **local Roadmap adapter complete** on 2026-07-30; no physical worktree
 has been created and no agent has been launched by the adapter.
@@ -140,5 +140,15 @@ back to Roadmap.
 
 The Roadmap dependency/protocol are versioned separately. A future integration
 must independently version primitive, estimator, and architecture references;
-therefore `REQ-CONTEXT-005` and full `ACC-PLANNING-001` remain planned. Next
-slice: `print-provider`, a deterministic no-execution provider reference.
+therefore `REQ-CONTEXT-005` and full `ACC-PLANNING-001` remain planned.
+
+`packages/provider-sdk` now provides a complete typed lifecycle declaration,
+capability-only routing, correlated observation normalization, and a shared
+conformance harness. `PrintProvider` passes that harness and records one
+redacted, sealed `execution: not-started` plan for every lifecycle operation.
+It contains no process execution path and cannot update Coordinator, task, or
+run state. `REQ-PROVIDER-001` through `REQ-PROVIDER-004` and `REQ-TEST-002`
+are complete as local evidence; `ACC-PROVIDER-001` remains planned until two
+real CLI providers pass the same suite. Next slice:
+`first-cli-provider-spike`, which may research only documented CLI control
+surfaces and must not configure credentials or execute one.

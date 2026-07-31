@@ -480,22 +480,119 @@ export const roadmapWorktreeIntentSchema = z.object({
 
 export type RoadmapWorktreeIntent = z.infer<typeof roadmapWorktreeIntentSchema>;
 
-export type ProviderObservation = {
-  readonly providerId: string;
-  readonly observedAt: string;
-  readonly state: "pending" | "starting" | "running" | "paused" | "attention" | "failed" | "cancelled" | "complete" | "unknown";
-  readonly sourceEventId: string;
-  readonly detail: Readonly<Record<string, unknown>>;
-};
+export const PROVIDER_OPERATIONS = [
+  "validate-environment",
+  "start",
+  "send-input",
+  "inspect",
+  "pause",
+  "resume",
+  "cancel",
+  "collect-artifacts",
+] as const;
+
+export const providerOperationSchema = z.enum(PROVIDER_OPERATIONS);
+export type ProviderOperation = z.infer<typeof providerOperationSchema>;
+
+export const providerIdSchema = z.string().regex(/^[a-z][a-z0-9-]{1,62}$/);
+
+export const providerLifecycleDeclarationSchema = z.object({
+  operation: providerOperationSchema,
+  support: z.enum(["supported", "unsupported"]),
+}).strict();
+
+export const providerCapabilityManifestSchema = z.object({
+  version: contractVersionSchema,
+  providerId: providerIdSchema,
+  providerVersion: semanticVersionSchema,
+  executionMode: z.enum(["no-execution", "bounded-execution"]),
+  capabilities: z.array(capabilitySchema).max(100),
+  lifecycle: z.array(providerLifecycleDeclarationSchema).length(PROVIDER_OPERATIONS.length),
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.capabilities, "capabilities", context);
+  addDuplicateIssues(value.lifecycle.map((entry) => entry.operation), "lifecycle operation", context);
+  const declared = new Set(value.lifecycle.map((entry) => entry.operation));
+  for (const operation of PROVIDER_OPERATIONS) {
+    if (!declared.has(operation)) {
+      context.addIssue({
+        code: "custom",
+        message: `missing lifecycle declaration: ${operation}`,
+        path: ["lifecycle"],
+      });
+    }
+  }
+});
+
+export type ProviderCapabilityManifest = z.infer<typeof providerCapabilityManifestSchema>;
+
+export const providerInvocationSchema = z.object({
+  version: contractVersionSchema,
+  invocationId: uuidSchema,
+  operation: providerOperationSchema,
+  envelope: signedJobEnvelopeSchema,
+  input: secretSafeObjectSchema,
+  requestedAt: rfc3339Schema,
+}).strict();
+
+export type ProviderInvocation = z.infer<typeof providerInvocationSchema>;
+
+export const providerStateSchema = z.enum([
+  "pending",
+  "starting",
+  "running",
+  "paused",
+  "attention",
+  "failed",
+  "cancelled",
+  "complete",
+  "unknown",
+]);
+
+export type ProviderState = z.infer<typeof providerStateSchema>;
+
+export const providerObservationSchema = z.object({
+  version: contractVersionSchema,
+  providerId: providerIdSchema,
+  invocationId: uuidSchema,
+  operation: providerOperationSchema,
+  observedAt: rfc3339Schema,
+  state: providerStateSchema,
+  sourceEventId: z.string().min(1).max(240),
+  detail: secretSafeObjectSchema,
+}).strict();
+
+export type ProviderObservation = z.infer<typeof providerObservationSchema>;
+
+export const providerEnvironmentVerdictSchema = z.object({
+  version: contractVersionSchema,
+  providerId: providerIdSchema,
+  invocationId: uuidSchema,
+  accepted: z.boolean(),
+  reasons: z.array(z.string().min(1).max(240)).max(100),
+  detail: secretSafeObjectSchema,
+}).strict();
+
+export type ProviderEnvironmentVerdict = z.infer<typeof providerEnvironmentVerdictSchema>;
+
+export const providerArtifactSchema = z.object({
+  version: contractVersionSchema,
+  providerId: providerIdSchema,
+  invocationId: uuidSchema,
+  kind: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+  mediaType: z.string().regex(/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i),
+  data: secretSafeObjectSchema,
+}).strict();
+
+export type ProviderArtifact = z.infer<typeof providerArtifactSchema>;
 
 export interface Provider {
-  inspectCapabilities(): Promise<readonly string[]>;
-  validateEnvironment(input: Readonly<Record<string, unknown>>): Promise<Readonly<Record<string, unknown>>>;
-  start(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  sendInput(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  inspect(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  pause(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  resume(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  cancel(input: Readonly<Record<string, unknown>>): Promise<ProviderObservation>;
-  collectArtifacts(input: Readonly<Record<string, unknown>>): Promise<readonly Readonly<Record<string, unknown>>[]>;
+  inspectCapabilities(): Promise<ProviderCapabilityManifest>;
+  validateEnvironment(input: ProviderInvocation): Promise<ProviderEnvironmentVerdict>;
+  start(input: ProviderInvocation): Promise<ProviderObservation>;
+  sendInput(input: ProviderInvocation): Promise<ProviderObservation>;
+  inspect(input: ProviderInvocation): Promise<ProviderObservation>;
+  pause(input: ProviderInvocation): Promise<ProviderObservation>;
+  resume(input: ProviderInvocation): Promise<ProviderObservation>;
+  cancel(input: ProviderInvocation): Promise<ProviderObservation>;
+  collectArtifacts(input: ProviderInvocation): Promise<readonly ProviderArtifact[]>;
 }

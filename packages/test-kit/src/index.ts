@@ -1,6 +1,7 @@
 import {
   CONTRACT_VERSION,
   type NormalizedEvent,
+  type ProviderInvocation,
   type SignedJobEnvelope,
   type WorkerHeartbeat,
   type WorkerManifest,
@@ -18,6 +19,7 @@ export const testIds = {
   task: "00000000-0000-4000-8000-000000000106",
   run: "00000000-0000-4000-8000-000000000107",
   policy: "00000000-0000-4000-8000-000000000108",
+  providerInvocation: "00000000-0000-4000-8000-000000000109",
 } as const;
 
 export class DeterministicClock {
@@ -207,5 +209,17 @@ export const buildJobEnvelope = (
     keyRef: "secret://agentops/signing/coordinator",
     value: "a".repeat(64),
   },
+  ...overrides,
+});
+
+export const buildProviderInvocation = (
+  overrides: Partial<ProviderInvocation> = {},
+): ProviderInvocation => ({
+  version: CONTRACT_VERSION,
+  invocationId: testIds.providerInvocation,
+  operation: "start",
+  envelope: buildJobEnvelope(),
+  input: {},
+  requestedAt: "2026-07-30T04:00:00Z",
   ...overrides,
 });

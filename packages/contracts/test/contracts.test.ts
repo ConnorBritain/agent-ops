@@ -5,6 +5,8 @@ import {
   assertNoInlineSecrets,
   commandSchema,
   normalizedEventSchema,
+  providerCapabilityManifestSchema,
+  providerInvocationSchema,
   roadmapWorktreeIntentRequestSchema,
   roadmapWorktreeIntentSchema,
   safetyAuditRecordSchema,
@@ -232,5 +234,53 @@ describe("versioned contracts", () => {
         preparation: "not-started",
       },
     }).worktree.preparation, "not-started");
+  });
+
+  it("requires a complete provider lifecycle and secret-safe invocation", () => {
+    const lifecycle = [
+      "validate-environment", "start", "send-input", "inspect",
+      "pause", "resume", "cancel", "collect-artifacts",
+    ].map((operation) => ({ operation, support: "supported" }));
+    assert.equal(providerCapabilityManifestSchema.parse({
+      version: CONTRACT_VERSION,
+      providerId: "print-provider",
+      providerVersion: "0.1.0",
+      executionMode: "no-execution",
+      capabilities: ["terminal"],
+      lifecycle,
+    }).lifecycle.length, 8);
+    assert.equal(providerCapabilityManifestSchema.safeParse({
+      version: CONTRACT_VERSION,
+      providerId: "print-provider",
+      providerVersion: "0.1.0",
+      executionMode: "no-execution",
+      capabilities: ["terminal"],
+      lifecycle: lifecycle.slice(0, 7),
+    }).success, false);
+
+    const envelope = {
+      version: CONTRACT_VERSION,
+      jobId: ids.job,
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      requiredCapabilities: ["terminal"],
+      requiredSkills: [],
+      policyDecisionId: ids.policy,
+      lease: { leaseName: "provider-job", holderId: ids.holder, fencingToken: 1, expiresAt: "2026-07-30T05:00:00Z" },
+      safeWorkingDirectory: "/workspace/example",
+      redactionPolicyRef: "policy://redaction/default",
+      callbackIdentityRef: "secret://agentops/callback/provider",
+      body: { objective: "fixture" },
+      signature: { algorithm: "ed25519", keyRef: "secret://agentops/signing/provider", value: "a".repeat(64) },
+    };
+    assert.equal(providerInvocationSchema.safeParse({
+      version: CONTRACT_VERSION,
+      invocationId: ids.registration,
+      operation: "start",
+      envelope,
+      input: { accessToken: "inline-value" },
+      requestedAt: "2026-07-30T04:00:00Z",
+    }).success, false);
   });
 });
