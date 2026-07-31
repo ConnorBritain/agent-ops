@@ -3,13 +3,14 @@
 Phase 0 created no runtime packages. Phase 2 activated the contract, domain,
 adapter, and Supabase boundaries. Phase 3 adds a transport-neutral worker
 supervisor, deterministic safety policy and monitor, and test kit. Phase 4
-adds the shared provider SDK and a deterministic `PrintProvider` test double,
-but still has no application service, real provider launcher, host enrollment,
-credential, or cloud deployment.
+adds the shared provider SDK and a deterministic `PrintProvider` test double.
+Phase 6 now adds a transport-neutral Coordinator application service over
+durable ports; it still has no listener, real provider launcher, host
+enrollment, credential, or cloud deployment.
 
 | Future location | Responsibility | Must not own |
 | --- | --- | --- |
-| `apps/coordinator` | Intent, policy orchestration, scheduling, reconciliation, attention, and durable state transitions. | Direct host control or unreviewed external state writes. |
+| `apps/coordinator` | Intent persistence, policy orchestration, scheduling audit, durable-job dispatch, reconciliation, and attention ordering over named ports. | Direct host control, a listener, timer, provider launch, chat authority, or unreviewed external state writes. |
 | `apps/worker` | Future host-service composition root for outbound connectivity and platform adapters. | Domain policy, provider implementation, portfolio priority, or autonomous restart decisions. |
 | `packages/contracts` | Versioned command, job, event, provider, verification, and remote-access contracts. | I/O, credentials, or current operational state. |
 | `packages/domain` | Pure state machines, scheduling constraints, policy inputs, and lineage rules. | Network, database, process, or provider APIs. |
@@ -24,7 +25,8 @@ credential, or cloud deployment.
 | `config/fleet` | Public schemas and generic examples. | Real host, relay, network, or credential values. |
 
 No generated package directory is committed before its owning Roadmap slice is
-active. Service composition and real provider execution remain later slices.
+active. Hosted service composition and real provider execution remain later
+separately authorized slices.
 
 The Roadmap adapter depends on the separately versioned read-only protocol in
 `config/roadmap-adapter.manifest.yaml`; it consumes Roadmap's readiness and

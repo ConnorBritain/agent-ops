@@ -433,7 +433,7 @@ pis:
         prompt: Use one disposable local-stdio session, preserve redacted evidence, verify interruption before ending the child process, and stop on any authorization or safety failure.
   - id: phase-6-attention-delivery
     title: Coordinator attention and verified draft delivery
-    status: scheduled
+    status: active
     deps: [phase-5-first-cli-provider]
     summary: Complete the first valuable vertical slice from authorized intent through one durable blocker response, independent verification, and draft pull-request delivery.
     exit_criteria: A replayable disposable-repository scenario proves attention persistence before delivery, restart-safe resume, independent verification, policy-gated draft PR creation, and quiet successful completion.
@@ -445,13 +445,14 @@ pis:
     sprints:
       - id: coordinator-runtime
         title: Intent, task, run, reconciliation, and attention services
-        status: scheduled
+        status: complete
         invoke: coordinator-runtime
         what: Implement transport-neutral Coordinator application services around the durable ports, policy engine, scheduler, reconciler, and attention manager.
-        est_sessions: 3
+        est_sessions: 0
         weight: heavy
         deps: [first-cli-provider, roadmap-adapter]
         gate: Command-to-job, scheduling audit, stale-session, and durable-attention fixtures
+        completed_on: "2026-07-30"
         touches:
           - apps/coordinator/
           - packages/domain/
@@ -464,7 +465,7 @@ pis:
           - docs/specs/SPEC-003-trust-security-and-federation.md
           - docs/specs/SPEC-006-coordinator-runtime.md
           - docs/specs/SPEC-016-observability-operations-and-runbooks.md
-        resume_action: Build application orchestration around existing domain and durable boundaries without choosing a chat transport.
+        resume_action: Preserve the durable-port boundary and fixtures; implement the separately scoped Slack attention projection next without making it authoritative.
         priority:
           tier: P0
           weight: 100

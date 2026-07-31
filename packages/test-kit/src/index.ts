@@ -1,5 +1,6 @@
 import {
   CONTRACT_VERSION,
+  type AttentionItem,
   type NormalizedEvent,
   type ProviderInvocation,
   type SignedJobEnvelope,
@@ -8,6 +9,18 @@ import {
   type WorkerRegistration,
   type WorkerResourceSnapshot,
 } from "@agent-ops/contracts";
+import type {
+  AttentionDraft,
+  AttentionResponseRecord,
+  CoordinatorDurableStore,
+  CoordinatorIntent,
+  CreateJobInput,
+  DurableOperationOptions,
+  LeaseGrant,
+  ProviderAcknowledgement,
+  ReconciliationSnapshot,
+  SchedulingAuditRecord,
+} from "@agent-ops/domain";
 import type { WorkerSafetySnapshot } from "@agent-ops/policy";
 
 export const testIds = {
@@ -20,6 +33,8 @@ export const testIds = {
   run: "00000000-0000-4000-8000-000000000107",
   policy: "00000000-0000-4000-8000-000000000108",
   providerInvocation: "00000000-0000-4000-8000-000000000109",
+  coordinator: "00000000-0000-4000-8000-000000000110",
+  attention: "00000000-0000-4000-8000-000000000111",
 } as const;
 
 export class DeterministicClock {
@@ -123,6 +138,134 @@ export class InMemoryWorkerControlPlane {
 
   async recordEvent(event: NormalizedEvent): Promise<void> {
     this.events.push(event);
+  }
+}
+
+/**
+ * Deterministic durable-port double for Coordinator application-service tests.
+ * It records the exact persistence order and never reaches a database, a
+ * provider, a chat service, or a host.
+ */
+export class InMemoryCoordinatorDurableStore implements CoordinatorDurableStore {
+  readonly operations: string[] = [];
+  readonly intents: CoordinatorIntent[] = [];
+  readonly schedulingDecisions: SchedulingAuditRecord[] = [];
+  readonly jobs: CreateJobInput[] = [];
+  readonly workerEvents: NormalizedEvent[] = [];
+  readonly attentionItems: AttentionItem[] = [];
+  readonly attentionResponses: AttentionResponseRecord[] = [];
+  readonly providerAcknowledgements: ProviderAcknowledgement[] = [];
+  reconciliationSnapshots: readonly ReconciliationSnapshot[] = [];
+  #attentionBySource = new Map<string, AttentionItem>();
+
+  async acquireCoordinatorLease(input: {
+    readonly leaseName: string;
+    readonly holderPrincipalId: string;
+    readonly ttlSeconds: number;
+  }, options?: DurableOperationOptions): Promise<LeaseGrant> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("lease");
+    return {
+      acquired: true,
+      leaseName: input.leaseName,
+      holderPrincipalId: input.holderPrincipalId,
+      fencingToken: 1,
+      expiresAt: "2026-07-30T04:05:00.000Z",
+    };
+  }
+
+  async createJob(input: CreateJobInput, options?: DurableOperationOptions): Promise<string> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("job");
+    this.jobs.push(input);
+    return input.envelope.jobId;
+  }
+
+  async recordWorkerEvent(
+    event: NormalizedEvent,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("worker-event");
+    this.workerEvents.push(event);
+    return event.sourceEventId;
+  }
+
+  async recordIntent(
+    intent: CoordinatorIntent,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("intent");
+    this.intents.push(intent);
+    return intent.command.idempotencyKey;
+  }
+
+  async recordSchedulingDecision(
+    audit: SchedulingAuditRecord,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("scheduling");
+    this.schedulingDecisions.push(audit);
+    return `${audit.runId}:scheduling`;
+  }
+
+  async createAttention(
+    draft: AttentionDraft,
+    options?: DurableOperationOptions,
+  ): Promise<AttentionItem> {
+    options?.signal?.throwIfAborted();
+    const existing = this.#attentionBySource.get(draft.sourceEventId);
+    if (existing) return existing;
+    this.operations.push("attention");
+    const item: AttentionItem = {
+      version: CONTRACT_VERSION,
+      id: `${testIds.attention.slice(0, -3)}${String(111 + this.attentionItems.length).padStart(3, "0")}`,
+      taskId: draft.taskId,
+      ...(draft.runId ? { runId: draft.runId } : {}),
+      securityDomain: draft.securityDomain,
+      type: draft.type,
+      summary: draft.summary,
+      ...(draft.verbatimQuestion ? { verbatimQuestion: draft.verbatimQuestion } : {}),
+    };
+    this.#attentionBySource.set(draft.sourceEventId, item);
+    this.attentionItems.push(item);
+    return item;
+  }
+
+  async recordAttentionResponse(
+    response: AttentionResponseRecord,
+    options?: DurableOperationOptions,
+  ): Promise<AttentionItem> {
+    options?.signal?.throwIfAborted();
+    const index = this.attentionItems.findIndex((item) => item.id === response.attentionItemId);
+    if (index < 0) throw new Error("Attention item does not exist in the deterministic store.");
+    const prior = this.attentionItems[index];
+    if (!prior) throw new Error("Attention item was unexpectedly absent.");
+    this.operations.push("attention-response");
+    const updated: AttentionItem = { ...prior, durableResponse: response.response };
+    this.attentionItems[index] = updated;
+    this.attentionResponses.push(response);
+    return updated;
+  }
+
+  async recordProviderAcknowledgement(
+    acknowledgement: ProviderAcknowledgement,
+    options?: DurableOperationOptions,
+  ): Promise<string> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("provider-acknowledgement");
+    this.providerAcknowledgements.push(acknowledgement);
+    return `${acknowledgement.jobId}:acknowledgement`;
+  }
+
+  async listReconciliationSnapshots(
+    options?: DurableOperationOptions,
+  ): Promise<readonly ReconciliationSnapshot[]> {
+    options?.signal?.throwIfAborted();
+    this.operations.push("reconciliation-read");
+    return this.reconciliationSnapshots.map((snapshot) => ({ ...snapshot }));
   }
 }
 

@@ -18,6 +18,19 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  apps/coordinator:
+    dependencies:
+      '@agent-ops/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@agent-ops/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+    devDependencies:
+      '@agent-ops/test-kit':
+        specifier: workspace:*
+        version: link:../../packages/test-kit
+
   packages/adapters:
     dependencies:
       '@agent-ops/contracts':
@@ -86,6 +99,9 @@ importers:
       '@agent-ops/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@agent-ops/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@agent-ops/policy':
         specifier: workspace:*
         version: link:../policy

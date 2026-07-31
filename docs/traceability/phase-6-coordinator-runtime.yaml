@@ -1,0 +1,27 @@
+slice: coordinator-runtime
+status: complete
+requirements:
+  - REQ-COORD-003
+  - REQ-COORD-004
+  - REQ-COORD-005
+  - REQ-COORD-006
+artifacts:
+  - apps/coordinator
+  - packages/domain
+  - packages/test-kit
+  - docs/architecture/coordinator-runtime.md
+  - docs/adr/ADR-0014-coordinator-durable-intent-and-attention-boundary.md
+tests:
+  - pnpm run check:coordinator-runtime
+  - pnpm --filter @agent-ops/coordinator test
+  - pnpm validate
+acceptance: ACC-ATTENTION-001
+evidence:
+  intent_policy_scheduler_ordering: passed
+  scheduling_audit_with_exclusions_and_selected_placement: passed
+  durable_job_before_assigned_worker_dispatch: passed
+  durable_attention_before_projection: passed
+  durable_attention_response_before_session_projection: passed
+  provider_acknowledgement_is_not_running_truth: passed
+  stale_state_attention_without_automatic_restart: passed
+  periodic_composition_hosted_binding_and_external_delivery: separately-authorized

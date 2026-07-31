@@ -47,9 +47,9 @@ private-overlay gate.
 ## Ordered v1 implementation
 
 Status: **Phase 3 worker core, safety hooks, static service packaging, all
-Phase 4 Roadmap/PrintProvider work, and the first CLI-provider selection spike
-are complete; the normalized Codex App Server adapter is next** as of
-2026-07-30.
+Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server adapter,
+and the local Coordinator application service are complete; the non-authoritative
+Slack attention projection is next** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -172,3 +172,26 @@ without a provider binary, credential, process, or network connection. The
 new `first-cli-provider-runtime-canary` slice is private and gated on owner
 authorization, scoped provider identity, a disposable repository, and a
 reviewed rollback plan.
+
+## Phase 6 — Coordinator runtime
+
+Status: **local application service complete** on 2026-07-30; hosted
+composition and human-facing transport are not started.
+
+`apps/coordinator` now persists a command intent before policy evaluation,
+applies domain/capability/health filters before scoring, records all scheduling
+inputs and exclusions, persists a job before assigned-worker dispatch, and
+records any provider acknowledgement strictly as an observation. It has no
+code path that promotes acknowledgement into a running state.
+
+The reconciler compares desired and observed state through a durable port and
+creates attention for stale, unavailable, failed, or divergent state with no
+automatic restart. Attention items and durable answers are written before their
+respective projection ports are called; a projection failure stays deferred and
+is never retried in-process. Deterministic fixtures prove the full ordering,
+negative placement, acknowledgement, stale-state, and redaction behavior.
+
+No timer, listener, hosted database binding, scoped service identity, chat
+workspace, provider process, worker connection, credential, or external
+message was created. A future private composition root must independently bind
+the reviewed durable schema and delivery transports.

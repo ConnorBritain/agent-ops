@@ -1,5 +1,5 @@
 {
-  "name": "@agent-ops/test-kit",
+  "name": "@agent-ops/coordinator",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@agent-ops/contracts": "workspace:*",
-    "@agent-ops/domain": "workspace:*",
-    "@agent-ops/policy": "workspace:*"
+    "@agent-ops/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@agent-ops/test-kit": "workspace:*"
   }
 }

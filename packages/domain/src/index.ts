@@ -1,4 +1,6 @@
 import type {
+  AttentionItem,
+  Command,
   NormalizedEvent,
   ResourceBudget,
   SignedJobEnvelope,
@@ -133,6 +135,117 @@ export interface DurableOperationalStore {
     event: NormalizedEvent,
     options?: DurableOperationOptions,
   ): Promise<string>;
+}
+
+/**
+ * A durable record of an intent received by the Coordinator. It is deliberately
+ * separate from a job: an intent can be denied, require approval, or fail
+ * placement without ever becoming executable work.
+ */
+export type CoordinatorIntent = {
+  readonly command: Command;
+  readonly taskId: string;
+  readonly runId: string;
+  readonly securityDomain: string;
+  readonly persistedAt: string;
+};
+
+export type SchedulingAuditRecord = {
+  readonly taskId: string;
+  readonly runId: string;
+  readonly securityDomain: string;
+  readonly policyDecision: PolicyDecision;
+  readonly requiredCapabilities: readonly string[];
+  readonly preferredProviderId?: string;
+  readonly candidates: readonly {
+    readonly workerId: string;
+    readonly providerId: string;
+    readonly securityDomain: string;
+    readonly capabilities: readonly string[];
+    readonly healthy: boolean;
+    readonly preferenceScore: number;
+  }[];
+  readonly placement: PlacementResult;
+  readonly recordedAt: string;
+};
+
+export type AttentionDraft = {
+  readonly taskId: string;
+  readonly runId?: string;
+  readonly securityDomain: string;
+  readonly type: AttentionItem["type"];
+  readonly summary: string;
+  readonly verbatimQuestion?: string;
+  /** A stable source identity makes a repeated reconciliation safe to deduplicate. */
+  readonly sourceEventId: string;
+  readonly raisedAt: string;
+};
+
+export type AttentionResponseRecord = {
+  readonly attentionItemId: string;
+  readonly command: Command;
+  readonly response: Readonly<Record<string, unknown>>;
+  readonly persistedAt: string;
+};
+
+/**
+ * An acknowledgement is an observation only. It never establishes that the
+ * corresponding run is executing; the reconciler must later obtain that fact
+ * independently from worker/provider observations.
+ */
+export type ProviderAcknowledgement = {
+  readonly jobId: string;
+  readonly taskId: string;
+  readonly runId: string;
+  readonly securityDomain: string;
+  readonly workerId: string;
+  readonly providerId: string;
+  readonly providerSessionRef?: string;
+  readonly acknowledgedAt: string;
+};
+
+export type ReconciliationSnapshot = {
+  readonly taskId: string;
+  readonly runId: string;
+  readonly securityDomain: string;
+  readonly desired: "running" | "paused" | "cancelled" | "complete";
+  readonly observed: "running" | "paused" | "failed" | "cancelled" | "complete" | "unknown";
+  readonly workerAvailable: boolean;
+  readonly providerAvailable: boolean;
+  /** Retained as evidence only; it must not alter `observed`. */
+  readonly providerAcknowledged: boolean;
+};
+
+/**
+ * The Coordinator's durable boundary. A concrete adapter may use the durable
+ * database and transactional outbox, while deterministic tests use an in-memory
+ * double. No chat or provider transport is given permission to bypass this
+ * port.
+ */
+export interface CoordinatorDurableStore extends DurableOperationalStore {
+  recordIntent(
+    intent: CoordinatorIntent,
+    options?: DurableOperationOptions,
+  ): Promise<string>;
+  recordSchedulingDecision(
+    audit: SchedulingAuditRecord,
+    options?: DurableOperationOptions,
+  ): Promise<string>;
+  createAttention(
+    draft: AttentionDraft,
+    options?: DurableOperationOptions,
+  ): Promise<AttentionItem>;
+  recordAttentionResponse(
+    response: AttentionResponseRecord,
+    options?: DurableOperationOptions,
+  ): Promise<AttentionItem>;
+  recordProviderAcknowledgement(
+    acknowledgement: ProviderAcknowledgement,
+    options?: DurableOperationOptions,
+  ): Promise<string>;
+  listReconciliationSnapshots(
+    options?: DurableOperationOptions,
+  ): Promise<readonly ReconciliationSnapshot[]>;
 }
 
 export type ReconciliationDecision =

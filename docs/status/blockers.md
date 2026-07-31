@@ -2,7 +2,8 @@
 
 ## Active blockers
 
-None for generalized local PrintProvider implementation and CI verification.
+None for generalized local Coordinator application-service implementation and
+CI verification.
 
 ## Explicit authorization gates
 
