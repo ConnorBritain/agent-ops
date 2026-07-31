@@ -100,6 +100,8 @@ export function normalizeProviderObservation(
 
 export type ProviderConformanceFixture = {
   readonly invocation: ProviderInvocation;
+  /** Provider-specific, secret-safe input overlays for lifecycle operations. */
+  readonly operationInputs?: Readonly<Partial<Record<ProviderOperation, Readonly<Record<string, unknown>>>>>;
   readonly ingestedAt: string;
 };
 
@@ -110,8 +112,16 @@ export type ProviderConformanceResult = {
   readonly artifacts: readonly ProviderArtifact[];
 };
 
-const invocationFor = (input: ProviderInvocation, operation: ProviderOperation): ProviderInvocation =>
-  providerInvocationSchema.parse({ ...input, operation });
+const invocationFor = (
+  input: ProviderInvocation,
+  operation: ProviderOperation,
+  operationInputs: ProviderConformanceFixture["operationInputs"],
+): ProviderInvocation =>
+  providerInvocationSchema.parse({
+    ...input,
+    operation,
+    ...(operationInputs?.[operation] ? { input: operationInputs[operation] } : {}),
+  });
 
 const declarationFor = (
   manifest: ProviderCapabilityManifest,
@@ -151,7 +161,7 @@ export async function runProviderConformance(
     }
   }
 
-  const environmentInvocation = invocationFor(base, "validate-environment");
+  const environmentInvocation = invocationFor(base, "validate-environment", fixture.operationInputs);
   const environment = providerEnvironmentVerdictSchema.parse(
     await provider.validateEnvironment(environmentInvocation),
   );
@@ -164,7 +174,7 @@ export async function runProviderConformance(
   const normalizedEvents: NormalizedEvent[] = [];
   for (const operation of PROVIDER_OPERATIONS) {
     if (operation === "validate-environment" || operation === "collect-artifacts") continue;
-    const invocation = invocationFor(base, operation);
+    const invocation = invocationFor(base, operation, fixture.operationInputs);
     const observation = operation === "start"
       ? await provider.start(invocation)
       : operation === "send-input"
@@ -181,7 +191,7 @@ export async function runProviderConformance(
     normalizedEvents.push(normalizeProviderObservation(invocation, validated, fixture.ingestedAt));
   }
 
-  const artifactInvocation = invocationFor(base, "collect-artifacts");
+  const artifactInvocation = invocationFor(base, "collect-artifacts", fixture.operationInputs);
   const artifacts = (await provider.collectArtifacts(artifactInvocation)).map((artifact) => {
     const parsed = providerArtifactSchema.parse(artifact);
     if (parsed.providerId !== manifest.providerId || parsed.invocationId !== base.invocationId) {

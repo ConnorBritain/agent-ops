@@ -346,7 +346,7 @@ pis:
         prompt: PrintProvider must never execute a process; it renders the exact authorized plan and normalized observations used by the shared conformance suite.
   - id: phase-5-first-cli-provider
     title: First bounded CLI provider
-    status: active
+    status: gated
     deps: [phase-4-roadmap-print-provider]
     summary: Select and implement one documented CLI control surface through the shared provider SDK without vendor authority leaking into domain contracts.
     exit_criteria: A disposable fixture executes, blocks, resumes, cancels, and collects artifacts through the provider conformance suite with redacted evidence.
@@ -382,13 +382,14 @@ pis:
         prompt: Record unsupported operations honestly, keep credentials out of fixtures, and reject any provider that requires undocumented UI automation.
       - id: first-cli-provider
         title: Implement the first normalized CLI provider
-        status: next
+        status: complete
         invoke: first-cli-provider
         what: Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [first-cli-provider-spike]
         gate: Shared provider conformance, crash recovery, cancellation, and redaction tests
+        completed_on: "2026-07-30"
         touches:
           - packages/providers/
           - packages/provider-sdk/
@@ -399,12 +400,37 @@ pis:
           - docs/specs/SPEC-005-commands-events-and-idempotency.md
           - docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
           - docs/specs/SPEC-009-hooks-health-and-safeguards.md
-        resume_action: Implement against the accepted provider ADR and use a disposable repository fixture.
+        resume_action: Preserve the injected transport and test-only boundary; move to a private disposable runtime canary only when separately authorized.
         priority:
           tier: P0
           weight: 90
           reason: The first end-to-end delivery loop depends on a real bounded provider.
         prompt: Emit only normalized observations, never mutate task state directly, and preserve cancellation and artifact evidence when the provider dies.
+      - id: first-cli-provider-runtime-canary
+        title: Private disposable Codex App Server runtime canary
+        status: gated
+        invoke: first-cli-provider-runtime-canary
+        what: Bind the reviewed adapter to one private disposable local-stdio provider session and record bounded launch, blocker input, cancellation, artifact, and rollback evidence.
+        est_sessions: 1
+        weight: light
+        deps: [first-cli-provider, private-worker-canary]
+        gated_on: Private owner authorization, scoped provider identity, disposable repository, and reviewed rollback plan
+        gate: Private canary evidence proves documented protocol compatibility, cancellation, redaction, no automatic restart, and cleanup
+        touches:
+          - packages/providers/
+          - docs/private/
+        read_order:
+          - docs/adr/ADR-0013-codex-app-server-first-cli-provider.md
+          - docs/architecture/codex-app-server-provider.md
+          - docs/specs/SPEC-003-trust-security-and-federation.md
+          - docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+          - docs/specs/SPEC-009-hooks-health-and-safeguards.md
+        resume_action: Wait for explicit private authorization; do not install, authenticate, launch, or enroll a provider from the public template.
+        priority:
+          tier: P1
+          weight: 80
+          reason: A real protocol binding needs private host, identity, and rollback controls before it can run.
+        prompt: Use one disposable local-stdio session, preserve redacted evidence, verify interruption before ending the child process, and stop on any authorization or safety failure.
   - id: phase-6-attention-delivery
     title: Coordinator attention and verified draft delivery
     status: scheduled

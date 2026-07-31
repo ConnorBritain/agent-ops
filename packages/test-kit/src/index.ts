@@ -167,15 +167,25 @@ export class StaticRoadmapReadTransport {
  * message ordering only; it never starts a process, connects a socket, or
  * materializes credentials.
  */
-export type ScriptedJsonRpcStep = {
+export type ScriptedJsonRpcRequestStep = {
+  readonly type?: "request";
   readonly method: string;
   readonly params?: unknown;
   readonly result?: unknown;
   readonly errorMessage?: string;
 };
 
+export type ScriptedJsonRpcNotificationStep = {
+  readonly type: "notification";
+  readonly method: string;
+  readonly params?: unknown;
+};
+
+export type ScriptedJsonRpcStep = ScriptedJsonRpcRequestStep | ScriptedJsonRpcNotificationStep;
+
 export class ScriptedJsonRpcTransport {
   readonly requests: { method: string; params: unknown }[] = [];
+  readonly notifications: { method: string; params: unknown }[] = [];
   #steps: ScriptedJsonRpcStep[];
 
   constructor(steps: readonly ScriptedJsonRpcStep[]) {
@@ -186,6 +196,8 @@ export class ScriptedJsonRpcTransport {
     const expected = this.#steps.shift();
     if (!expected) throw new Error(`Unexpected JSON-RPC request: ${method}`);
     if (
+      expected.type === "notification"
+      ||
       expected.method !== method
       || (expected.params !== undefined && JSON.stringify(expected.params) !== JSON.stringify(params))
     ) {
@@ -194,6 +206,19 @@ export class ScriptedJsonRpcTransport {
     this.requests.push({ method, params });
     if (expected.errorMessage) throw new Error(expected.errorMessage);
     return expected.result;
+  }
+
+  async notify(method: string, params: unknown = {}): Promise<void> {
+    const expected = this.#steps.shift();
+    if (!expected) throw new Error(`Unexpected JSON-RPC notification: ${method}`);
+    if (
+      expected.type !== "notification"
+      || expected.method !== method
+      || (expected.params !== undefined && JSON.stringify(expected.params) !== JSON.stringify(params))
+    ) {
+      throw new Error(`Unexpected JSON-RPC notification: ${method}`);
+    }
+    this.notifications.push({ method, params });
   }
 
   assertComplete(): void {

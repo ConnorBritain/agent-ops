@@ -47,6 +47,7 @@ const required = [
   "docs/traceability/phase-4-roadmap-adapter.yaml",
   "docs/traceability/phase-4-print-provider.yaml",
   "docs/traceability/phase-5-first-cli-provider-spike.yaml",
+  "docs/traceability/phase-5-first-cli-provider.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",

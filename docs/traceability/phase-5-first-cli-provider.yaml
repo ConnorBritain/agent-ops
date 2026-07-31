@@ -1,0 +1,21 @@
+slice: first-cli-provider
+status: complete
+requirements: []
+artifacts:
+  - packages/providers/codex-app-server
+  - packages/provider-sdk
+  - packages/test-kit
+  - docs/architecture/codex-app-server-provider.md
+tests:
+  - pnpm run check:codex-app-server-provider
+  - pnpm --filter @agent-ops/provider-codex-app-server test
+  - pnpm validate
+acceptance: ACC-PROVIDER-001
+evidence:
+  shared_provider_conformance: passed
+  local_stdio_only_preflight: passed
+  malformed_or_secret_protocol_output: rejected
+  crash_attention_and_no_automatic_restart: passed
+  cancellation_and_redacted_artifact_evidence: passed
+  binary_authentication_and_runtime_canary: separately-authorized
+catalog_version: 1

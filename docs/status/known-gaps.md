@@ -13,10 +13,10 @@
   does not create worktrees, launch agents, mutate Roadmap, or satisfy the
   remaining independently versioned primitive, estimator, and architecture
   dependency references.
-- PrintProvider proves the lifecycle contract without launching anything. No
-  real CLI provider has been authenticated, installed by AgentOps, or
-  exercised. Codex App Server is selected as the first protocol, but its
-  adapter, crash recovery, cancellation, artifact, and redaction behavior
-  remain unimplemented and must be verified with an injected test port before
-  any executable provider use.
+- PrintProvider proves the lifecycle contract without launching anything. The
+  first Codex App Server adapter now proves its injected protocol boundary,
+  crash handling, cancellation, and redacted artifacts with deterministic test
+  doubles only. No real CLI provider has been authenticated, installed by
+  AgentOps, launched, or exercised; the host-specific local-stdio binding and
+  disposable runtime canary remain private, separately authorized work.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.
