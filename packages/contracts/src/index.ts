@@ -134,7 +134,11 @@ export const expiringLeaseSchema = z.object({
 export const skillRequirementSchema = z.object({
   key: z.string().min(1).max(160),
   versionRange: z.string().min(1).max(120),
+  /** Only deterministic/enforced primitives may be required for dispatch. */
+  enforcement: z.literal("enforced").default("enforced"),
 }).strict();
+
+export type SkillRequirement = z.infer<typeof skillRequirementSchema>;
 
 export const resourceBudgetSchema = z.object({
   minimumFreeDiskBytes: z.number().int().nonnegative().safe(),
@@ -177,7 +181,16 @@ const semanticVersionSchema = z.string().regex(
 export const workerSkillManifestEntrySchema = z.object({
   key: z.string().min(1).max(160),
   version: semanticVersionSchema,
+  bundleId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
 }).strict();
+
+export const workerSkillBundleManifestEntrySchema = z.object({
+  bundleId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  version: semanticVersionSchema,
+  primitiveKeys: z.array(z.string().min(1).max(160)).min(1).max(100),
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.primitiveKeys, "primitiveKeys", context);
+});
 
 export const workerProviderManifestEntrySchema = z.object({
   providerId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
@@ -211,12 +224,24 @@ export const workerManifestSchema = z.object({
   runtimeVersion: semanticVersionSchema,
   capabilities: z.array(capabilitySchema).max(100),
   skills: z.array(workerSkillManifestEntrySchema).max(100),
+  bundles: z.array(workerSkillBundleManifestEntrySchema).max(100),
   providers: z.array(workerProviderManifestEntrySchema).max(100),
   generatedAt: rfc3339Schema,
 }).strict().superRefine((value, context) => {
   addDuplicateIssues(value.capabilities, "capabilities", context);
   addDuplicateIssues(value.skills.map((skill) => skill.key), "skills", context);
+  addDuplicateIssues(value.bundles.map((bundle) => bundle.bundleId), "bundles", context);
   addDuplicateIssues(value.providers.map((provider) => provider.providerId), "providers", context);
+  for (const [index, skill] of value.skills.entries()) {
+    const bundle = value.bundles.find((candidate) => candidate.bundleId === skill.bundleId);
+    if (!bundle || !bundle.primitiveKeys.includes(skill.key)) {
+      context.addIssue({
+        code: "custom",
+        message: "Worker skill must be declared by its installed bundle.",
+        path: ["skills", index, "bundleId"],
+      });
+    }
+  }
 });
 
 export type WorkerManifest = z.infer<typeof workerManifestSchema>;
@@ -609,6 +634,214 @@ export const externalProjectionFactSchema = z.object({
 });
 
 export type ExternalProjectionFact = z.infer<typeof externalProjectionFactSchema>;
+
+const primitiveKeySchema = z.string().regex(/^[a-z][a-z0-9-]{1,120}$/);
+
+export const primitiveEnforcementSchema = z.object({
+  harness: z.enum(["generic", "codex-app-server", "claude-code"]),
+  level: z.enum(["enforced", "advisory"]),
+  mechanism: z.enum(["deterministic-code", "provider-instruction", "human-process"]),
+}).strict().superRefine((value, context) => {
+  if (value.level === "enforced" && value.mechanism !== "deterministic-code") {
+    context.addIssue({
+      code: "custom",
+      message: "An enforced primitive must name deterministic-code enforcement.",
+    });
+  }
+});
+
+export const portablePrimitiveSchema = z.object({
+  key: primitiveKeySchema,
+  version: semanticVersionSchema,
+  purpose: z.string().min(1).max(1_000),
+  capabilities: z.array(capabilitySchema).max(100),
+  securityDomains: z.array(securityDomainSchema).min(1).max(100),
+  access: z.object({
+    reads: z.array(z.enum(["task-ledger", "repository-metadata", "attention-item"])).max(20),
+    writes: z.array(z.enum(["attention-item", "draft-delivery", "finops-record"])).max(20),
+  }).strict(),
+  outputContract: z.object({
+    kind: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+    redaction: z.literal("required"),
+    maximumRecords: z.number().int().positive().max(1_000),
+  }).strict(),
+  enforcement: z.array(primitiveEnforcementSchema).min(1).max(20),
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.capabilities, "capabilities", context);
+  addDuplicateIssues(value.securityDomains, "securityDomains", context);
+  const harnesses = value.enforcement.map((entry) => entry.harness);
+  addDuplicateIssues(harnesses, "enforcement", context);
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type PortablePrimitive = z.infer<typeof portablePrimitiveSchema>;
+
+export const primitiveBundleManifestSchema = z.object({
+  version: contractVersionSchema,
+  bundleId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  bundleVersion: semanticVersionSchema,
+  sourceRef: z.string().regex(/^bundle:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  primitives: z.array(portablePrimitiveSchema).min(1).max(100),
+  publishedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.primitives.map((primitive) => primitive.key), "primitives", context);
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type PrimitiveBundleManifest = z.infer<typeof primitiveBundleManifestSchema>;
+
+/**
+ * A deliberately conservative static audit. The strict manifest has no host,
+ * session, credential, endpoint, or runtime-fact field; this second check also
+ * refuses those concepts if somebody attempts to smuggle them into free text.
+ */
+export function assertPortablePrimitiveBundle(raw: unknown): PrimitiveBundleManifest {
+  const manifest = primitiveBundleManifestSchema.parse(raw);
+  assertNoInlineSecrets(manifest);
+  const serialized = JSON.stringify(manifest);
+  if (/(?:host[ _-]?availability|session[ _-]?id|credential|secret:\/\/)/i.test(serialized)) {
+    throw new Error("Portable primitive bundles must not embed host, session, credential, or secret facts.");
+  }
+  return manifest;
+}
+
+const nonNegativeFiniteNumber = z.number().finite().nonnegative();
+
+export const estimateRangeSchema = z.object({
+  low: nonNegativeFiniteNumber,
+  expected: nonNegativeFiniteNumber,
+  high: nonNegativeFiniteNumber,
+}).strict().superRefine((value, context) => {
+  if (value.low > value.expected || value.expected > value.high) {
+    context.addIssue({
+      code: "custom",
+      message: "Estimate ranges must satisfy low <= expected <= high.",
+    });
+  }
+});
+
+export const estimateRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  estimator: z.object({
+    id: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+    version: semanticVersionSchema,
+    model: z.string().min(1).max(160),
+  }).strict(),
+  basis: z.object({
+    calibrationVersion: semanticVersionSchema,
+    evidenceRefs: z.array(evidenceReferenceSchema).min(1).max(100),
+  }).strict(),
+  agentRounds: estimateRangeSchema,
+  wallClockSeconds: estimateRangeSchema,
+  supersedesEstimateId: uuidSchema.optional(),
+  estimatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type EstimateRecord = z.infer<typeof estimateRecordSchema>;
+
+export const effortMeasurementSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  measure: z.enum(["agent-execution", "human-attention", "blocked", "verification"]),
+  durationSeconds: nonNegativeFiniteNumber,
+  source: z.object({
+    kind: z.enum(["coordinator", "worker", "human", "verifier", "integration"]),
+    id: z.string().min(1).max(200),
+  }).strict(),
+  occurredAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type EffortMeasurement = z.infer<typeof effortMeasurementSchema>;
+
+const currencySchema = z.string().regex(/^[A-Z]{3}$/);
+
+export const rateCardSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  rateCardVersion: semanticVersionSchema,
+  sourceRef: z.string().regex(/^rate-card:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  entries: z.array(z.object({
+    key: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+    unit: z.string().regex(/^[a-z][a-z0-9-]{1,80}$/),
+    amount: nonNegativeFiniteNumber,
+    currency: currencySchema,
+  }).strict()).min(1).max(1_000),
+  effectiveAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.entries.map((entry) => entry.key), "entries", context);
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type RateCard = z.infer<typeof rateCardSchema>;
+
+export const allocationRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  category: z.enum(["direct", "fully-loaded", "human-inclusive", "failure-adjusted"]),
+  allocationMethod: z.enum(["direct-usage", "fixed-pool", "human-time", "failure-adjustment"]),
+  rateCardId: uuidSchema,
+  rateCardVersion: semanticVersionSchema,
+  rateKey: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+  quantity: nonNegativeFiniteNumber,
+  unit: z.string().regex(/^[a-z][a-z0-9-]{1,80}$/),
+  amount: nonNegativeFiniteNumber,
+  currency: currencySchema,
+  accountingSystemOfRecord: z.literal("external"),
+  allocatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type AllocationRecord = z.infer<typeof allocationRecordSchema>;
+
+export const planningFeedbackSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  planningRecordRef: z.string().regex(/^planning:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  relativePoints: nonNegativeFiniteNumber,
+  estimateId: uuidSchema,
+  effortMeasurementIds: z.array(uuidSchema).min(1).max(100),
+  allocationIds: z.array(uuidSchema).min(1).max(100),
+  outcomeVerdict: verificationVerdictSchema,
+  recordedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.effortMeasurementIds, "effortMeasurementIds", context);
+  addDuplicateIssues(value.allocationIds, "allocationIds", context);
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type PlanningFeedback = z.infer<typeof planningFeedbackSchema>;
 
 export const attentionItemSchema = z.object({
   version: contractVersionSchema,

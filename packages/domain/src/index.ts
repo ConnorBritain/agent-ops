@@ -1,10 +1,16 @@
 import type {
   AttentionItem,
+  AllocationRecord,
   Command,
   CoordinatorProjectionCommand,
+  EffortMeasurement,
+  EstimateRecord,
   ExternalProjectionFact,
   NormalizedEvent,
+  PlanningFeedback,
+  RateCard,
   ResourceBudget,
+  SkillRequirement,
   SignedJobEnvelope,
   WorkerMode,
   WorkerResourceSnapshot,
@@ -17,11 +23,19 @@ export type PolicyDecision = {
   readonly rationale: string;
 };
 
+/** A worker's local evidence of an installed portable primitive. */
+export type PlacementInstalledSkill = {
+  readonly key: string;
+  readonly version: string;
+  readonly bundleId: string;
+};
+
 export type PlacementCandidate = {
   readonly workerId: string;
   readonly providerId: string;
   readonly securityDomain: string;
   readonly capabilities: ReadonlySet<string>;
+  readonly skills: readonly PlacementInstalledSkill[];
   readonly healthy: boolean;
   readonly preferenceScore: number;
 };
@@ -29,8 +43,70 @@ export type PlacementCandidate = {
 export type PlacementRequest = {
   readonly securityDomain: string;
   readonly requiredCapabilities: readonly string[];
+  readonly requiredSkills: readonly SkillRequirement[];
   readonly preferredProviderId?: string;
   readonly policyDecision: PolicyDecision;
+};
+
+type ParsedVersion = readonly [number, number, number];
+
+const parseVersion = (value: string): ParsedVersion | undefined => {
+  const match = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-[0-9A-Za-z.-]+)?$/.exec(value);
+  if (!match) return undefined;
+  return [Number(match[1]), Number(match[2] ?? 0), Number(match[3] ?? 0)];
+};
+
+const compareVersions = (left: ParsedVersion, right: ParsedVersion): number => {
+  for (let index = 0; index < 3; index += 1) {
+    const difference = left[index]! - right[index]!;
+    if (difference !== 0) return difference;
+  }
+  return 0;
+};
+
+/**
+ * This is only deterministic compatibility policy for declared manifests; it
+ * is not a duplicate implementation of any primitive or its estimator.
+ */
+export const skillVersionSatisfies = (installed: string, requested: string): boolean => {
+  if (requested === "*") return true;
+  const installedVersion = parseVersion(installed);
+  const range = /^(\^|~|>=)?(\d+(?:\.\d+)?(?:\.\d+)?)(?:-[0-9A-Za-z.-]+)?$/.exec(requested);
+  if (!installedVersion || !range) return false;
+  const requiredVersion = parseVersion(range[2]!);
+  if (!requiredVersion) return false;
+  const operator = range[1] ?? "";
+  const requestedParts = range[2]!.split(".").length;
+  const comparison = compareVersions(installedVersion, requiredVersion);
+  if (operator === ">=") return comparison >= 0;
+  if (operator === "^") {
+    if (requestedParts === 1) {
+      return installedVersion[0] === requiredVersion[0] && comparison >= 0;
+    }
+    if (requiredVersion[0] > 0) {
+      return installedVersion[0] === requiredVersion[0] && comparison >= 0;
+    }
+    if (requestedParts === 2 || requiredVersion[1] > 0) {
+      return installedVersion[0] === 0
+        && installedVersion[1] === requiredVersion[1]
+        && comparison >= 0;
+    }
+    return installedVersion[0] === 0
+      && installedVersion[1] === 0
+      && installedVersion[2] === requiredVersion[2];
+  }
+  if (operator === "~") {
+    return requestedParts === 1
+      ? installedVersion[0] === requiredVersion[0] && comparison >= 0
+      : installedVersion[0] === requiredVersion[0]
+        && installedVersion[1] === requiredVersion[1]
+        && comparison >= 0;
+  }
+  return requestedParts === 1
+    ? installedVersion[0] === requiredVersion[0]
+    : requestedParts === 2
+      ? installedVersion[0] === requiredVersion[0] && installedVersion[1] === requiredVersion[1]
+      : comparison === 0;
 };
 
 export type PlacementResult =
@@ -62,6 +138,17 @@ function excludeReason(
     (capability) => !candidate.capabilities.has(capability),
   );
   if (missing.length) return `missing-capabilities:${missing.sort().join(",")}`;
+  for (const required of request.requiredSkills) {
+    // The contract currently allows only enforced requirements. Keep this
+    // conditional for forward-compatible manifests that may also report
+    // advisory capabilities without making them dispatch authority.
+    if (required.enforcement !== "enforced") continue;
+    const installed = candidate.skills.find((skill) => skill.key === required.key);
+    if (!installed) return `missing-enforced-skill:${required.key}`;
+    if (!skillVersionSatisfies(installed.version, required.versionRange)) {
+      return `incompatible-enforced-skill:${required.key}`;
+    }
+  }
   return undefined;
 }
 
@@ -102,7 +189,7 @@ export function selectPlacement(
     accepted: true,
     selected,
     exclusions,
-    rationale: `eligible after policy, domain, health, and capability filters; score=${selected.preferenceScore}`,
+    rationale: `eligible after policy, domain, health, capability, and enforced-skill filters; score=${selected.preferenceScore}`,
   };
 }
 
@@ -158,18 +245,91 @@ export type SchedulingAuditRecord = {
   readonly securityDomain: string;
   readonly policyDecision: PolicyDecision;
   readonly requiredCapabilities: readonly string[];
+  readonly requiredSkills: readonly SkillRequirement[];
   readonly preferredProviderId?: string;
   readonly candidates: readonly {
     readonly workerId: string;
     readonly providerId: string;
     readonly securityDomain: string;
     readonly capabilities: readonly string[];
+    readonly skills: readonly PlacementInstalledSkill[];
     readonly healthy: boolean;
     readonly preferenceScore: number;
   }[];
   readonly placement: PlacementResult;
   readonly recordedAt: string;
 };
+
+/** Durable source-only ports for separately versioned estimation and accounting adapters. */
+export interface FinOpsLedgerStore {
+  recordEstimate(estimate: EstimateRecord): Promise<void>;
+  recordEffort(measurement: EffortMeasurement): Promise<void>;
+  recordRateCard(rateCard: RateCard): Promise<void>;
+  recordAllocation(allocation: AllocationRecord): Promise<void>;
+  recordPlanningFeedback(feedback: PlanningFeedback): Promise<void>;
+}
+
+export type FinOpsLineageInput = {
+  readonly estimate: EstimateRecord;
+  readonly effort: readonly EffortMeasurement[];
+  readonly rateCards: readonly RateCard[];
+  readonly allocations: readonly AllocationRecord[];
+  readonly planningFeedback: PlanningFeedback;
+};
+
+const hasSameLineage = (
+  record: { readonly taskId: string; readonly runId: string; readonly securityDomain: string },
+  reference: { readonly taskId: string; readonly runId: string; readonly securityDomain: string },
+): boolean => record.taskId === reference.taskId
+  && record.runId === reference.runId
+  && record.securityDomain === reference.securityDomain;
+
+/**
+ * Validates accounting and planning correlations without calculating a price,
+ * interpreting a primitive, or claiming to be an accounting system of record.
+ */
+export function assertFinOpsLineage(input: FinOpsLineageInput): FinOpsLineageInput {
+  const { estimate, effort, rateCards, allocations, planningFeedback } = input;
+  if (!hasSameLineage(planningFeedback, estimate) || planningFeedback.estimateId !== estimate.id) {
+    throw new Error("Planning feedback must reference an estimate with the same task, run, and security domain.");
+  }
+  const effortById = new Map(effort.map((measurement) => [measurement.id, measurement]));
+  for (const measurement of effort) {
+    if (!hasSameLineage(measurement, estimate)) {
+      throw new Error("Effort measurements must retain the same task, run, and security domain as their estimate.");
+    }
+  }
+  for (const effortId of planningFeedback.effortMeasurementIds) {
+    const measurement = effortById.get(effortId);
+    if (!measurement || !hasSameLineage(measurement, estimate)) {
+      throw new Error("Planning feedback must reference effort records with the same task, run, and security domain.");
+    }
+  }
+  const rateCardById = new Map(rateCards.map((rateCard) => [rateCard.id, rateCard]));
+  const allocationById = new Map(allocations.map((allocation) => [allocation.id, allocation]));
+  for (const allocation of allocations) {
+    if (!hasSameLineage(allocation, estimate)) {
+      throw new Error("Allocations must retain the same task, run, and security domain as their estimate.");
+    }
+    const rateCard = rateCardById.get(allocation.rateCardId);
+    const rateEntry = rateCard?.entries.find((entry) => entry.key === allocation.rateKey);
+    if (
+      !rateCard
+      || rateCard.rateCardVersion !== allocation.rateCardVersion
+      || !rateEntry
+      || rateEntry.unit !== allocation.unit
+      || rateEntry.currency !== allocation.currency
+    ) {
+      throw new Error("Allocation must retain a compatible versioned rate-card entry.");
+    }
+  }
+  for (const allocationId of planningFeedback.allocationIds) {
+    if (!allocationById.has(allocationId)) {
+      throw new Error("Planning feedback must reference an allocation retained by the same lineage set.");
+    }
+  }
+  return input;
+}
 
 export type AttentionDraft = {
   readonly taskId: string;

@@ -144,6 +144,7 @@ describe("replayable verified draft-delivery fixture", () => {
         providerId: "codex-app-server",
         securityDomain: "example-domain",
         capabilities: new Set(["terminal", "git"]),
+        skills: [{ key: "repository-inspection", version: "1.2.0", bundleId: "core-primitives" }],
         healthy: true,
         preferenceScore: 1,
       }],

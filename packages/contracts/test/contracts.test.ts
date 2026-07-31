@@ -7,6 +7,9 @@ import {
   coordinatorProjectionCommandSchema,
   draftPullRequestIntentSchema,
   externalProjectionFactSchema,
+  assertPortablePrimitiveBundle,
+  estimateRecordSchema,
+  planningFeedbackSchema,
   normalizedEventSchema,
   providerCapabilityManifestSchema,
   providerInvocationSchema,
@@ -70,7 +73,7 @@ describe("versioned contracts", () => {
       runId: ids.run,
       securityDomain: "example-domain",
       requiredCapabilities: ["terminal"],
-      requiredSkills: [{ key: "repository-inspection", versionRange: "^1" }],
+      requiredSkills: [{ key: "repository-inspection", versionRange: "^1", enforcement: "enforced" }],
       policyDecisionId: ids.policy,
       lease: {
         leaseName: "primary-coordinator",
@@ -112,7 +115,12 @@ describe("versioned contracts", () => {
       securityDomain: "example-domain",
       runtimeVersion: "0.1.0",
       capabilities: ["terminal", "git"],
-      skills: [{ key: "repository-inspection", version: "1.0.0" }],
+      skills: [{ key: "repository-inspection", version: "1.0.0", bundleId: "core-primitives" }],
+      bundles: [{
+        bundleId: "core-primitives",
+        version: "1.0.0",
+        primitiveKeys: ["repository-inspection"],
+      }],
       providers: [{
         providerId: "print-provider",
         version: "0.1.0",
@@ -289,6 +297,67 @@ describe("versioned contracts", () => {
       occurredAt: "2026-07-30T04:00:00Z",
       ingestedAt: "2026-07-30T04:00:01Z",
       metadata: { token: "inline-value" },
+    }).success, false);
+  });
+
+  it("validates portable primitive manifests and independent estimation lineage", () => {
+    const bundle = {
+      version: CONTRACT_VERSION,
+      bundleId: "core-primitives",
+      bundleVersion: "1.0.0",
+      sourceRef: "bundle://fixture/core-primitives",
+      publishedAt: "2026-07-30T04:00:00Z",
+      primitives: [{
+        key: "authentication-handoff",
+        version: "1.0.0",
+        purpose: "Create a redacted authentication attention item.",
+        capabilities: ["attention:raise"],
+        securityDomains: ["example-domain"],
+        access: { reads: ["task-ledger", "attention-item"], writes: ["attention-item"] },
+        outputContract: { kind: "attention", redaction: "required", maximumRecords: 1 },
+        enforcement: [{ harness: "generic", level: "enforced", mechanism: "deterministic-code" }],
+      }],
+    };
+    assert.equal(assertPortablePrimitiveBundle(bundle).primitives[0]?.key, "authentication-handoff");
+    assert.throws(
+      () => assertPortablePrimitiveBundle({
+        ...bundle,
+        primitives: [{ ...bundle.primitives[0], purpose: "Bind a host availability record." }],
+      }),
+      /must not embed host/,
+    );
+
+    const estimate = {
+      version: CONTRACT_VERSION,
+      id: ids.registration,
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      estimator: { id: "independent-estimator", version: "1.0.0", model: "transparent-rounds" },
+      basis: { calibrationVersion: "1.0.0", evidenceRefs: ["evidence://fixture/calibration/1"] },
+      agentRounds: { low: 1, expected: 2, high: 3 },
+      wallClockSeconds: { low: 60, expected: 120, high: 180 },
+      estimatedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(estimateRecordSchema.parse(estimate).agentRounds.expected, 2);
+    assert.equal(estimateRecordSchema.safeParse({
+      ...estimate,
+      agentRounds: { low: 3, expected: 2, high: 1 },
+    }).success, false);
+    assert.equal(planningFeedbackSchema.safeParse({
+      version: CONTRACT_VERSION,
+      id: ids.boot,
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      planningRecordRef: "planning://fixture/records/1",
+      relativePoints: 3,
+      estimateId: ids.registration,
+      effortMeasurementIds: [ids.actor],
+      allocationIds: [ids.target],
+      outcomeVerdict: "pass",
+      recordedAt: "2026-07-30T04:00:00Z",
+      currency: "USD",
     }).success, false);
   });
 

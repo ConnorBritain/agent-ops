@@ -53,12 +53,12 @@ scenarios:
   - id: ACC-SKILLS-001
     title: Portable primitive enforcement and missing-skill refusal
     requirements: [REQ-SKILL-001, REQ-SKILL-002, REQ-SKILL-003, REQ-SKILL-004, REQ-SKILL-005, REQ-SKILL-006]
-    evidence: future primitive manifest and enforcement suite
+    evidence: pnpm run check:skills-estimation-finops deterministic manifest, enforced-skill refusal, and redacted relay suite
     phase: 8
   - id: ACC-FINOPS-001
     title: Estimate, time, outcome, and allocation lineage
     requirements: [REQ-FINOPS-001, REQ-FINOPS-002, REQ-FINOPS-003, REQ-FINOPS-004, REQ-FINOPS-005, REQ-FINOPS-006]
-    evidence: future estimation and FinOps lineage suite
+    evidence: pnpm run check:skills-estimation-finops deterministic estimate, distinct-measure, rate-card, allocation, and planning-lineage suite
     phase: 8
   - id: ACC-RELEASE-001
     title: Compatibility promotion and recoverable replacement

@@ -9,6 +9,7 @@ import {
   type ProviderInvocation,
   type ProviderObservation,
   type ProviderOperation,
+  type SkillRequirement,
 } from "@agent-ops/contracts";
 
 export type PrintedPlan = {
@@ -23,7 +24,7 @@ export type PrintedPlan = {
   readonly runId: string;
   readonly securityDomain: string;
   readonly requiredCapabilities: readonly string[];
-  readonly requiredSkills: readonly { readonly key: string; readonly versionRange: string }[];
+  readonly requiredSkills: readonly SkillRequirement[];
   readonly safeWorkingDirectory: string;
   readonly resourceBudget: Readonly<Record<string, unknown>> | null;
   /** Identifies the full sealed envelope without rendering body, callback, or signature material. */

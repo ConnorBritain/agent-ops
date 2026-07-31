@@ -39,6 +39,7 @@ type WorkerManifest = {
   runtimeVersion: string;
   capabilities: Capability[];
   skills: SkillManifestEntry[];
+  bundles: Array<{ bundleId: string; version: string; primitiveKeys: string[] }>;
   providers: ProviderManifestEntry[];
   generatedAt: string;
 };
@@ -201,6 +202,61 @@ type AttentionItem = {
   response?: DurableResponse;
 };
 
+type PrimitiveBundleManifest = {
+  version: string;
+  bundleId: string;
+  bundleVersion: string;
+  sourceRef: string; // generic bundle reference only
+  primitives: Array<{
+    key: string;
+    version: string;
+    purpose: string;
+    capabilities: Capability[];
+    securityDomains: SecurityDomain[];
+    outputContract: { kind: string; redaction: "required"; maximumRecords: number };
+    enforcement: Array<{ harness: string; level: "enforced" | "advisory"; mechanism: string }>;
+  }>;
+  publishedAt: string;
+};
+
+type EstimateRecord = {
+  version: string;
+  id: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  estimator: { id: string; version: string; model: string };
+  basis: { calibrationVersion: string; evidenceRefs: string[] };
+  agentRounds: { low: number; expected: number; high: number };
+  wallClockSeconds: { low: number; expected: number; high: number };
+  supersedesEstimateId?: string;
+  estimatedAt: string;
+};
+
+type EffortMeasurement = {
+  version: string;
+  id: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  measure: "agent-execution" | "human-attention" | "blocked" | "verification";
+  durationSeconds: number;
+  occurredAt: string;
+};
+
+type AllocationRecord = {
+  version: string;
+  id: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  category: "direct" | "fully-loaded" | "human-inclusive" | "failure-adjusted";
+  allocationMethod: "direct-usage" | "fixed-pool" | "human-time" | "failure-adjustment";
+  rateCardId: string;
+  rateCardVersion: string;
+  accountingSystemOfRecord: "external";
+};
+
 type RoadmapWorktreeIntent = {
   version: string;
   correlationId: string;
@@ -291,5 +347,22 @@ bad fact to a redacted retryable state. Portfolio `running` and
 external delivery. Explicit replay is owned by a future authorized outbox
 runner; this source contains no SDK, network client, credentials, timer, or
 background retry loop.
+
+Portable primitives and independent estimation are also compositional
+boundaries. A generic bundle manifest has no host, session, credential, or
+installation data; Worker manifests retain bundle membership alongside skill
+versions. The Coordinator's pure placement filter rejects a missing or
+incompatible required enforced primitive before a job is written or sent to a
+worker. A future catalog/installation workflow remains an explicit,
+separately-authorized attention path.
+
+Estimate, effort, rate-card, allocation, and planning-feedback records retain
+the same task/run/security-domain lineage. An independent estimator supplies
+ranges, model, calibration, and evidence through an injected port; AgentOps
+does not reproduce its logic. Agent, human, blocked, and verification time are
+separate. Rate cards and allocation methods are versioned source facts, while
+an `external` accounting system remains authoritative for transactions and
+invoices. Strict planning feedback holds relative points but cannot add a
+currency field.
 
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

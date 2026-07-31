@@ -1,11 +1,17 @@
 import {
   CONTRACT_VERSION,
+  type AllocationRecord,
   type AttentionItem,
   type CoordinatorProjectionCommand,
   type ExternalProjectionFact,
   type ExternalProjectionIntent,
+  type EffortMeasurement,
+  type EstimateRecord,
   type NormalizedEvent,
   type ProviderInvocation,
+  type PrimitiveBundleManifest,
+  type PlanningFeedback,
+  type RateCard,
   type SignedJobEnvelope,
   type VerificationRecord,
   type WorkerHeartbeat,
@@ -24,6 +30,7 @@ import type {
   ExternalProjectionOutboxRecord,
   ExternalProjectionOutboxStore,
   ExternalProjectionReservation,
+  FinOpsLedgerStore,
   LeaseGrant,
   ProviderAcknowledgement,
   ReconciliationSnapshot,
@@ -47,6 +54,17 @@ export const testIds = {
   verification: "00000000-0000-4000-8000-000000000112",
   delivery: "00000000-0000-4000-8000-000000000113",
   projection: "00000000-0000-4000-8000-000000000114",
+  estimate: "00000000-0000-4000-8000-000000000115",
+  effortAgent: "00000000-0000-4000-8000-000000000116",
+  effortHuman: "00000000-0000-4000-8000-000000000117",
+  effortBlocked: "00000000-0000-4000-8000-000000000118",
+  effortVerification: "00000000-0000-4000-8000-000000000119",
+  rateCard: "00000000-0000-4000-8000-000000000120",
+  allocationDirect: "00000000-0000-4000-8000-000000000121",
+  allocationFixed: "00000000-0000-4000-8000-000000000122",
+  planningFeedback: "00000000-0000-4000-8000-000000000123",
+  allocationHuman: "00000000-0000-4000-8000-000000000124",
+  allocationFailure: "00000000-0000-4000-8000-000000000125",
 } as const;
 
 export class DeterministicClock {
@@ -742,6 +760,74 @@ export class RecordingPortfolioProjectionGateway {
   }
 }
 
+/**
+ * Portable-skill fixture transport. It has no filesystem, host, identity, or
+ * credential access; tests supply an already-materialized generic manifest.
+ */
+export class StaticPrimitiveBundleTransport {
+  readonly calls: string[] = [];
+  result: unknown;
+
+  constructor(result: PrimitiveBundleManifest) {
+    this.result = result;
+  }
+
+  async load(input: { readonly bundleRef: string }): Promise<unknown> {
+    this.calls.push(input.bundleRef);
+    return this.result;
+  }
+}
+
+/** A deterministic stand-in for a separately versioned estimator. */
+export class StaticIndependentEstimatorTransport {
+  readonly calls: unknown[] = [];
+  result: unknown;
+
+  constructor(result: EstimateRecord) {
+    this.result = result;
+  }
+
+  async estimate(input: unknown): Promise<unknown> {
+    this.calls.push(input);
+    return this.result;
+  }
+}
+
+/** In-memory ledger double; it is deliberately not an accounting system. */
+export class InMemoryFinOpsLedger implements FinOpsLedgerStore {
+  readonly operations: string[] = [];
+  readonly estimates: EstimateRecord[] = [];
+  readonly effort: EffortMeasurement[] = [];
+  readonly rateCards: RateCard[] = [];
+  readonly allocations: AllocationRecord[] = [];
+  readonly planningFeedback: PlanningFeedback[] = [];
+
+  async recordEstimate(estimate: EstimateRecord): Promise<void> {
+    this.operations.push("estimate");
+    this.estimates.push(estimate);
+  }
+
+  async recordEffort(measurement: EffortMeasurement): Promise<void> {
+    this.operations.push(`effort:${measurement.measure}`);
+    this.effort.push(measurement);
+  }
+
+  async recordRateCard(rateCard: RateCard): Promise<void> {
+    this.operations.push("rate-card");
+    this.rateCards.push(rateCard);
+  }
+
+  async recordAllocation(allocation: AllocationRecord): Promise<void> {
+    this.operations.push(`allocation:${allocation.category}`);
+    this.allocations.push(allocation);
+  }
+
+  async recordPlanningFeedback(feedback: PlanningFeedback): Promise<void> {
+    this.operations.push("planning-feedback");
+    this.planningFeedback.push(feedback);
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({
@@ -751,7 +837,12 @@ export const buildWorkerManifest = (
   securityDomain: "example-domain",
   runtimeVersion: "0.1.0",
   capabilities: ["terminal", "git"],
-  skills: [{ key: "repository-inspection", version: "1.2.0" }],
+  skills: [{ key: "repository-inspection", version: "1.2.0", bundleId: "core-primitives" }],
+  bundles: [{
+    bundleId: "core-primitives",
+    version: "1.2.0",
+    primitiveKeys: ["repository-inspection"],
+  }],
   providers: [],
   generatedAt: "2026-07-30T04:00:00Z",
   ...overrides,
@@ -766,7 +857,7 @@ export const buildJobEnvelope = (
   runId: testIds.run,
   securityDomain: "example-domain",
   requiredCapabilities: ["terminal"],
-  requiredSkills: [{ key: "repository-inspection", versionRange: "^1" }],
+  requiredSkills: [{ key: "repository-inspection", versionRange: "^1", enforcement: "enforced" }],
   policyDecisionId: testIds.policy,
   lease: {
     leaseName: "worker-job",

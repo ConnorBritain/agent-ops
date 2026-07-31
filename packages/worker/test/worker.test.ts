@@ -331,7 +331,7 @@ describe("worker job admission", () => {
     const envelope = buildJobEnvelope({
       securityDomain: "another-domain",
       requiredCapabilities: ["browser"],
-      requiredSkills: [{ key: "missing-skill", versionRange: "^1" }],
+      requiredSkills: [{ key: "missing-skill", versionRange: "^1", enforcement: "enforced" }],
       resourceBudget: {
         minimumFreeDiskBytes: 10_000,
         memoryReservationBytes: 5_000,

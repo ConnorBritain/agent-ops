@@ -598,13 +598,14 @@ pis:
     sprints:
       - id: skills-estimation-finops
         title: Primitive manifests, independent estimates, and allocation lineage
-        status: scheduled
+        status: complete
         invoke: skills-estimation-finops
         what: Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures.
-        est_sessions: 3
+        est_sessions: 0
         weight: heavy
         deps: [github-portfolio-projections]
         gate: Missing-skill refusal, redaction, estimate lineage, and allocation trace fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/adapters/
           - packages/domain/
@@ -615,7 +616,7 @@ pis:
           - docs/specs/SPEC-012-agent-skills-and-primitives.md
           - docs/specs/SPEC-013-estimation-finops-and-planning-feedback.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
-        resume_action: Compose independently versioned skills and estimation tools rather than copying their logic.
+        resume_action: Preserve the source-only portable-skill and FinOps boundary; proceed to simulated release recovery without a live registry, estimator, rate import, accounting connection, or host action.
         priority:
           tier: P1
           weight: 75

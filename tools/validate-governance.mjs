@@ -53,6 +53,7 @@ const required = [
   "docs/traceability/phase-6-verified-draft-delivery.yaml",
   "docs/traceability/phase-7-second-cli-provider.yaml",
   "docs/traceability/phase-7-github-portfolio-projections.yaml",
+  "docs/traceability/phase-8-skills-estimation-finops.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -64,6 +65,7 @@ const required = [
   "docs/architecture/codex-app-server-provider.md",
   "docs/architecture/claude-code-provider.md",
   "docs/architecture/github-portfolio-projections.md",
+  "docs/architecture/portable-skills-and-finops.md",
   "docs/architecture/coordinator-runtime.md",
   "docs/architecture/verified-draft-delivery.md",
   "docs/architecture/remote-access.md",
@@ -76,6 +78,7 @@ const required = [
   "docs/adr/ADR-0016-replayable-independent-verification-before-draft-delivery.md",
   "docs/adr/ADR-0017-claude-code-second-cli-provider.md",
   "docs/adr/ADR-0018-outbox-projections-are-non-authoritative.md",
+  "docs/adr/ADR-0019-portable-skills-and-independent-finops-lineage.md",
   "config/roadmap-adapter.manifest.yaml",
   ".github/workflows/ci.yml"
 ];
@@ -364,6 +367,7 @@ const phase6SlackTraceability = await readFile(path.join(root, "docs/traceabilit
 const phase6VerifiedDraftTraceability = await readFile(path.join(root, "docs/traceability/phase-6-verified-draft-delivery.yaml"), "utf8");
 const phase7SecondProviderTraceability = await readFile(path.join(root, "docs/traceability/phase-7-second-cli-provider.yaml"), "utf8");
 const phase7ProjectionsTraceability = await readFile(path.join(root, "docs/traceability/phase-7-github-portfolio-projections.yaml"), "utf8");
+const phase8SkillsFinopsTraceability = await readFile(path.join(root, "docs/traceability/phase-8-skills-estimation-finops.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -421,7 +425,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}\n${phase6CoordinatorTraceability}\n${phase6SlackTraceability}\n${phase6VerifiedDraftTraceability}\n${phase7SecondProviderTraceability}\n${phase7ProjectionsTraceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}\n${phase6CoordinatorTraceability}\n${phase6SlackTraceability}\n${phase6VerifiedDraftTraceability}\n${phase7SecondProviderTraceability}\n${phase7ProjectionsTraceability}\n${phase8SkillsFinopsTraceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);

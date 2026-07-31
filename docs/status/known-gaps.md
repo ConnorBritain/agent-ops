@@ -15,6 +15,13 @@
   does not create worktrees, launch agents, mutate Roadmap, or satisfy the
   remaining independently versioned primitive, estimator, and architecture
   dependency references.
+- Portable primitive, independent-estimator, rate-card, and FinOps ledger
+  boundaries now have deterministic contract/lineage coverage only. There is
+  no selected registry, bundle signing/distribution implementation, primitive
+  installation or execution, estimator connection, rate-card import,
+  accounting reconciliation, hosted ledger adapter, or private composition.
+  Accounting transactions and invoices remain intentionally outside AgentOps
+  operational truth; planning points remain intentionally non-monetary.
 - PrintProvider proves the lifecycle contract without launching anything. The
   Codex App Server and Claude Code adapters prove independent injected protocol
   boundaries, cancellation, explicit unsupported operations, and redacted

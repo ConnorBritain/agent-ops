@@ -16,4 +16,8 @@ None for generalized deterministic implementation and CI verification.
   portfolio identity, disposable repository, external draft pull request,
   portfolio projection, or hosted Coordinator composition is authorized by the
   deterministic fixtures.
+- No live primitive registry, primitive installation, estimator identity,
+  rate-card source, accounting connection, invoice/transaction import, or
+  hosted FinOps ledger binding is authorized by the deterministic Phase 8
+  source slice.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.

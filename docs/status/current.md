@@ -51,7 +51,8 @@ Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server and Claude
 Code adapters, the local Coordinator application service, the
 non-authoritative Slack attention adapter, the replayable
 verified-draft-delivery fixture, and deterministic GitHub/portfolio outbox
-projections are complete** as of 2026-07-30.
+projections, portable primitive enforcement, and independent FinOps lineage
+are complete** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -297,3 +298,35 @@ change was created. The operator-view/dashboard requirement `REQ-OPS-006` and
 the separately gated cross-environment/private-canary coverage in `REQ-TEST-005`
 remain open, so broader `ACC-PROJECTION-001` acceptance is planned rather than
 being claimed from the local fixture alone.
+
+## Phase 8 — portable skills, estimation, and FinOps lineage
+
+Status: **deterministic source-level slice complete** on 2026-07-30; live
+registries, estimation, rate import, accounting, and host composition are not
+started.
+
+`PrimitiveBundleManifest` now declares generic bundle/version provenance and
+portable primitives with purpose, capabilities, security domains, narrow
+access, redacted output, and harness-specific enforcement truth. It refuses
+host/session/credential facts and inline secret-like values. Worker manifests
+retain bundle membership alongside installed skill versions. Before creating a
+job or contacting a worker, the Coordinator's pure placement filter refuses a
+missing or incompatible required enforced skill and records that evidence in
+the scheduling audit.
+
+`IndependentEstimatorAdapter` and `PortablePrimitiveCatalogAdapter` are
+injected named transport boundaries, not implementations of a registry or
+model. The FinOps ledger port records independently supplied low/expected/high
+estimates with model, calibration, and evidence lineage; separate agent,
+human, blocked, and verification durations; versioned rate cards; task/run
+allocations; and currency-free relative planning feedback. The accounting
+system of record remains external, while direct, fully-loaded,
+human-inclusive, and failure-adjusted allocations stay distinguishable.
+
+Deterministic fakes prove portable-manifest rejection, enforced-skill refusal,
+redacted operational relay, estimate lineage, separate measures, allocation
+trace, external accounting truth, and no relative-points-to-currency conversion.
+No primitive is installed or executed, and no registry, estimator, rate-card
+source, accounting product, network connection, credential, worker process,
+or host change is included. The next local slice is simulated release recovery;
+any private live composition remains separately authorized.
