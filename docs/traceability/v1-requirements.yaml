@@ -105,7 +105,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Command-to-job audit trace."
   - id: REQ-CHARTER-003
     owner: SPEC-000
@@ -153,7 +153,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Schema and traceability test."
   - id: REQ-V1-003
     owner: SPEC-001
@@ -217,7 +217,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Authorization integration test."
   - id: REQ-CONTEXT-004
     owner: SPEC-002
@@ -313,7 +313,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "State-to-event trace query."
   - id: REQ-DATA-004
     owner: SPEC-004
@@ -407,33 +407,33 @@ requirements:
     owner: SPEC-006
     slice: coordinator-runtime
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Stale-session scenario."
   - id: REQ-COORD-004
     owner: SPEC-006
-    slice: slack-attention-adapter
+    slice: coordinator-runtime
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Slack attention adapter contract suite"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Response persistence test."
   - id: REQ-COORD-005
     owner: SPEC-006
     slice: coordinator-runtime
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "False-positive start test."
   - id: REQ-COORD-006
     owner: SPEC-006
     slice: coordinator-runtime
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Coordinator application-service fixtures"
+    test: "pnpm run check:coordinator-runtime"
     required_evidence: "Audit decision query."
   - id: REQ-WORKER-001
     owner: SPEC-007

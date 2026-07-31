@@ -48,6 +48,7 @@ const required = [
   "docs/traceability/phase-4-print-provider.yaml",
   "docs/traceability/phase-5-first-cli-provider-spike.yaml",
   "docs/traceability/phase-5-first-cli-provider.yaml",
+  "docs/traceability/phase-6-coordinator-runtime.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -57,12 +58,14 @@ const required = [
   "docs/architecture/monorepo-boundaries.md",
   "docs/architecture/contracts.md",
   "docs/architecture/codex-app-server-provider.md",
+  "docs/architecture/coordinator-runtime.md",
   "docs/architecture/remote-access.md",
   "docs/adr/ADR-0009-independent-safety-monitor-and-dry-run-remediation.md",
   "docs/adr/ADR-0010-supervisor-only-service-packaging.md",
   "docs/adr/ADR-0011-roadmap-readiness-and-worktree-intent.md",
   "docs/adr/ADR-0012-print-provider-no-execution-reference.md",
   "docs/adr/ADR-0013-codex-app-server-first-cli-provider.md",
+  "docs/adr/ADR-0014-coordinator-durable-intent-and-attention-boundary.md",
   "config/roadmap-adapter.manifest.yaml",
   ".github/workflows/ci.yml"
 ];
@@ -346,6 +349,7 @@ const phase3SafetyTraceability = await readFile(path.join(root, "docs/traceabili
 const phase3ServiceTraceability = await readFile(path.join(root, "docs/traceability/phase-3-worker-service-packaging.yaml"), "utf8");
 const phase4RoadmapTraceability = await readFile(path.join(root, "docs/traceability/phase-4-roadmap-adapter.yaml"), "utf8");
 const phase4PrintTraceability = await readFile(path.join(root, "docs/traceability/phase-4-print-provider.yaml"), "utf8");
+const phase6CoordinatorTraceability = await readFile(path.join(root, "docs/traceability/phase-6-coordinator-runtime.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -403,7 +407,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}\n${phase6CoordinatorTraceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);
