@@ -395,6 +395,91 @@ export const attentionItemSchema = z.object({
 
 export type AttentionItem = z.infer<typeof attentionItemSchema>;
 
+export const roadmapStatusSchema = z.enum([
+  "active",
+  "next",
+  "scheduled",
+  "complete",
+  "blocked",
+  "paused",
+  "gated",
+  "optionality",
+]);
+
+export const roadmapSliceKeySchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{1,120}$/, "expected a stable Roadmap slice key");
+
+const roadmapReferenceSchema = z
+  .string()
+  .min(1)
+  .max(4096)
+  .refine((value) => !value.includes("\u0000"), "reference must not contain a NUL byte");
+
+export const roadmapPlanSliceSchema = z.object({
+  invoke: roadmapSliceKeySchema,
+  pi: roadmapSliceKeySchema,
+  sprint: roadmapSliceKeySchema,
+  status: roadmapStatusSchema,
+  branch: roadmapReferenceSchema,
+  worktree: roadmapReferenceSchema,
+  what: z.string().min(1).max(4_000),
+  suggestedConcurrency: z.number().int().positive().max(100),
+});
+
+export type RoadmapPlanSlice = z.infer<typeof roadmapPlanSliceSchema>;
+
+export const roadmapPlanSchema = z.object({
+  waves: z.array(z.array(roadmapPlanSliceSchema).max(100)).max(100),
+});
+
+export const roadmapSliceDetailSchema = z.object({
+  invoke: roadmapSliceKeySchema,
+  pi: roadmapSliceKeySchema,
+  sprint: roadmapSliceKeySchema,
+  status: roadmapStatusSchema,
+  gate: z.string().min(1).max(4_000),
+  gatedOn: z.string().min(1).max(4_000).nullable().optional(),
+});
+
+export const roadmapWorktreeIntentRequestSchema = z.object({
+  version: contractVersionSchema,
+  correlationId: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  sliceKey: roadmapSliceKeySchema,
+  requestedAt: rfc3339Schema,
+}).strict();
+
+export type RoadmapWorktreeIntentRequest = z.infer<typeof roadmapWorktreeIntentRequestSchema>;
+
+export const roadmapWorktreeIntentSchema = z.object({
+  version: contractVersionSchema,
+  correlationId: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  slice: z.object({
+    key: roadmapSliceKeySchema,
+    pi: roadmapSliceKeySchema,
+    sprint: roadmapSliceKeySchema,
+    wave: z.number().int().nonnegative().max(99),
+  }).strict(),
+  gate: z.object({
+    source: z.literal("roadmap"),
+    expression: z.string().min(1).max(4_000),
+  }).strict(),
+  worktree: z.object({
+    authority: z.literal("roadmap"),
+    branch: roadmapReferenceSchema,
+    reference: roadmapReferenceSchema,
+    preparation: z.literal("not-started"),
+  }).strict(),
+}).strict();
+
+export type RoadmapWorktreeIntent = z.infer<typeof roadmapWorktreeIntentSchema>;
+
 export type ProviderObservation = {
   readonly providerId: string;
   readonly observedAt: string;

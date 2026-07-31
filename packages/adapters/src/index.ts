@@ -1,7 +1,14 @@
 import {
+  assertNoInlineSecrets,
   normalizedEventSchema,
+  roadmapPlanSchema,
+  roadmapSliceDetailSchema,
+  roadmapWorktreeIntentRequestSchema,
+  roadmapWorktreeIntentSchema,
   signedJobEnvelopeSchema,
   type NormalizedEvent,
+  type RoadmapWorktreeIntent,
+  type RoadmapWorktreeIntentRequest,
 } from "@agent-ops/contracts";
 import type {
   CreateJobInput,
@@ -36,6 +43,154 @@ export class DurableStoreError extends Error {
     this.name = "DurableStoreError";
     this.operation = operation;
     this.code = error.code;
+  }
+}
+
+export type RoadmapReadOptions = {
+  readonly signal?: AbortSignal;
+};
+
+export interface RoadmapReadTransport {
+  plan(options?: RoadmapReadOptions): Promise<unknown>;
+  showSlice(input: { readonly invoke: string }, options?: RoadmapReadOptions): Promise<unknown>;
+}
+
+export interface RoadmapMcpClient {
+  callTool(
+    name: "plan" | "show",
+    input: Readonly<Record<string, unknown>>,
+    options?: RoadmapReadOptions,
+  ): Promise<unknown>;
+}
+
+/**
+ * Concrete mapping for Roadmap's read-only MCP tools. It deliberately exposes
+ * neither a graph implementation nor a mutating/launching Roadmap command.
+ */
+export class RoadmapMcpReadTransport implements RoadmapReadTransport {
+  private readonly client: RoadmapMcpClient;
+
+  constructor(client: RoadmapMcpClient) {
+    this.client = client;
+  }
+
+  plan(options?: RoadmapReadOptions): Promise<unknown> {
+    return this.client.callTool("plan", {}, options);
+  }
+
+  showSlice(
+    input: { readonly invoke: string },
+    options?: RoadmapReadOptions,
+  ): Promise<unknown> {
+    return this.client.callTool("show", { invoke: input.invoke }, options);
+  }
+}
+
+export class RoadmapAdapterError extends Error {
+  readonly code: "INVALID_ROADMAP_RESPONSE" | "SLICE_NOT_READY" | "GATED_SLICE" | "MISMATCHED_SLICE";
+
+  constructor(
+    code: RoadmapAdapterError["code"],
+    message: string,
+  ) {
+    super(message);
+    this.name = "RoadmapAdapterError";
+    this.code = code;
+  }
+}
+
+/**
+ * Reads Roadmap's own structured plan and slice-detail APIs. This adapter does
+ * not read roadmap.yaml, infer dependencies, create a worktree, launch an
+ * agent, or write back to Roadmap. `preparation: not-started` is deliberately
+ * an intent for a separately authorized Roadmap operation.
+ */
+export class RoadmapReadAdapter {
+  private readonly transport: RoadmapReadTransport;
+
+  constructor(transport: RoadmapReadTransport) {
+    this.transport = transport;
+  }
+
+  async resolveWorktreeIntent(
+    input: RoadmapWorktreeIntentRequest,
+    options?: RoadmapReadOptions,
+  ): Promise<RoadmapWorktreeIntent> {
+    const request = roadmapWorktreeIntentRequestSchema.parse(input);
+    options?.signal?.throwIfAborted();
+
+    const rawPlan = await this.transport.plan(options);
+    assertNoInlineSecrets(rawPlan);
+    let plan: ReturnType<typeof roadmapPlanSchema.parse>;
+    try {
+      plan = roadmapPlanSchema.parse(rawPlan);
+    } catch {
+      throw new RoadmapAdapterError(
+        "INVALID_ROADMAP_RESPONSE",
+        "Roadmap returned an invalid planning response.",
+      );
+    }
+    const readyWave = plan.waves[0] ?? [];
+    const selected = readyWave.find((slice) => slice.invoke === request.sliceKey);
+    if (!selected) {
+      throw new RoadmapAdapterError(
+        "SLICE_NOT_READY",
+        "Roadmap did not report the requested slice in its current ready wave.",
+      );
+    }
+
+    const rawDetail = await this.transport.showSlice({ invoke: request.sliceKey }, options);
+    assertNoInlineSecrets(rawDetail);
+    let detail: ReturnType<typeof roadmapSliceDetailSchema.parse>;
+    try {
+      detail = roadmapSliceDetailSchema.parse(rawDetail);
+    } catch {
+      throw new RoadmapAdapterError(
+        "INVALID_ROADMAP_RESPONSE",
+        "Roadmap returned an invalid slice-detail response.",
+      );
+    }
+    if (
+      detail.invoke !== selected.invoke
+      || detail.pi !== selected.pi
+      || detail.sprint !== selected.sprint
+      || detail.status !== selected.status
+    ) {
+      throw new RoadmapAdapterError(
+        "MISMATCHED_SLICE",
+        "Roadmap plan and slice detail did not identify the same stable slice.",
+      );
+    }
+    if (detail.gatedOn || detail.status === "gated" || detail.status === "blocked") {
+      throw new RoadmapAdapterError(
+        "GATED_SLICE",
+        "Roadmap reported a human or blocking gate for the requested slice.",
+      );
+    }
+
+    return roadmapWorktreeIntentSchema.parse({
+      version: request.version,
+      correlationId: request.correlationId,
+      taskId: request.taskId,
+      runId: request.runId,
+      securityDomain: request.securityDomain,
+      slice: {
+        key: selected.invoke,
+        pi: selected.pi,
+        sprint: selected.sprint,
+        wave: 0,
+      },
+      gate: {
+        source: "roadmap",
+        expression: detail.gate,
+      },
+      worktree: {
+        authority: "roadmap",
+        branch: selected.branch,
+        reference: selected.worktree,
+        preparation: "not-started",
+      },
+    });
   }
 }
 

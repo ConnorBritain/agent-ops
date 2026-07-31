@@ -38,7 +38,7 @@ scenarios:
   - id: ACC-PLANNING-001
     title: Roadmap readiness and stable worktree intent
     requirements: [REQ-CONTEXT-001, REQ-CONTEXT-005, REQ-INT-001, REQ-INT-002]
-    evidence: future Roadmap adapter scenario
+    evidence: Roadmap read-adapter scenario; future primitive, estimator, and architecture dependency-manifest evidence
     phase: 4
   - id: ACC-DELIVERY-001
     title: Independently verified draft pull-request delivery

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   DeterministicClock,
   InMemoryWorkerControlPlane,
+  StaticRoadmapReadTransport,
   StaticResourceInspector,
   assertRebootIdleServiceFixture,
   buildJobEnvelope,
@@ -46,5 +47,18 @@ describe("deterministic worker test kit", () => {
       automaticWorkloadResume: true,
       restartsSupervisorOnFailure: true,
     }), /never automatically resume/);
+  });
+
+  it("records deterministic Roadmap reads without creating a worktree", async () => {
+    const transport = new StaticRoadmapReadTransport(
+      { waves: [[]] },
+      { "roadmap-adapter": { invoke: "roadmap-adapter" } },
+    );
+    await transport.plan();
+    await transport.showSlice({ invoke: "roadmap-adapter" });
+    assert.deepEqual(transport.calls, [
+      { method: "plan" },
+      { method: "show", invoke: "roadmap-adapter" },
+    ]);
   });
 });

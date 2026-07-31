@@ -9,7 +9,8 @@
   reboot-idle packaging boundaries. Provider launch, actual signature
   verification, actual service installation, durable attention routing, and
   full end-to-end fixtures remain future work.
-- The full v1 Roadmap and traceability report now describe those future slices,
-  but planned mappings are not completion evidence. `roadmap-adapter` is the
-  next autonomous local implementation slice.
+- The Roadmap read adapter resolves only ready-wave and worktree intent. It
+  does not create worktrees, launch agents, mutate Roadmap, or satisfy the
+  remaining independently versioned primitive, estimator, and architecture
+  dependency references. `print-provider` is the next autonomous local slice.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

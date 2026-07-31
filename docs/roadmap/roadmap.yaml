@@ -15,7 +15,7 @@ meta:
   links:
     narrative: docs/specs/SPEC-000-program-charter.md
     status: docs/status/current.md
-    tracker: docs/traceability/phase-3-worker-service-packaging.yaml
+    tracker: docs/traceability/phase-4-roadmap-adapter.yaml
     bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
 pis:
   - id: phase-0-governance
@@ -283,7 +283,7 @@ pis:
         prompt: Keep all host, network, identity, and service evidence private; stop if any safety threshold or authorization is missing.
   - id: phase-4-roadmap-print-provider
     title: Roadmap composition and PrintProvider
-    status: scheduled
+    status: active
     deps: [phase-0-governance, phase-3-worker-safety]
     summary: Compose Roadmap for readiness and worktree intent, then prove the provider lifecycle through a deterministic no-execution provider.
     exit_criteria: A bounded fixture resolves a ready slice, retains stable correlation references, and produces a complete no-execution launch plan through the shared provider conformance suite.
@@ -295,13 +295,14 @@ pis:
     sprints:
       - id: roadmap-adapter
         title: Roadmap readiness and worktree-intent adapter
-        status: scheduled
+        status: complete
         invoke: roadmap-adapter
         what: Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation.
-        est_sessions: 1
+        est_sessions: 0
         weight: light
         deps: [worker-service-packaging]
         gate: Roadmap adapter scenario and correlation contract tests
+        completed_on: "2026-07-30"
         touches:
           - packages/adapters/
           - packages/contracts/
@@ -311,7 +312,7 @@ pis:
           - docs/specs/SPEC-002-system-context-and-authority.md
           - docs/specs/SPEC-005-commands-events-and-idempotency.md
           - docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
-        resume_action: Implement against the documented Roadmap CLI contract without copying its dependency graph.
+        resume_action: Preserve the read-only Roadmap boundary; physical worktree preparation and agent launch remain separately authorized.
         priority:
           tier: P0
           weight: 95

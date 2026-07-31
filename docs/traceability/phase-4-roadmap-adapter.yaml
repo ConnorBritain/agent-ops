@@ -1,0 +1,26 @@
+slice: roadmap-adapter
+status: complete
+requirements:
+  - REQ-CONTEXT-001
+  - REQ-INT-001
+  - REQ-INT-002
+artifacts:
+  - packages/contracts
+  - packages/adapters
+  - packages/test-kit
+  - config/roadmap-adapter.manifest.yaml
+  - docs/adr/ADR-0011-roadmap-readiness-and-worktree-intent.md
+tests:
+  - pnpm run check:roadmap-adapter
+  - pnpm --filter @agent-ops/contracts test
+  - pnpm --filter @agent-ops/adapters test
+  - pnpm --filter @agent-ops/test-kit test
+  - pnpm validate
+acceptance: ACC-PLANNING-001
+evidence:
+  typed_roadmap_mcp_mapping: passed
+  ready_wave_and_gate_validation: passed
+  task_run_slice_worktree_correlation: passed
+  non_ready_gated_mismatched_and_secret_output_refusal: passed
+  physical_worktree_preparation_and_agent_launch: separately-authorized
+  dependency_manifest_for_future_primitives_estimation_and_architecture: planned
