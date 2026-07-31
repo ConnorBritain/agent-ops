@@ -43,7 +43,7 @@ Lifecycle mapping:
 | --- | --- | --- |
 | capability inspection | local version/schema discovery and manifest construction | No auth, task, or provider launch is implied by declaration. |
 | environment validation | validate protocol version and approved local executable reference | No credential value is read or stored. |
-| start | `thread/start` then `turn/start` | Only after the Worker/Coordinator policy and signature boundary accepts the job. |
+| start | `initialize`, `initialized`, then `thread/start` and `turn/start` | Only after the Worker/Coordinator policy and signature boundary accepts the job. |
 | send input | `turn/steer` for an active turn; later completed-turn input creates a new turn only through the durable Coordinator path | Input is a typed, redacted provider invocation, never raw shell transport. |
 | inspect | normalized streamed item events plus `thread/read` | Raw provider transcripts are not operational truth. |
 | pause and resume | unsupported | The manifest must declare both explicitly; no process suspension is implied. |

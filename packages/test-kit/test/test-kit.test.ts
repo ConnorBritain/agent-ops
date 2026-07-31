@@ -66,13 +66,15 @@ describe("deterministic worker test kit", () => {
   it("models a bounded Codex App Server lifecycle without a binary or credentials", async () => {
     const transport = new ScriptedJsonRpcTransport([
       { method: "initialize", params: { clientInfo: { name: "agent-ops" } }, result: { platformFamily: "unix" } },
+      { type: "notification", method: "initialized", params: {} },
       { method: "thread/start", params: { model: "selected-by-provider" }, result: { thread: { id: "thread-1" } } },
       { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "bounded task" }] }, result: { turn: { id: "turn-1" } } },
       { method: "turn/steer", params: { threadId: "thread-1", input: [{ type: "text", text: "bounded follow-up" }] }, result: { turnId: "turn-1" } },
-      { method: "thread/read", params: { threadId: "thread-1" }, result: { thread: { status: "running" } } },
+      { method: "thread/read", params: { threadId: "thread-1" }, result: { thread: { status: { type: "active", activeFlags: [] } } } },
       { method: "turn/interrupt", params: { threadId: "thread-1", turnId: "turn-1" }, result: {} },
     ]);
     await transport.request("initialize", { clientInfo: { name: "agent-ops" } });
+    await transport.notify("initialized", {});
     await transport.request("thread/start", { model: "selected-by-provider" });
     await transport.request("turn/start", { threadId: "thread-1", input: [{ type: "text", text: "bounded task" }] });
     await transport.request("turn/steer", { threadId: "thread-1", input: [{ type: "text", text: "bounded follow-up" }] });
@@ -82,5 +84,6 @@ describe("deterministic worker test kit", () => {
     assert.deepEqual(transport.requests.map((request) => request.method), [
       "initialize", "thread/start", "turn/start", "turn/steer", "thread/read", "turn/interrupt",
     ]);
+    assert.deepEqual(transport.notifications, [{ method: "initialized", params: {} }]);
   });
 });

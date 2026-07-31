@@ -154,14 +154,21 @@ real CLI providers pass the same suite.
 
 ## Phase 5 — First CLI-provider selection
 
-Status: **selection spike complete** on 2026-07-30; executable provider work
-is not yet started.
+Status: **deterministic adapter complete** on 2026-07-30; real provider
+binding remains separately gated.
 
-The selected first protocol is the Codex CLI App Server over local stdio. Its
-documented JSON-RPC lifecycle supports typed thread/turn start, active-turn
-steer, inspection, and interruption without a terminal UI or network listener.
-Pause and resume are explicitly unsupported. `ScriptedJsonRpcTransport` proves
-the protocol ordering without a provider binary, credential, process, or
-network connection. The next slice, `first-cli-provider`, implements the
-adapter against that port and must retain all execution, authentication, and
-host-enrollment gates.
+The selected first protocol is the Codex CLI App Server over local stdio. The
+new `CodexAppServerProvider` accepts an injected JSON-RPC session factory and
+orders `initialize`, thread/turn start, active-turn steer, inspection, and
+interruption while keeping pause/resume explicitly unsupported. It emits only
+correlated normalized observations and bounded session artifacts; it does not
+mutate task or run state. Unknown or secret-bearing protocol output is refused,
+transport failure produces redacted attention evidence, and a failed invocation
+cannot restart automatically.
+
+`ScriptedJsonRpcTransport` proves conformance, crash recovery, cancellation,
+artifact redaction, local-stdio-only preflight, and no-execution behavior
+without a provider binary, credential, process, or network connection. The
+new `first-cli-provider-runtime-canary` slice is private and gated on owner
+authorization, scoped provider identity, a disposable repository, and a
+reviewed rollback plan.

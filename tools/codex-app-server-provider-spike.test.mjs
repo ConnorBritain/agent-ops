@@ -9,6 +9,7 @@ const adr = await readFile(
 
 test("first CLI provider selection keeps the Codex control surface local and bounded", () => {
   assert.match(adr, /codex app-server --listen stdio:\/\//);
+  assert.match(adr, /`initialize`, `initialized`, then `thread\/start` and `turn\/start`/);
   assert.match(adr, /turn\/steer/);
   assert.match(adr, /turn\/interrupt/);
   assert.match(adr, /pause and resume \| unsupported/i);
