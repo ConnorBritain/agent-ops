@@ -1,0 +1,19 @@
+slice: first-cli-provider-spike
+status: complete
+requirements: []
+artifacts:
+  - docs/adr/ADR-0013-codex-app-server-first-cli-provider.md
+  - docs/architecture/codex-app-server-provider.md
+  - packages/test-kit
+tests:
+  - pnpm run check:codex-app-server-provider-spike
+  - pnpm --filter @agent-ops/test-kit test
+  - pnpm validate
+acceptance: ACC-PROVIDER-001
+evidence:
+  documented_surface_comparison: passed
+  local_stdio_only_and_no_ui_automation: passed
+  active_turn_input_inspection_and_cancellation_mapping: passed
+  deterministic_json_rpc_test_double: passed
+  provider_binary_authentication_and_execution: separately-authorized
+catalog_version: 1

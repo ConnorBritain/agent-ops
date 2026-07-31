@@ -4,6 +4,7 @@ import {
   DeterministicClock,
   InMemoryWorkerControlPlane,
   StaticRoadmapReadTransport,
+  ScriptedJsonRpcTransport,
   StaticResourceInspector,
   assertRebootIdleServiceFixture,
   buildJobEnvelope,
@@ -59,6 +60,27 @@ describe("deterministic worker test kit", () => {
     assert.deepEqual(transport.calls, [
       { method: "plan" },
       { method: "show", invoke: "roadmap-adapter" },
+    ]);
+  });
+
+  it("models a bounded Codex App Server lifecycle without a binary or credentials", async () => {
+    const transport = new ScriptedJsonRpcTransport([
+      { method: "initialize", params: { clientInfo: { name: "agent-ops" } }, result: { platformFamily: "unix" } },
+      { method: "thread/start", params: { model: "selected-by-provider" }, result: { thread: { id: "thread-1" } } },
+      { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "bounded task" }] }, result: { turn: { id: "turn-1" } } },
+      { method: "turn/steer", params: { threadId: "thread-1", input: [{ type: "text", text: "bounded follow-up" }] }, result: { turnId: "turn-1" } },
+      { method: "thread/read", params: { threadId: "thread-1" }, result: { thread: { status: "running" } } },
+      { method: "turn/interrupt", params: { threadId: "thread-1", turnId: "turn-1" }, result: {} },
+    ]);
+    await transport.request("initialize", { clientInfo: { name: "agent-ops" } });
+    await transport.request("thread/start", { model: "selected-by-provider" });
+    await transport.request("turn/start", { threadId: "thread-1", input: [{ type: "text", text: "bounded task" }] });
+    await transport.request("turn/steer", { threadId: "thread-1", input: [{ type: "text", text: "bounded follow-up" }] });
+    await transport.request("thread/read", { threadId: "thread-1" });
+    await transport.request("turn/interrupt", { threadId: "thread-1", turnId: "turn-1" });
+    transport.assertComplete();
+    assert.deepEqual(transport.requests.map((request) => request.method), [
+      "initialize", "thread/start", "turn/start", "turn/steer", "thread/read", "turn/interrupt",
     ]);
   });
 });

@@ -13,9 +13,9 @@ specification-ordered v1 Roadmap is
 tracked in `docs/SLICES.md`, and the generated
 requirement-to-slice-to-acceptance-to-test report is in
 `docs/traceability/v1-requirements.yaml`. No host service or provider runtime
-is installed by this repository. The next slice is a documented first
-CLI-provider selection spike; it is not authorization to install,
-authenticate, or run a provider.
+is installed by this repository. The selected first protocol is Codex App
+Server over local stdio; the next slice implements a deterministic adapter, not
+an installation, authentication, or provider launch.
 
 Run `pnpm validate` for specifications, traceability, public-data policy,
 Supabase migration structure, TypeScript, unit tests, and Roadmap validation.

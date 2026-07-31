@@ -358,13 +358,14 @@ pis:
     sprints:
       - id: first-cli-provider-spike
         title: Select and prove a stable CLI control surface
-        status: next
+        status: complete
         invoke: first-cli-provider-spike
         what: Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR.
         est_sessions: 1
         weight: light
         deps: [print-provider]
         gate: Bounded integration spike, security review, and accepted provider ADR
+        completed_on: "2026-07-30"
         touches:
           - docs/adr/
           - docs/architecture/
@@ -381,7 +382,7 @@ pis:
         prompt: Record unsupported operations honestly, keep credentials out of fixtures, and reject any provider that requires undocumented UI automation.
       - id: first-cli-provider
         title: Implement the first normalized CLI provider
-        status: scheduled
+        status: next
         invoke: first-cli-provider
         what: Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection.
         est_sessions: 2
