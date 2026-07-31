@@ -52,6 +52,7 @@ const candidate = (overrides: Partial<PlacementCandidate> = {}): PlacementCandid
   providerId: "codex-app-server",
   securityDomain: "example-domain",
   capabilities: new Set(["terminal", "git"]),
+  skills: [{ key: "repository-inspection", version: "1.2.0", bundleId: "core-primitives" }],
   healthy: true,
   preferenceScore: 10,
   ...overrides,
@@ -168,7 +169,7 @@ describe("Coordinator dispatch", () => {
       accepted: true,
       selected: candidate(),
       exclusions: [{ workerId: "wrong-domain", reason: "security-domain-mismatch" }],
-      rationale: "eligible after policy, domain, health, and capability filters; score=10",
+      rationale: "eligible after policy, domain, health, capability, and enforced-skill filters; score=10",
     });
     assert.equal(store.providerAcknowledgements.length, 1);
   });
@@ -192,6 +193,37 @@ describe("Coordinator dispatch", () => {
     assert.deepEqual(store.operations, ["intent", "scheduling", "attention"]);
     assert.deepEqual(calls, ["policy", "attention-delivery"]);
     assert.equal(store.jobs.length, 0);
+  });
+
+  it("rejects missing or incompatible enforced skills before creating a job or contacting a worker", async () => {
+    const { runtime, calls, store } = runtimeFixture();
+    const result = await runtime.dispatch({
+      command: dispatchCommand(),
+      envelope: buildJobEnvelope(),
+      candidates: [
+        candidate({ workerId: "missing-skill", skills: [] }),
+        candidate({
+          workerId: "incompatible-skill",
+          skills: [{ key: "repository-inspection", version: "0.9.0", bundleId: "core-primitives" }],
+        }),
+      ],
+    });
+
+    assert.equal(result.kind, "attention-required");
+    assert.equal(result.reason, "no-eligible-candidate");
+    assert.equal(store.jobs.length, 0);
+    assert.deepEqual(calls, ["policy", "attention-delivery"]);
+    assert.deepEqual(store.schedulingDecisions[0]?.requiredSkills, [
+      { key: "repository-inspection", versionRange: "^1", enforcement: "enforced" },
+    ]);
+    assert.deepEqual(store.schedulingDecisions[0]?.placement, {
+      accepted: false,
+      reason: "no-eligible-candidate",
+      exclusions: [
+        { workerId: "missing-skill", reason: "missing-enforced-skill:repository-inspection" },
+        { workerId: "incompatible-skill", reason: "incompatible-enforced-skill:repository-inspection" },
+      ],
+    });
   });
 
   it("records a provider acknowledgement only as an observation and turns stale state into attention without a restart", async () => {

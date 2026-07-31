@@ -135,6 +135,9 @@ const candidateAudit = (candidate: PlacementCandidate) => ({
   providerId: candidate.providerId,
   securityDomain: candidate.securityDomain,
   capabilities: [...candidate.capabilities].sort(),
+  skills: candidate.skills
+    .map((skill) => ({ ...skill }))
+    .sort((left, right) => left.key.localeCompare(right.key) || left.version.localeCompare(right.version)),
   healthy: candidate.healthy,
   preferenceScore: candidate.preferenceScore,
 });
@@ -234,6 +237,7 @@ export class CoordinatorRuntime {
     const placement = selectPlacement({
       securityDomain: envelope.securityDomain,
       requiredCapabilities: envelope.requiredCapabilities,
+      requiredSkills: envelope.requiredSkills,
       ...(command.providerPreference ? { preferredProviderId: command.providerPreference } : {}),
       policyDecision,
     }, rawInput.candidates);
@@ -243,6 +247,7 @@ export class CoordinatorRuntime {
       securityDomain: envelope.securityDomain,
       policyDecision,
       requiredCapabilities: [...envelope.requiredCapabilities],
+      requiredSkills: envelope.requiredSkills.map((skill) => ({ ...skill })),
       ...(command.providerPreference ? { preferredProviderId: command.providerPreference } : {}),
       candidates: rawInput.candidates.map(candidateAudit),
       placement,

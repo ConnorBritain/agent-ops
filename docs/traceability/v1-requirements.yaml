@@ -44,12 +44,12 @@ acceptance_routes:
     test: "pnpm run check:github-portfolio-projections"
   - id: ACC-SKILLS-001
     slice: skills-estimation-finops
-    status: planned
-    test: "future primitive manifest and enforcement suite"
+    status: complete
+    test: "pnpm run check:skills-estimation-finops"
   - id: ACC-FINOPS-001
     slice: skills-estimation-finops
-    status: planned
-    test: "future estimation and FinOps lineage suite"
+    status: complete
+    test: "pnpm run check:skills-estimation-finops"
   - id: ACC-RELEASE-001
     slice: release-recovery
     status: planned
@@ -687,97 +687,97 @@ requirements:
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Manifest schema validation."
   - id: REQ-SKILL-002
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Static skill audit."
   - id: REQ-SKILL-003
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Worker manifest test."
   - id: REQ-SKILL-004
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Missing-skill dispatch test."
   - id: REQ-SKILL-005
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Enforcement classification review."
   - id: REQ-SKILL-006
     owner: SPEC-012
     slice: skills-estimation-finops
     acceptance: ACC-SKILLS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future primitive manifest and enforcement suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Redaction and relay test."
   - id: REQ-FINOPS-001
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Estimate lineage test."
   - id: REQ-FINOPS-002
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Time-accounting fixture."
   - id: REQ-FINOPS-003
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Rate-card review."
   - id: REQ-FINOPS-004
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Allocation lineage query."
   - id: REQ-FINOPS-005
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "System-of-record review."
   - id: REQ-FINOPS-006
     owner: SPEC-013
     slice: skills-estimation-finops
     acceptance: ACC-FINOPS-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future estimation and FinOps lineage suite"
+    test: "pnpm run check:skills-estimation-finops"
     required_evidence: "Projection contract test."
   - id: REQ-MEMORY-001
     owner: SPEC-014

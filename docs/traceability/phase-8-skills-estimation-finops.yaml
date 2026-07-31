@@ -1,0 +1,47 @@
+slice: skills-estimation-finops
+status: complete
+requirements:
+  - REQ-SKILL-001
+  - REQ-SKILL-002
+  - REQ-SKILL-003
+  - REQ-SKILL-004
+  - REQ-SKILL-005
+  - REQ-SKILL-006
+  - REQ-FINOPS-001
+  - REQ-FINOPS-002
+  - REQ-FINOPS-003
+  - REQ-FINOPS-004
+  - REQ-FINOPS-005
+  - REQ-FINOPS-006
+artifacts:
+  - packages/contracts/src/index.ts
+  - packages/contracts/test/contracts.test.ts
+  - packages/domain/src/index.ts
+  - packages/domain/test/domain.test.ts
+  - apps/coordinator/src/index.ts
+  - apps/coordinator/test/coordinator.test.ts
+  - packages/adapters/src/skills-estimation-finops.ts
+  - packages/adapters/test/skills-estimation-finops.test.ts
+  - packages/test-kit/src/index.ts
+  - tools/skills-estimation-finops.test.mjs
+  - docs/architecture/portable-skills-and-finops.md
+  - docs/adr/ADR-0019-portable-skills-and-independent-finops-lineage.md
+tests:
+  - pnpm run check:skills-estimation-finops
+  - pnpm validate
+acceptance:
+  - ACC-SKILLS-001
+  - ACC-FINOPS-001
+evidence:
+  portable_primitive_manifest_and_bundle_membership: passed
+  no_host_session_or_inline_secret_facts_in_portable_bundle: rejected
+  coordinator_missing_or_incompatible_enforced_skill_refusal: passed
+  deterministic_enforcement_classification: passed
+  redacted_authentication_reporting_detail_relay: passed
+  independent_estimate_range_model_and_calibration_lineage: passed
+  separate_agent_human_blocked_and_verification_measures: passed
+  versioned_rate_card_and_allocation_trace: passed
+  external_accounting_system_of_record: declared
+  planning_points_currency_conversion: rejected
+  live_primitive_registry_estimator_rate_import_and_accounting_reconciliation: separately-authorized
+catalog_version: 1

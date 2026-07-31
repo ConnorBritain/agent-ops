@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  assertFinOpsLineage,
   evaluateWorkerPreflight,
   reconcileObservedState,
   selectPlacement,
+  skillVersionSatisfies,
   type WorkerPreflightFacts,
 } from "../src/index.ts";
 
@@ -13,6 +15,7 @@ describe("placement policy", () => {
       {
         securityDomain: "domain-a",
         requiredCapabilities: ["terminal"],
+        requiredSkills: [],
         preferredProviderId: "preferred",
         policyDecision: {
           id: "policy-1",
@@ -27,6 +30,7 @@ describe("placement policy", () => {
           providerId: "preferred",
           securityDomain: "domain-b",
           capabilities: new Set(["terminal"]),
+          skills: [],
           healthy: true,
           preferenceScore: 100,
         },
@@ -35,6 +39,7 @@ describe("placement policy", () => {
           providerId: "fallback",
           securityDomain: "domain-a",
           capabilities: new Set(["terminal"]),
+          skills: [],
           healthy: true,
           preferenceScore: 1,
         },
@@ -55,6 +60,7 @@ describe("placement policy", () => {
       {
         securityDomain: "domain-a",
         requiredCapabilities: [],
+        requiredSkills: [],
         policyDecision: {
           id: "policy-1",
           decision: "requires-approval",
@@ -69,6 +75,84 @@ describe("placement policy", () => {
       reason: "approval-required",
       exclusions: [],
     });
+  });
+
+  it("requires an installed, version-compatible primitive for each enforced skill", () => {
+    const request = {
+      securityDomain: "domain-a",
+      requiredCapabilities: ["terminal"],
+      requiredSkills: [{ key: "repository-inspection", versionRange: "^1", enforcement: "enforced" as const }],
+      policyDecision: {
+        id: "policy-1",
+        decision: "allow" as const,
+        securityDomain: "domain-a",
+        rationale: "bounded test",
+      },
+    };
+    const result = selectPlacement(request, [{
+      workerId: "worker-1",
+      providerId: "provider-1",
+      securityDomain: "domain-a",
+      capabilities: new Set(["terminal"]),
+      skills: [{ key: "repository-inspection", version: "1.2.0", bundleId: "core" }],
+      healthy: true,
+      preferenceScore: 1,
+    }]);
+    assert.equal(result.accepted, true);
+    assert.equal(skillVersionSatisfies("1.2.0", "^1"), true);
+    assert.equal(skillVersionSatisfies("0.9.0", "^1"), false);
+    assert.equal(skillVersionSatisfies("0.1.4", "^0.1"), true);
+    assert.equal(skillVersionSatisfies("0.2.0", "^0.1"), false);
+    assert.equal(skillVersionSatisfies("1.3.0", "~1"), true);
+  });
+});
+
+describe("FinOps lineage", () => {
+  it("requires rate-card allocation lineage without converting planning points to money", () => {
+    const estimate = {
+      id: "00000000-0000-4000-8000-000000000001",
+      taskId: "00000000-0000-4000-8000-000000000002",
+      runId: "00000000-0000-4000-8000-000000000003",
+      securityDomain: "domain-a",
+    };
+    const effort = [{
+      id: "00000000-0000-4000-8000-000000000004",
+      taskId: estimate.taskId,
+      runId: estimate.runId,
+      securityDomain: estimate.securityDomain,
+      measure: "agent-execution" as const,
+    }];
+    const rateCard = {
+      id: "00000000-0000-4000-8000-000000000005",
+      rateCardVersion: "1.0.0",
+      entries: [{ key: "compute", unit: "second", amount: 1, currency: "USD" }],
+    };
+    const allocation = {
+      id: "00000000-0000-4000-8000-000000000006",
+      taskId: estimate.taskId,
+      runId: estimate.runId,
+      securityDomain: estimate.securityDomain,
+      rateCardId: rateCard.id,
+      rateCardVersion: rateCard.rateCardVersion,
+      rateKey: "compute",
+      unit: "second",
+      currency: "USD",
+    };
+    const feedback = {
+      taskId: estimate.taskId,
+      runId: estimate.runId,
+      securityDomain: estimate.securityDomain,
+      estimateId: estimate.id,
+      effortMeasurementIds: [effort[0]!.id],
+      allocationIds: [allocation.id],
+    };
+    assert.equal(assertFinOpsLineage({
+      estimate: estimate as never,
+      effort: effort as never,
+      rateCards: [rateCard] as never,
+      allocations: [allocation] as never,
+      planningFeedback: feedback as never,
+    }).estimate.id, estimate.id);
   });
 });
 
