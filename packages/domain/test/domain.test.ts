@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertFinOpsLineage,
+  assertReleaseRecoveryLineage,
+  compatibilityVersionSatisfies,
   evaluateWorkerPreflight,
   reconcileObservedState,
   selectPlacement,
@@ -153,6 +155,196 @@ describe("FinOps lineage", () => {
       allocations: [allocation] as never,
       planningFeedback: feedback as never,
     }).estimate.id, estimate.id);
+  });
+});
+
+const releaseRecoveryFixture = () => {
+  const ids = {
+    release: "00000000-0000-4000-8000-000000000301",
+    manifest: "00000000-0000-4000-8000-000000000302",
+    canary: "00000000-0000-4000-8000-000000000303",
+    stable: "00000000-0000-4000-8000-000000000304",
+    migration: "00000000-0000-4000-8000-000000000305",
+    backup: "00000000-0000-4000-8000-000000000306",
+    replacement: "00000000-0000-4000-8000-000000000307",
+    retiredWorker: "00000000-0000-4000-8000-000000000308",
+    replacementWorker: "00000000-0000-4000-8000-000000000309",
+    ledgerOne: "00000000-0000-4000-8000-000000000310",
+    ledgerTwo: "00000000-0000-4000-8000-000000000311",
+    gate: "00000000-0000-4000-8000-000000000312",
+    approver: "00000000-0000-4000-8000-000000000313",
+  };
+  const declarations = [
+    "coordinator-api", "worker-runtime", "provider-sdk", "provider-adapter", "policy",
+    "database-schema", "job-contract", "event-contract", "skill-bundle",
+  ].map((component) => ({
+    component,
+    currentVersion: "1.1.0",
+    acceptsVersionRange: ">=1.0.0 <2.0.0",
+    backwardCompatibility: component === "database-schema"
+      ? "requires-expand-migration"
+      : "backward-compatible",
+  }));
+  const approval = {
+    approvalRef: "approval://fixture/release-recovery",
+    approvedBy: { id: ids.approver, kind: "human", securityDomain: "example-domain" },
+    approvedAt: "2026-07-30T04:00:00Z",
+  };
+  const manifest = {
+    version: "1.0",
+    id: ids.manifest,
+    releaseId: ids.release,
+    releaseRef: "release://fixture/recovery-1",
+    declarations,
+    generatedAt: "2026-07-30T04:00:00Z",
+  };
+  const promotions = [
+    {
+      version: "1.0",
+      id: ids.canary,
+      releaseId: ids.release,
+      compatibilityManifestId: ids.manifest,
+      fromChannel: "development",
+      toChannel: "canary",
+      compatibilityCheck: {
+        verdict: "passed",
+        evidenceRefs: ["test://fixture/development-canary"],
+        checkedAt: "2026-07-30T04:00:00Z",
+      },
+      approval,
+      promotedAt: "2026-07-30T04:00:00Z",
+    },
+    {
+      version: "1.0",
+      id: ids.stable,
+      releaseId: ids.release,
+      compatibilityManifestId: ids.manifest,
+      fromChannel: "canary",
+      toChannel: "stable",
+      compatibilityCheck: {
+        verdict: "passed",
+        evidenceRefs: ["test://fixture/canary-stable"],
+        checkedAt: "2026-07-30T04:01:00Z",
+      },
+      approval,
+      promotedAt: "2026-07-30T04:01:00Z",
+    },
+  ];
+  const backup = {
+    version: "1.0",
+    id: ids.backup,
+    releaseId: ids.release,
+    backupRef: "backup://fixture/recovery-1",
+    coverage: [
+      "durable-operational-state",
+      "versioned-configuration",
+      "persistent-memory-data",
+      "documented-secret-references",
+    ],
+    integrity: "verified",
+    restoration: "verified",
+    evidenceRefs: ["test://fixture/backup-restore"],
+    verifiedAt: "2026-07-30T04:00:00Z",
+  };
+  const migrations = [{
+    version: "1.0",
+    id: ids.migration,
+    releaseId: ids.release,
+    migrationRef: "migration://fixture/expand-contract-1",
+    sourceSchemaVersion: "1.0.0",
+    targetSchemaVersion: "1.1.0",
+    appendOnly: true,
+    strategy: "expand-before-contract",
+    operation: "destructive",
+    backupVerificationId: ids.backup,
+    approval,
+    forwardRepairRunbookRef: "runbook://release-recovery/forward-repair",
+    gatedAt: "2026-07-30T04:00:00Z",
+  }];
+  const replacement = {
+    version: "1.0",
+    id: ids.replacement,
+    releaseId: ids.release,
+    retiredWorkerId: ids.retiredWorker,
+    replacementWorkerId: ids.replacementWorker,
+    durableLedger: {
+      ledgerRef: "ledger://fixture/task-run-event",
+      immutableRecordIds: [ids.ledgerOne, ids.ledgerTwo],
+    },
+    restoredLedgerRecordIds: [ids.ledgerTwo, ids.ledgerOne],
+    enrollment: {
+      bootstrap: true,
+      registration: true,
+      validation: true,
+      provisioning: true,
+      health: true,
+      controlledDrain: true,
+    },
+    rehearsedAt: "2026-07-30T04:00:00Z",
+  };
+  const gate = {
+    version: "1.0",
+    id: ids.gate,
+    releaseId: ids.release,
+    compatibilityManifestId: ids.manifest,
+    promotionIds: [ids.canary, ids.stable],
+    migrationGateIds: [ids.migration],
+    backupVerificationId: ids.backup,
+    replacementRecordId: ids.replacement,
+    redactionVerification: "passed",
+    criticalSafetyTests: [{
+      id: "safety-fixture",
+      status: "passed",
+      evidenceRefs: ["test://fixture/safety"],
+    }],
+    verdict: "passed",
+    checkedAt: "2026-07-30T04:01:00Z",
+  };
+  return {
+    manifest,
+    observations: declarations.map(({ component, currentVersion }) => ({
+      component,
+      version: currentVersion,
+    })),
+    promotions,
+    migrations,
+    backups: [backup],
+    replacement,
+    gate,
+  };
+};
+
+describe("release recovery lineage", () => {
+  it("requires explicit compatible development-to-canary-to-stable promotion and full recovery evidence", () => {
+    const fixture = releaseRecoveryFixture();
+    assert.equal(
+      assertReleaseRecoveryLineage(fixture as never).gate.verdict,
+      "passed",
+    );
+    assert.equal(compatibilityVersionSatisfies("1.4.0", ">=1.0.0 <2.0.0"), true);
+    assert.equal(compatibilityVersionSatisfies("2.0.0", ">=1.0.0 <2.0.0"), false);
+  });
+
+  it("blocks schema incompatibility, incomplete backups, ledger loss, failed redaction, and unaddressed safety", () => {
+    const incompatible = releaseRecoveryFixture();
+    incompatible.observations[6] = { component: "job-contract", version: "2.0.0" };
+    assert.throws(() => assertReleaseRecoveryLineage(incompatible as never), /Incompatible job-contract/);
+
+    const backupFailure = releaseRecoveryFixture();
+    backupFailure.backups[0]!.restoration = "not-verified";
+    assert.throws(() => assertReleaseRecoveryLineage(backupFailure as never), /verified, restoration-tested full backup/);
+
+    const lostLedger = releaseRecoveryFixture();
+    lostLedger.replacement.restoredLedgerRecordIds = [lostLedger.replacement.durableLedger.immutableRecordIds[0]!];
+    assert.throws(() => assertReleaseRecoveryLineage(lostLedger as never), /did not preserve the durable ledger/);
+
+    const redactionFailure = releaseRecoveryFixture();
+    redactionFailure.gate.redactionVerification = "failed";
+    assert.throws(() => assertReleaseRecoveryLineage(redactionFailure as never), /failed redaction/);
+
+    const safetyFailure = releaseRecoveryFixture();
+    safetyFailure.gate.criticalSafetyTests[0]!.status = "unaddressed";
+    assert.throws(() => assertReleaseRecoveryLineage(safetyFailure as never), /unaddressed critical safety/);
   });
 });
 

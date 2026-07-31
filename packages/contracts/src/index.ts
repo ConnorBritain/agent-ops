@@ -843,6 +843,237 @@ export const planningFeedbackSchema = z.object({
 
 export type PlanningFeedback = z.infer<typeof planningFeedbackSchema>;
 
+/**
+ * Release-recovery records deliberately use internal UUIDs and opaque generic
+ * references. They declare evidence and approval boundaries; they do not name
+ * hosts, backup locations, cloud projects, credentials, or deployment APIs.
+ */
+export const RELEASE_COMPATIBILITY_COMPONENTS = [
+  "coordinator-api",
+  "worker-runtime",
+  "provider-sdk",
+  "provider-adapter",
+  "policy",
+  "database-schema",
+  "job-contract",
+  "event-contract",
+  "skill-bundle",
+] as const;
+
+export const releaseCompatibilityComponentSchema = z.enum(RELEASE_COMPATIBILITY_COMPONENTS);
+export type ReleaseCompatibilityComponent = z.infer<typeof releaseCompatibilityComponentSchema>;
+
+/** A deliberately small, declarative semver range grammar for compatibility records. */
+export const compatibilityVersionRangeSchema = z.string().regex(
+  /^(?:\*|(?:\^|~|>=|>|<=|<)?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\s+(?:\^|~|>=|>|<=|<)?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?){0,7})$/,
+  "expected a bounded semantic-version compatibility range",
+);
+
+export const releaseChannelSchema = z.enum(["development", "canary", "stable"]);
+export type ReleaseChannel = z.infer<typeof releaseChannelSchema>;
+
+export const compatibilityDeclarationSchema = z.object({
+  component: releaseCompatibilityComponentSchema,
+  currentVersion: semanticVersionSchema,
+  acceptsVersionRange: compatibilityVersionRangeSchema,
+  /** New contracts must state their backwards-compatibility behavior. */
+  backwardCompatibility: z.enum([
+    "backward-compatible",
+    "requires-expand-migration",
+    "incompatible-blocked",
+  ]),
+}).strict();
+
+export type CompatibilityDeclaration = z.infer<typeof compatibilityDeclarationSchema>;
+
+export const compatibilityManifestSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  releaseRef: z.string().regex(/^release:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  declarations: z.array(compatibilityDeclarationSchema)
+    .length(RELEASE_COMPATIBILITY_COMPONENTS.length),
+  generatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.declarations.map((entry) => entry.component), "compatibility component", context);
+  const declared = new Set(value.declarations.map((entry) => entry.component));
+  for (const component of RELEASE_COMPATIBILITY_COMPONENTS) {
+    if (!declared.has(component)) {
+      context.addIssue({
+        code: "custom",
+        message: `missing release compatibility declaration: ${component}`,
+        path: ["declarations"],
+      });
+    }
+  }
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type CompatibilityManifest = z.infer<typeof compatibilityManifestSchema>;
+
+export const humanApprovalSchema = z.object({
+  approvalRef: z.string().regex(/^approval:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  approvedBy: actorRefSchema.refine((actor) => actor.kind === "human", {
+    message: "Release approval must be recorded by a human actor.",
+  }),
+  approvedAt: rfc3339Schema,
+}).strict();
+
+export type HumanApproval = z.infer<typeof humanApprovalSchema>;
+
+export const promotionRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  compatibilityManifestId: uuidSchema,
+  fromChannel: releaseChannelSchema,
+  toChannel: releaseChannelSchema,
+  compatibilityCheck: z.object({
+    verdict: z.literal("passed"),
+    evidenceRefs: z.array(evidenceReferenceSchema).min(1).max(100),
+    checkedAt: rfc3339Schema,
+  }).strict(),
+  approval: humanApprovalSchema,
+  promotedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const allowed = (value.fromChannel === "development" && value.toChannel === "canary")
+    || (value.fromChannel === "canary" && value.toChannel === "stable");
+  if (!allowed) {
+    context.addIssue({
+      code: "custom",
+      message: "Promotion must follow development -> canary or canary -> stable.",
+      path: ["toChannel"],
+    });
+  }
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type PromotionRecord = z.infer<typeof promotionRecordSchema>;
+
+export const backupVerificationRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  backupRef: z.string().regex(/^backup:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  coverage: z.array(z.enum([
+    "durable-operational-state",
+    "versioned-configuration",
+    "persistent-memory-data",
+    "documented-secret-references",
+  ])).length(4),
+  integrity: z.literal("verified"),
+  restoration: z.literal("verified"),
+  evidenceRefs: z.array(evidenceReferenceSchema).min(1).max(100),
+  verifiedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.coverage, "backup coverage", context);
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type BackupVerificationRecord = z.infer<typeof backupVerificationRecordSchema>;
+
+export const migrationGateSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  migrationRef: z.string().regex(/^migration:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  sourceSchemaVersion: semanticVersionSchema,
+  targetSchemaVersion: semanticVersionSchema,
+  appendOnly: z.literal(true),
+  strategy: z.literal("expand-before-contract"),
+  operation: z.enum(["additive", "destructive"]),
+  backupVerificationId: uuidSchema.optional(),
+  approval: humanApprovalSchema.optional(),
+  forwardRepairRunbookRef: z.string().regex(/^runbook:\/\/[A-Za-z0-9._/-]{1,240}$/).optional(),
+  gatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  if (value.operation === "destructive") {
+    for (const [field, present] of [
+      ["backupVerificationId", Boolean(value.backupVerificationId)],
+      ["approval", Boolean(value.approval)],
+      ["forwardRepairRunbookRef", Boolean(value.forwardRepairRunbookRef)],
+    ] as const) {
+      if (!present) {
+        context.addIssue({
+          code: "custom",
+          message: "Destructive migration requires backup verification, human approval, and forward repair instructions.",
+          path: [field],
+        });
+      }
+    }
+  }
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type MigrationGate = z.infer<typeof migrationGateSchema>;
+
+export const workerReplacementRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  retiredWorkerId: uuidSchema,
+  replacementWorkerId: uuidSchema,
+  durableLedger: z.object({
+    ledgerRef: z.string().regex(/^ledger:\/\/[A-Za-z0-9._/-]{1,240}$/),
+    immutableRecordIds: z.array(uuidSchema).min(1).max(10_000),
+  }).strict(),
+  restoredLedgerRecordIds: z.array(uuidSchema).min(1).max(10_000),
+  enrollment: z.object({
+    bootstrap: z.literal(true),
+    registration: z.literal(true),
+    validation: z.literal(true),
+    provisioning: z.literal(true),
+    health: z.literal(true),
+    controlledDrain: z.literal(true),
+  }).strict(),
+  rehearsedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.durableLedger.immutableRecordIds, "immutable ledger record", context);
+  addDuplicateIssues(value.restoredLedgerRecordIds, "restored ledger record", context);
+  if (value.retiredWorkerId === value.replacementWorkerId) {
+    context.addIssue({
+      code: "custom",
+      message: "Replacement worker must have a distinct internal identity.",
+      path: ["replacementWorkerId"],
+    });
+  }
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type WorkerReplacementRecord = z.infer<typeof workerReplacementRecordSchema>;
+
+export const releaseGateRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  releaseId: uuidSchema,
+  compatibilityManifestId: uuidSchema,
+  promotionIds: z.array(uuidSchema).length(2),
+  migrationGateIds: z.array(uuidSchema).min(1).max(1_000),
+  backupVerificationId: uuidSchema,
+  replacementRecordId: uuidSchema,
+  redactionVerification: z.literal("passed"),
+  criticalSafetyTests: z.array(z.object({
+    id: z.string().regex(/^[a-z][a-z0-9-]{1,120}$/),
+    status: z.literal("passed"),
+    evidenceRefs: z.array(evidenceReferenceSchema).min(1).max(100),
+  }).strict()).min(1).max(1_000),
+  verdict: z.literal("passed"),
+  checkedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.promotionIds, "promotion", context);
+  addDuplicateIssues(value.migrationGateIds, "migration gate", context);
+  addDuplicateIssues(value.criticalSafetyTests.map((entry) => entry.id), "critical safety test", context);
+  const finding = findInlineSecret(value);
+  if (finding) context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type ReleaseGateRecord = z.infer<typeof releaseGateRecordSchema>;
+
 export const attentionItemSchema = z.object({
   version: contractVersionSchema,
   id: uuidSchema,

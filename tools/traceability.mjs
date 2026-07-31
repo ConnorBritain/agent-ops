@@ -28,7 +28,7 @@ export const routes = {
   projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "pnpm run check:github-portfolio-projections"),
   skills: route("skills-estimation-finops", "ACC-SKILLS-001", "complete", "pnpm run check:skills-estimation-finops"),
   finops: route("skills-estimation-finops", "ACC-FINOPS-001", "complete", "pnpm run check:skills-estimation-finops"),
-  release: route("release-recovery", "ACC-RELEASE-001", "planned", "future compatibility, promotion, backup, and replacement suite"),
+  release: route("release-recovery", "ACC-RELEASE-001", "complete", "pnpm run check:release-recovery"),
   browser: route("observed-browser-path", "ACC-BROWSER-001", "planned", "future browser classification and confirmation suite"),
   memory: route("graphiti-curation", "ACC-MEMORY-001", "planned", "future curated-memory contract suite"),
   security: route("restricted-domain-federation", "ACC-SECURITY-001", "gated", "future domain, resource, destructive-action, and restricted-dispatch negative suite"),
@@ -143,6 +143,17 @@ const completedRequirementIds = new Set([
   "REQ-FINOPS-004",
   "REQ-FINOPS-005",
   "REQ-FINOPS-006",
+  "REQ-CHARTER-006",
+  "REQ-DATA-002",
+  "REQ-CONTRACT-006",
+  "REQ-DEPLOY-002",
+  "REQ-DEPLOY-003",
+  "REQ-DEPLOY-004",
+  "REQ-DEPLOY-005",
+  "REQ-DEPLOY-006",
+  "REQ-OPS-005",
+  "REQ-TEST-006",
+  "REQ-ROLL-003",
 ]);
 
 const prefixRoutes = new Map([

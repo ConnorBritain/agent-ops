@@ -52,8 +52,8 @@ acceptance_routes:
     test: "pnpm run check:skills-estimation-finops"
   - id: ACC-RELEASE-001
     slice: release-recovery
-    status: planned
-    test: "future compatibility, promotion, backup, and replacement suite"
+    status: complete
+    test: "pnpm run check:release-recovery"
   - id: ACC-BROWSER-001
     slice: observed-browser-path
     status: planned
@@ -135,9 +135,9 @@ requirements:
     owner: SPEC-000
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Clean-host bootstrap rehearsal."
   - id: REQ-V1-001
     owner: SPEC-001
@@ -303,9 +303,9 @@ requirements:
     owner: SPEC-004
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "ID migration fixture."
   - id: REQ-DATA-003
     owner: SPEC-004
@@ -383,9 +383,9 @@ requirements:
     owner: SPEC-005
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Compatibility manifest review."
   - id: REQ-COORD-001
     owner: SPEC-006
@@ -839,41 +839,41 @@ requirements:
     owner: SPEC-015
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Compatibility manifest test."
   - id: REQ-DEPLOY-003
     owner: SPEC-015
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Promotion record."
   - id: REQ-DEPLOY-004
     owner: SPEC-015
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Migration review."
   - id: REQ-DEPLOY-005
     owner: SPEC-015
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Migration gate test."
   - id: REQ-DEPLOY-006
     owner: SPEC-015
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Replacement rehearsal."
   - id: REQ-OPS-001
     owner: SPEC-016
@@ -911,9 +911,9 @@ requirements:
     owner: SPEC-016
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Runbook review."
   - id: REQ-OPS-006
     owner: SPEC-016
@@ -993,9 +993,9 @@ requirements:
     owner: SPEC-017
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Release-gate matrix."
   - id: REQ-ROLL-001
     owner: SPEC-018
@@ -1017,9 +1017,9 @@ requirements:
     owner: SPEC-018
     slice: release-recovery
     acceptance: ACC-RELEASE-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future compatibility, promotion, backup, and replacement suite"
+    test: "pnpm run check:release-recovery"
     required_evidence: "Promotion record."
   - id: REQ-ROLL-004
     owner: SPEC-018

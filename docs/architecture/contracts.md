@@ -257,6 +257,78 @@ type AllocationRecord = {
   accountingSystemOfRecord: "external";
 };
 
+type CompatibilityManifest = {
+  version: string;
+  id: string;
+  releaseId: string;
+  releaseRef: string; // generic opaque release reference
+  declarations: Array<{
+    component: "coordinator-api" | "worker-runtime" | "provider-sdk" | "provider-adapter" | "policy" | "database-schema" | "job-contract" | "event-contract" | "skill-bundle";
+    currentVersion: string;
+    acceptsVersionRange: string;
+    backwardCompatibility: "backward-compatible" | "requires-expand-migration" | "incompatible-blocked";
+  }>;
+};
+
+type PromotionRecord = {
+  version: string;
+  id: string;
+  releaseId: string;
+  compatibilityManifestId: string;
+  fromChannel: "development" | "canary";
+  toChannel: "canary" | "stable";
+  compatibilityCheck: { verdict: "passed"; evidenceRefs: string[] };
+  approval: { approvalRef: string; approvedBy: ActorRef /* human */ };
+};
+
+type MigrationGate = {
+  version: string;
+  id: string;
+  releaseId: string;
+  appendOnly: true;
+  strategy: "expand-before-contract";
+  operation: "additive" | "destructive";
+  backupVerificationId?: string;
+  approval?: { approvalRef: string; approvedBy: ActorRef /* human */ };
+  forwardRepairRunbookRef?: string;
+};
+
+type BackupVerificationRecord = {
+  version: string;
+  id: string;
+  releaseId: string;
+  backupRef: string; // generic opaque reference, never a location or secret
+  coverage: ["durable-operational-state", "versioned-configuration", "persistent-memory-data", "documented-secret-references"];
+  integrity: "verified";
+  restoration: "verified";
+  evidenceRefs: string[];
+};
+
+type WorkerReplacementRecord = {
+  version: string;
+  id: string;
+  releaseId: string;
+  retiredWorkerId: string;
+  replacementWorkerId: string;
+  durableLedger: { ledgerRef: string; immutableRecordIds: string[] };
+  restoredLedgerRecordIds: string[];
+  enrollment: { bootstrap: true; registration: true; validation: true; provisioning: true; health: true; controlledDrain: true };
+};
+
+type ReleaseGateRecord = {
+  version: string;
+  id: string;
+  releaseId: string;
+  compatibilityManifestId: string;
+  promotionIds: [string, string];
+  migrationGateIds: string[];
+  backupVerificationId: string;
+  replacementRecordId: string;
+  redactionVerification: "passed";
+  criticalSafetyTests: Array<{ id: string; status: "passed"; evidenceRefs: string[] }>;
+  verdict: "passed";
+};
+
 type RoadmapWorktreeIntent = {
   version: string;
   correlationId: string;

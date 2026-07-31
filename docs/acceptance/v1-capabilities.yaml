@@ -63,7 +63,7 @@ scenarios:
   - id: ACC-RELEASE-001
     title: Compatibility promotion and recoverable replacement
     requirements: [REQ-CHARTER-006, REQ-DATA-002, REQ-CONTRACT-006, REQ-DEPLOY-002, REQ-DEPLOY-003, REQ-DEPLOY-004, REQ-DEPLOY-005, REQ-DEPLOY-006, REQ-OPS-005, REQ-TEST-006, REQ-ROLL-003]
-    evidence: future release, migration, backup, and replacement suite
+    evidence: pnpm run check:release-recovery deterministic compatibility, promotion, migration, backup, and replacement suite; live execution remains separately authorized
     phase: 8
   - id: ACC-BROWSER-001
     title: Human-confirmed observed browser path
