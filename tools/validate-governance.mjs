@@ -46,6 +46,7 @@ const required = [
   "docs/traceability/phase-3-worker-service-packaging.yaml",
   "docs/traceability/phase-4-roadmap-adapter.yaml",
   "docs/traceability/phase-4-print-provider.yaml",
+  "docs/traceability/phase-5-first-cli-provider-spike.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -54,11 +55,13 @@ const required = [
   "docs/roadmap/backlog.yaml",
   "docs/architecture/monorepo-boundaries.md",
   "docs/architecture/contracts.md",
+  "docs/architecture/codex-app-server-provider.md",
   "docs/architecture/remote-access.md",
   "docs/adr/ADR-0009-independent-safety-monitor-and-dry-run-remediation.md",
   "docs/adr/ADR-0010-supervisor-only-service-packaging.md",
   "docs/adr/ADR-0011-roadmap-readiness-and-worktree-intent.md",
   "docs/adr/ADR-0012-print-provider-no-execution-reference.md",
+  "docs/adr/ADR-0013-codex-app-server-first-cli-provider.md",
   "config/roadmap-adapter.manifest.yaml",
   ".github/workflows/ci.yml"
 ];

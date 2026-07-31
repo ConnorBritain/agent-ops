@@ -46,9 +46,10 @@ private-overlay gate.
 
 ## Ordered v1 implementation
 
-Status: **Phase 3 worker core, safety hooks, static service packaging, and all
-Phase 4 Roadmap/PrintProvider work are complete; the documented first
-CLI-provider selection spike is next** as of 2026-07-30.
+Status: **Phase 3 worker core, safety hooks, static service packaging, all
+Phase 4 Roadmap/PrintProvider work, and the first CLI-provider selection spike
+are complete; the normalized Codex App Server adapter is next** as of
+2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -149,6 +150,18 @@ redacted, sealed `execution: not-started` plan for every lifecycle operation.
 It contains no process execution path and cannot update Coordinator, task, or
 run state. `REQ-PROVIDER-001` through `REQ-PROVIDER-004` and `REQ-TEST-002`
 are complete as local evidence; `ACC-PROVIDER-001` remains planned until two
-real CLI providers pass the same suite. Next slice:
-`first-cli-provider-spike`, which may research only documented CLI control
-surfaces and must not configure credentials or execute one.
+real CLI providers pass the same suite.
+
+## Phase 5 — First CLI-provider selection
+
+Status: **selection spike complete** on 2026-07-30; executable provider work
+is not yet started.
+
+The selected first protocol is the Codex CLI App Server over local stdio. Its
+documented JSON-RPC lifecycle supports typed thread/turn start, active-turn
+steer, inspection, and interruption without a terminal UI or network listener.
+Pause and resume are explicitly unsupported. `ScriptedJsonRpcTransport` proves
+the protocol ordering without a provider binary, credential, process, or
+network connection. The next slice, `first-cli-provider`, implements the
+adapter against that port and must retain all execution, authentication, and
+host-enrollment gates.

@@ -14,7 +14,9 @@
   remaining independently versioned primitive, estimator, and architecture
   dependency references.
 - PrintProvider proves the lifecycle contract without launching anything. No
-  real CLI provider has been selected, authenticated, installed by AgentOps,
-  or exercised; the next research-only spike must choose a documented control
-  surface before that execution adapter is designed.
+  real CLI provider has been authenticated, installed by AgentOps, or
+  exercised. Codex App Server is selected as the first protocol, but its
+  adapter, crash recovery, cancellation, artifact, and redaction behavior
+  remain unimplemented and must be verified with an injected test port before
+  any executable provider use.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

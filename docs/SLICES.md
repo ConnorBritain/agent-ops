@@ -12,36 +12,33 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
 **Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P0]** `/slice first-cli-provider-spike` — Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR. · touches `docs/adr/`, `docs/architecture/`, `packages/test-kit/`
-
-**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P0]** `/slice first-cli-provider` — Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection. · touches `packages/providers/`, `packages/provider-sdk/`, `packages/test-kit/`, `docs/`
 
-**Wave 3** — launch concurrently (disjoint files, deps satisfied):
+**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P0]** `/slice coordinator-runtime` — Implement transport-neutral Coordinator application services around the durable ports, policy engine, scheduler, reconciler, and attention manager. · touches `apps/coordinator/`, `packages/domain/`, `packages/contracts/`, `packages/adapters/`, `packages/test-kit/`, `docs/`
 
-**Wave 4** — launch concurrently (disjoint files, deps satisfied):
+**Wave 3** — launch concurrently (disjoint files, deps satisfied):
 - **[P0]** `/slice slack-attention-adapter` — Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion. · touches `packages/adapters/`, `apps/coordinator/`, `packages/test-kit/`, `docs/`
 
-**Wave 5** — launch concurrently (disjoint files, deps satisfied):
+**Wave 4** — launch concurrently (disjoint files, deps satisfied):
 - **[P0]** `/slice verified-draft-delivery` — Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request. · touches `apps/`, `packages/`, `e2e/`, `docs/`
 
-**Wave 6** — launch concurrently (disjoint files, deps satisfied):
+**Wave 5** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice second-cli-provider` — Select and implement a second documented CLI provider through the same SDK and conformance suite. · touches `packages/providers/`, `packages/provider-sdk/`, `packages/test-kit/`, `docs/adr/`
 
-**Wave 7** — launch concurrently (disjoint files, deps satisfied):
+**Wave 6** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice github-portfolio-projections` — Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
-**Wave 8** — launch concurrently (disjoint files, deps satisfied):
+**Wave 7** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice skills-estimation-finops` — Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. · touches `packages/adapters/`, `packages/domain/`, `packages/contracts/`, `packages/test-kit/`, `docs/`
 
-**Wave 9** — launch concurrently (disjoint files, deps satisfied):
+**Wave 8** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice release-recovery` — Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. · touches `deploy/`, `config/`, `packages/test-kit/`, `docs/runbooks/`, `docs/`
 
-**Wave 10** — launch concurrently (disjoint files, deps satisfied):
+**Wave 9** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice observed-browser-path` — Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. · touches `packages/providers/`, `packages/policy/`, `packages/test-kit/`, `docs/`
 
-**Wave 11** — launch concurrently (disjoint files, deps satisfied):
+**Wave 10** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
 **Held on a human:**
@@ -107,16 +104,16 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | ROADMAP-ADAPTER | `/slice roadmap-adapter` | ✅ Complete · **P0** | — | WORKER-SERVICE-PACKAGING | Add a typed adapter that invokes Roadmap for ready slices, waves, gates, and worktree preparation while retaining task and run correlation. |
 | PRINT-PROVIDER | `/slice print-provider` | ✅ Complete · **P0** | — | ROADMAP-ADAPTER, WORKER-SAFETY-HOOKS | Implement the common provider lifecycle, capability manifest, observation normalization, conformance kit, and no-execution PrintProvider. |
 
-### PHASE-5-FIRST-CLI-PROVIDER — First bounded CLI provider · 🟢 Active · ~3 sessions remaining
-> Sprints: FIRST-CLI-PROVIDER-SPIKE 🟡 · FIRST-CLI-PROVIDER ⚪
-> Exec plan: FIRST-CLI-PROVIDER-SPIKE→FIRST-CLI-PROVIDER
+### PHASE-5-FIRST-CLI-PROVIDER — First bounded CLI provider · 🟢 Active · ~2 sessions remaining
+> Sprints: FIRST-CLI-PROVIDER-SPIKE ✅ · FIRST-CLI-PROVIDER 🟡
+> Exec plan: FIRST-CLI-PROVIDER
 > Deps: PHASE-4-ROADMAP-PRINT-PROVIDER
 > Exit: A disposable fixture executes, blocks, resumes, cancels, and collects artifacts through the provider conformance suite with redacted evidence.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| FIRST-CLI-PROVIDER-SPIKE | `/slice first-cli-provider-spike` | 🟡 Next · **P0** | ~1 | PRINT-PROVIDER | Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR. |
-| FIRST-CLI-PROVIDER | `/slice first-cli-provider` | ⚪ Scheduled · **P0** | ~2 | FIRST-CLI-PROVIDER-SPIKE | Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection. |
+| FIRST-CLI-PROVIDER-SPIKE | `/slice first-cli-provider-spike` | ✅ Complete · **P0** | — | PRINT-PROVIDER | Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR. |
+| FIRST-CLI-PROVIDER | `/slice first-cli-provider` | 🟡 Next · **P0** | ~2 | FIRST-CLI-PROVIDER-SPIKE | Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection. |
 
 ### PHASE-6-ATTENTION-DELIVERY — Coordinator attention and verified draft delivery · ⚪ Scheduled · ~8 sessions remaining
 > Sprints: COORDINATOR-RUNTIME ⚪ · SLACK-ATTENTION-ADAPTER ⚪ · VERIFIED-DRAFT-DELIVERY ⚪
@@ -196,6 +193,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | WORKER-SERVICE-PACKAGING | PHASE-3-WORKER-SAFETY | — |
 | ROADMAP-ADAPTER | PHASE-4-ROADMAP-PRINT-PROVIDER | — |
 | PRINT-PROVIDER | PHASE-4-ROADMAP-PRINT-PROVIDER | — |
+| FIRST-CLI-PROVIDER-SPIKE | PHASE-5-FIRST-CLI-PROVIDER | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -247,21 +245,9 @@ pnpm validate
 - **Gate:** Private reboot, registration, capability-health, resource refusal, cancellation, headless RustDesk authorization and lock-screen access, and unenrollment evidence
 - **Gated on:** Private owner authorization, safe host baseline, scoped identity, and reviewed rollback plan (an agent prepares; it does not perform the gate).
 
-### `first-cli-provider-spike`
-- **What:** Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR.
-- **Status:** 🟡 Next (PHASE-5-FIRST-CLI-PROVIDER · FIRST-CLI-PROVIDER-SPIKE)
-- **Priority:** P0 · weight 90 — The first real provider must have a stable supported control boundary.
-- **Deps:** PRINT-PROVIDER
-- **Read-order:**
-  1. docs/specs/SPEC-003-trust-security-and-federation.md
-  2. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
-  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
-- **Resume / next action:** Evaluate only documented CLI or SDK surfaces; stop before credentials or unsafe UI automation.
-- **Gate:** Bounded integration spike, security review, and accepted provider ADR
-
 ### `first-cli-provider`
 - **What:** Implement the selected CLI adapter and deterministic fixtures for launch, observation, blocker input, cancellation, and artifact collection.
-- **Status:** ⚪ Scheduled (PHASE-5-FIRST-CLI-PROVIDER · FIRST-CLI-PROVIDER)
+- **Status:** 🟡 Next (PHASE-5-FIRST-CLI-PROVIDER · FIRST-CLI-PROVIDER)
 - **Priority:** P0 · weight 90 — The first end-to-end delivery loop depends on a real bounded provider.
 - **Deps:** FIRST-CLI-PROVIDER-SPIKE
 - **Read-order:**

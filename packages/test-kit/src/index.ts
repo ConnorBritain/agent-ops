@@ -162,6 +162,47 @@ export class StaticRoadmapReadTransport {
   }
 }
 
+/**
+ * Deterministic JSON-RPC transcript double for a provider protocol. It models
+ * message ordering only; it never starts a process, connects a socket, or
+ * materializes credentials.
+ */
+export type ScriptedJsonRpcStep = {
+  readonly method: string;
+  readonly params?: unknown;
+  readonly result?: unknown;
+  readonly errorMessage?: string;
+};
+
+export class ScriptedJsonRpcTransport {
+  readonly requests: { method: string; params: unknown }[] = [];
+  #steps: ScriptedJsonRpcStep[];
+
+  constructor(steps: readonly ScriptedJsonRpcStep[]) {
+    this.#steps = [...steps];
+  }
+
+  async request(method: string, params: unknown = {}): Promise<unknown> {
+    const expected = this.#steps.shift();
+    if (!expected) throw new Error(`Unexpected JSON-RPC request: ${method}`);
+    if (
+      expected.method !== method
+      || (expected.params !== undefined && JSON.stringify(expected.params) !== JSON.stringify(params))
+    ) {
+      throw new Error(`Unexpected JSON-RPC request: ${method}`);
+    }
+    this.requests.push({ method, params });
+    if (expected.errorMessage) throw new Error(expected.errorMessage);
+    return expected.result;
+  }
+
+  assertComplete(): void {
+    if (this.#steps.length) {
+      throw new Error(`Unconsumed JSON-RPC steps: ${this.#steps.map((step) => step.method).join(",")}`);
+    }
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({
