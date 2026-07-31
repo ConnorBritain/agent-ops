@@ -125,6 +125,36 @@ type ProviderObservation = {
 
 type VerificationVerdict = "pass" | "conditional-pass" | "needs-human-review" | "fail";
 
+type VerificationRecord = {
+  version: string;
+  id: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  verifierId: string;
+  verdict: VerificationVerdict;
+  summary: string;
+  implementationEvidenceRefs: string[];
+  verifiedAt: string;
+};
+
+type DraftPullRequestIntent = {
+  version: string;
+  deliveryId: string;
+  idempotencyKey: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  repositoryRef: string;
+  headRef: string;
+  baseRef: string;
+  title: string;
+  verificationId: string;
+  policyDecisionId: string;
+  draft: true;
+  requestedAt: string;
+};
+
 type AttentionItem = {
   id: string;
   runId: string;
@@ -184,6 +214,15 @@ only; HTTP ingress and signing-secret configuration are rejected. An attention
 summary and an exact worker question are separate domain-scoped projections,
 and authentication remains out-of-band. Slack has no task/run, worker,
 provider, or Scheduler authority.
+
+`VerificationRecord` is a distinct durable evidence type, not a
+`ProviderObservation`. A verified draft-delivery service reserves its
+idempotent delivery before recording a verification result, records a matching
+policy decision before projecting, and may create only an intent with
+`draft: true`. A completed result is replayable without another verifier,
+policy, or gateway call; failure remains pending for a future authorized
+outbox retry. The public boundary owns no GitHub SDK, repository, process,
+network, merge, release, or deployment behavior.
 
 The provider SDK validates a complete lifecycle declaration, routes only by
 declared capability (with a human-selected provider preference as a tie-breaker

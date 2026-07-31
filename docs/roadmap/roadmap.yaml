@@ -433,7 +433,7 @@ pis:
         prompt: Use one disposable local-stdio session, preserve redacted evidence, verify interruption before ending the child process, and stop on any authorization or safety failure.
   - id: phase-6-attention-delivery
     title: Coordinator attention and verified draft delivery
-    status: active
+    status: complete
     deps: [phase-5-first-cli-provider]
     summary: Complete the first valuable vertical slice from authorized intent through one durable blocker response, independent verification, and draft pull-request delivery.
     exit_criteria: A replayable disposable-repository scenario proves attention persistence before delivery, restart-safe resume, independent verification, policy-gated draft PR creation, and quiet successful completion.
@@ -499,13 +499,14 @@ pis:
         prompt: "Complete: Slack remains a non-authoritative projection. Workspace/actor authorization, ingress persistence before acknowledgement, summary/question separation, response redaction, duplicate acknowledgement, and secret-reference-only configuration are proven with deterministic fixtures."
       - id: verified-draft-delivery
         title: Disposable end-to-end attention and draft-PR delivery
-        status: scheduled
+        status: complete
         invoke: verified-draft-delivery
         what: Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request.
-        est_sessions: 3
+        est_sessions: 0
         weight: heavy
         deps: [slack-attention-adapter]
         gate: Replayable ACC-ATTENTION-001, ACC-DELIVERY-001, and security-negative scenarios
+        completed_on: "2026-07-30"
         touches:
           - apps/
           - packages/
@@ -516,12 +517,12 @@ pis:
           - docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
           - docs/specs/SPEC-018-v1-rollout-and-milestones.md
-        resume_action: Use test doubles until a separately authorized disposable Slack workspace, provider identity, and GitHub repository are available.
+        resume_action: The deterministic test-double gate is complete. Retain its contracts for a separately authorized live Slack, provider, and disposable-GitHub integration canary; do not bypass durable answer, verifier, policy, idempotency, or draft-only controls.
         priority:
           tier: P0
           weight: 100
           reason: BUILD-001 forbids broader automation until this loop is proven.
-        prompt: Make a reversible change, relay exactly one blocker, persist the answer before resuming, require an independent verdict, and open only a draft pull request.
+        prompt: "Complete: one deterministic fixture relays exactly one blocker, persists the answer before resuming the retained run, records an independent verdict, blocks negative gates, and produces one replay-safe draft-only result."
   - id: phase-7-provider-projections
     title: Second CLI provider and external projections
     status: scheduled

@@ -53,6 +53,13 @@ confirmation before Socket acknowledgement; Slack is not an authority or
 system of record. Provider and worker sessions remain behind their own bounded
 ports.
 
+`CoordinatorRuntime.answerAndResume` is the bounded continuation path for an
+authorized human answer. It records the answer through the same durable
+attention port before reading a candidate dispatch. The target task and signed
+envelope run must equal the attention item's retained task/run; otherwise it
+refuses the continuation. No provider `resume` operation or automatic retry is
+used: a newly authorized Coordinator dispatch is the only continuation.
+
 ## Current implementation limits
 
 The public runtime provides typed ports, deterministic in-memory fixtures, and

@@ -20,8 +20,8 @@ acceptance_routes:
     test: "future shared conformance suite across PrintProvider and two CLI providers"
   - id: ACC-ATTENTION-001
     slice: verified-draft-delivery
-    status: planned
-    test: "future replayable attention and verified draft-delivery scenario"
+    status: complete
+    test: "pnpm run check:verified-draft-delivery"
   - id: ACC-SECURITY-001
     slice: restricted-domain-federation
     status: gated
@@ -36,8 +36,8 @@ acceptance_routes:
     test: "pnpm run check:roadmap-adapter"
   - id: ACC-DELIVERY-001
     slice: verified-draft-delivery
-    status: planned
-    test: "future disposable-repository end-to-end scenario"
+    status: complete
+    test: "pnpm run check:verified-draft-delivery"
   - id: ACC-PROJECTION-001
     slice: github-portfolio-projections
     status: planned
@@ -121,7 +121,7 @@ requirements:
     acceptance: ACC-DELIVERY-001
     status: planned
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "Accepted-task evidence export."
   - id: REQ-CHARTER-005
     owner: SPEC-000
@@ -165,19 +165,19 @@ requirements:
     required_evidence: "Provider conformance fixture."
   - id: REQ-V1-004
     owner: SPEC-001
-    slice: slack-attention-adapter
+    slice: verified-draft-delivery
     acceptance: ACC-ATTENTION-001
-    status: planned
-    route_role: contributing
-    test: "pnpm run check:slack-attention-adapter"
+    status: complete
+    route_role: completion
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "Intervention scenario."
   - id: REQ-V1-005
     owner: SPEC-001
     slice: verified-draft-delivery
     acceptance: ACC-DELIVERY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "Delivery scenario."
   - id: REQ-V1-006
     owner: SPEC-001
@@ -943,17 +943,17 @@ requirements:
     owner: SPEC-017
     slice: verified-draft-delivery
     acceptance: ACC-DELIVERY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "Independent-verifier test."
   - id: REQ-TEST-004
     owner: SPEC-017
     slice: verified-draft-delivery
     acceptance: ACC-DELIVERY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "PR-gate test."
   - id: REQ-TEST-005
     owner: SPEC-017
@@ -1009,9 +1009,9 @@ requirements:
     owner: SPEC-018
     slice: verified-draft-delivery
     acceptance: ACC-DELIVERY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "End-to-end v1 slice."
   - id: REQ-ROLL-003
     owner: SPEC-018
@@ -1113,9 +1113,9 @@ requirements:
     owner: BUILD-001
     slice: verified-draft-delivery
     acceptance: ACC-DELIVERY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future disposable-repository end-to-end scenario"
+    test: "pnpm run check:verified-draft-delivery"
     required_evidence: "End-to-end v1 scenario."
   - id: REQ-BUILD-004
     owner: BUILD-001

@@ -23,7 +23,7 @@ scenarios:
   - id: ACC-ATTENTION-001
     title: Attention and verified draft delivery loop
     requirements: [REQ-CHARTER-001, REQ-CHARTER-002, REQ-V1-002, REQ-V1-004, REQ-V1-005, REQ-CONTEXT-003, REQ-DATA-003, REQ-COORD-003, REQ-COORD-004, REQ-COORD-005, REQ-COORD-006, REQ-INT-005, REQ-OPS-004, REQ-TEST-003, REQ-TEST-004]
-    evidence: future end-to-end fixture
+    evidence: pnpm run check:verified-draft-delivery deterministic fixture; external Slack and hosted-composition canary remain separately authorized
     phase: 6
   - id: ACC-SECURITY-001
     title: Domain, resource, and destructive-action refusal
@@ -43,7 +43,7 @@ scenarios:
   - id: ACC-DELIVERY-001
     title: Independently verified draft pull-request delivery
     requirements: [REQ-CHARTER-004, REQ-V1-002, REQ-V1-005, REQ-TEST-003, REQ-TEST-004, REQ-ROLL-002, REQ-BUILD-003]
-    evidence: future disposable-repository delivery fixture
+    evidence: pnpm run check:verified-draft-delivery deterministic fixture; external GitHub disposable-repository projection remains separately authorized
     phase: 6
   - id: ACC-PROJECTION-001
     title: Replayable human-scale GitHub and portfolio projections

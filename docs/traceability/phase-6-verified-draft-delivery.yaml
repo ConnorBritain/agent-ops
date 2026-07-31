@@ -1,0 +1,35 @@
+slice: verified-draft-delivery
+status: complete
+requirements:
+  - REQ-BUILD-003
+  - REQ-V1-004
+  - REQ-V1-005
+  - REQ-TEST-003
+  - REQ-TEST-004
+  - REQ-ROLL-002
+artifacts:
+  - packages/contracts/src/index.ts
+  - packages/contracts/test/contracts.test.ts
+  - packages/adapters/src/verified-draft-delivery.ts
+  - packages/adapters/test/verified-draft-delivery.test.ts
+  - apps/coordinator/src/index.ts
+  - apps/coordinator/test/verified-draft-delivery.test.ts
+  - packages/test-kit/src/index.ts
+  - docs/architecture/verified-draft-delivery.md
+  - docs/adr/ADR-0016-replayable-independent-verification-before-draft-delivery.md
+tests:
+  - pnpm run check:verified-draft-delivery
+  - pnpm --filter @agent-ops/coordinator test
+  - pnpm validate
+acceptance:
+  - ACC-ATTENTION-001
+  - ACC-DELIVERY-001
+evidence:
+  exactly_one_blocked_attention_then_durable_human_answer: passed
+  response_is_persisted_before_same_task_run_resume: passed
+  scripted_provider_observation_is_not_a_verification_record: passed
+  verifier_and_policy_gate_precede_draft_only_gateway: passed
+  failed_verifier_and_non_allow_policy_do_not_call_gateway: passed
+  completed_delivery_replay_creates_no_second_draft: passed
+  live_slack_provider_github_and_disposable_repository: separately-authorized
+catalog_version: 1

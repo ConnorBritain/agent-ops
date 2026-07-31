@@ -17,9 +17,21 @@ test("Coordinator runtime remains a durable-port application service", () => {
   assert.match(source, /createAttention/);
   assert.match(source, /recordAttentionResponse/);
   assert.match(source, /recordProviderAcknowledgement/);
+  assert.match(source, /answerAndResume/);
   assert.match(source, /reconcileObservedState/);
   assert.match(domainSource, /automaticallyRestart: false/);
   assert.doesNotMatch(source, /node:child_process|node:http|node:net|createServer|WebSocket/);
   assert.doesNotMatch(source, /setInterval|setTimeout|WorkerSupervisor|spawn\s*\(|exec\s*\(/);
   assert.doesNotMatch(source, /updateTask|updateRun|provider\.start|provider\.resume/);
+});
+
+test("Coordinator response-resume ordering remains explicit and run-bound", () => {
+  const answerAndResume = source.indexOf("async answerAndResume");
+  const durableAnswer = source.indexOf("await this.answerAttention(rawInput.answer)", answerAndResume);
+  const resumedDispatch = source.indexOf("dispatch: await this.dispatch(rawInput.dispatch)", answerAndResume);
+  assert.ok(answerAndResume >= 0);
+  assert.ok(durableAnswer > answerAndResume);
+  assert.ok(resumedDispatch > durableAnswer);
+  assert.match(source, /answer\.attention\.runId !== envelope\.runId/);
+  assert.match(source, /may resume only its retained task and run/);
 });

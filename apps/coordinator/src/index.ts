@@ -103,6 +103,21 @@ export type CoordinatorAttentionResponseResult = {
   readonly delivery: AttentionDeliveryAttempt;
 };
 
+/**
+ * A resume is an explicit human-response path, not automatic recovery. The
+ * response is durably recorded first; the subsequent dispatch must target the
+ * same retained task and run as the attention item.
+ */
+export type CoordinatorAnswerAndResumeRequest = {
+  readonly answer: CoordinatorAttentionResponseRequest;
+  readonly dispatch: CoordinatorDispatchRequest;
+};
+
+export type CoordinatorAnswerAndResumeResult = {
+  readonly answer: CoordinatorAttentionResponseResult;
+  readonly dispatch: CoordinatorDispatchResult;
+};
+
 export type CoordinatorReconciliationResult = {
   readonly snapshot: ReconciliationSnapshot;
   readonly decision: ReconciliationDecision;
@@ -325,6 +340,28 @@ export class CoordinatorRuntime {
     } catch {
       return { attention, delivery: { status: "deferred" } };
     }
+  }
+
+  async answerAndResume(
+    rawInput: CoordinatorAnswerAndResumeRequest,
+  ): Promise<CoordinatorAnswerAndResumeResult> {
+    const answer = await this.answerAttention(rawInput.answer);
+    const command = commandSchema.parse(rawInput.dispatch.command);
+    const envelope = signedJobEnvelopeSchema.parse(rawInput.dispatch.envelope);
+    if (
+      command.kind !== "DispatchTask"
+      || command.target.kind !== "task"
+      || !answer.attention.runId
+      || answer.attention.taskId !== envelope.taskId
+      || answer.attention.runId !== envelope.runId
+      || command.target.id !== answer.attention.taskId
+    ) {
+      throw new Error("An answered attention item may resume only its retained task and run.");
+    }
+    return {
+      answer,
+      dispatch: await this.dispatch(rawInput.dispatch),
+    };
   }
 
   async reconcile(): Promise<readonly CoordinatorReconciliationResult[]> {

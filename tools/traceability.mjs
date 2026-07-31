@@ -22,8 +22,8 @@ export const routes = {
   providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future shared conformance suite across PrintProvider and two CLI providers"),
   coordinator: route("coordinator-runtime", "ACC-ATTENTION-001", "complete", "pnpm run check:coordinator-runtime", "planned"),
   slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "complete", "pnpm run check:slack-attention-adapter", "planned"),
-  attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "planned", "future replayable attention and verified draft-delivery scenario"),
-  delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "planned", "future disposable-repository end-to-end scenario"),
+  attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
+  delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
   secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future second CLI provider conformance suite"),
   projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "future projection replay and noise-suppression suite"),
   skills: route("skills-estimation-finops", "ACC-SKILLS-001", "planned", "future primitive manifest and enforcement suite"),
@@ -117,7 +117,13 @@ const completedRequirementIds = new Set([
   "REQ-PROVIDER-004",
   "REQ-TEST-002",
   "REQ-CHARTER-001",
-  "REQ-INT-005"
+  "REQ-INT-005",
+  "REQ-BUILD-003",
+  "REQ-V1-004",
+  "REQ-V1-005",
+  "REQ-TEST-003",
+  "REQ-TEST-004",
+  "REQ-ROLL-002"
 ]);
 
 const prefixRoutes = new Map([
@@ -155,7 +161,7 @@ const overrides = new Map(Object.entries({
   "REQ-V1-001": "worker",
   "REQ-V1-002": "coordinator",
   "REQ-V1-003": "secondProvider",
-  "REQ-V1-004": "slack",
+  "REQ-V1-004": "attentionAcceptance",
   "REQ-V1-006": "safety",
   "REQ-V1-007": "federation",
   "REQ-CONTEXT-001": "roadmap",

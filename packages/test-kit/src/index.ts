@@ -4,6 +4,7 @@ import {
   type NormalizedEvent,
   type ProviderInvocation,
   type SignedJobEnvelope,
+  type VerificationRecord,
   type WorkerHeartbeat,
   type WorkerManifest,
   type WorkerRegistration,
@@ -20,6 +21,7 @@ import type {
   ProviderAcknowledgement,
   ReconciliationSnapshot,
   SchedulingAuditRecord,
+  PolicyDecision,
 } from "@agent-ops/domain";
 import type { WorkerSafetySnapshot } from "@agent-ops/policy";
 
@@ -35,6 +37,8 @@ export const testIds = {
   providerInvocation: "00000000-0000-4000-8000-000000000109",
   coordinator: "00000000-0000-4000-8000-000000000110",
   attention: "00000000-0000-4000-8000-000000000111",
+  verification: "00000000-0000-4000-8000-000000000112",
+  delivery: "00000000-0000-4000-8000-000000000113",
 } as const;
 
 export class DeterministicClock {
@@ -469,6 +473,123 @@ export class RecordingSlackAttentionOutbox {
   }> {
     this.messages.push(message);
     if (this.throwOnSend) throw new Error("fixture Slack outbox unavailable");
+    return this.result;
+  }
+}
+
+export type FixtureVerifiedDraftDeliveryResult =
+  | {
+    readonly kind: "draft-created";
+    readonly verification: VerificationRecord;
+    readonly pullRequest: { readonly draft: true; readonly pullRequestRef: string };
+  }
+  | {
+    readonly kind: "blocked-verification";
+    readonly verification: VerificationRecord;
+  }
+  | {
+    readonly kind: "blocked-policy";
+    readonly verification: VerificationRecord;
+    readonly policyDecision: PolicyDecision;
+  };
+
+/**
+ * A structural durable double for verified-draft delivery tests. It models a
+ * pending reservation and completion replay without a GitHub repository,
+ * outbox runner, external verifier, or credential.
+ */
+export class InMemoryDraftDeliveryStore {
+  readonly operations: string[] = [];
+  readonly verifications: VerificationRecord[] = [];
+  readonly gates: {
+    deliveryId: string;
+    verificationId: string;
+    policyDecision?: PolicyDecision;
+    allowed: boolean;
+  }[] = [];
+  readonly completed = new Map<string, FixtureVerifiedDraftDeliveryResult>();
+
+  async reserve(input: { readonly deliveryId: string }): Promise<
+    | { readonly state: "pending" }
+    | { readonly state: "completed"; readonly result: FixtureVerifiedDraftDeliveryResult }
+  > {
+    this.operations.push("delivery-reserve");
+    const prior = this.completed.get(input.deliveryId);
+    return prior ? { state: "completed", result: prior } : { state: "pending" };
+  }
+
+  async recordVerification(verification: VerificationRecord): Promise<void> {
+    this.operations.push("verification");
+    if (!this.verifications.some((entry) => entry.id === verification.id)) {
+      this.verifications.push(verification);
+    }
+  }
+
+  async recordGate(input: {
+    readonly deliveryId: string;
+    readonly verificationId: string;
+    readonly policyDecision?: PolicyDecision;
+    readonly allowed: boolean;
+    readonly recordedAt: string;
+  }): Promise<void> {
+    this.operations.push(input.allowed ? "delivery-gate-allow" : "delivery-gate-block");
+    this.gates.push({
+      deliveryId: input.deliveryId,
+      verificationId: input.verificationId,
+      ...(input.policyDecision ? { policyDecision: input.policyDecision } : {}),
+      allowed: input.allowed,
+    });
+  }
+
+  async complete(input: {
+    readonly deliveryId: string;
+    readonly result: FixtureVerifiedDraftDeliveryResult;
+    readonly completedAt: string;
+  }): Promise<void> {
+    this.operations.push("delivery-complete");
+    this.completed.set(input.deliveryId, input.result);
+  }
+}
+
+export class StaticIndependentVerifier {
+  result: VerificationRecord;
+  readonly calls: string[] = [];
+
+  constructor(result: VerificationRecord) {
+    this.result = result;
+  }
+
+  async verify(): Promise<VerificationRecord> {
+    this.calls.push("independent-verifier");
+    return this.result;
+  }
+}
+
+export class StaticDraftDeliveryPolicy {
+  decision: PolicyDecision;
+  readonly calls: string[] = [];
+
+  constructor(decision: PolicyDecision) {
+    this.decision = decision;
+  }
+
+  async evaluate(): Promise<PolicyDecision> {
+    this.calls.push("draft-delivery-policy");
+    return this.decision;
+  }
+}
+
+export class RecordingDraftPullRequestGateway {
+  readonly intents: unknown[] = [];
+  result: { readonly draft: true; readonly pullRequestRef: string } = {
+    draft: true,
+    pullRequestRef: "draft-pr://fixture/reversible-change/1",
+  };
+  throwOnCreate = false;
+
+  async createDraft(intent: unknown): Promise<{ readonly draft: true; readonly pullRequestRef: string }> {
+    this.intents.push(intent);
+    if (this.throwOnCreate) throw new Error("fixture draft gateway unavailable");
     return this.result;
   }
 }

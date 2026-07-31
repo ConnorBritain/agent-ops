@@ -4,6 +4,7 @@ import {
   CONTRACT_VERSION,
   assertNoInlineSecrets,
   commandSchema,
+  draftPullRequestIntentSchema,
   normalizedEventSchema,
   providerCapabilityManifestSchema,
   providerInvocationSchema,
@@ -11,6 +12,7 @@ import {
   roadmapWorktreeIntentSchema,
   safetyAuditRecordSchema,
   signedJobEnvelopeSchema,
+  verificationRecordSchema,
   workerHeartbeatSchema,
   workerManifestSchema,
   workerRegistrationSchema,
@@ -282,5 +284,39 @@ describe("versioned contracts", () => {
       input: { accessToken: "inline-value" },
       requestedAt: "2026-07-30T04:00:00Z",
     }).success, false);
+  });
+
+  it("keeps independent verification and draft delivery secret-safe and draft-only", () => {
+    const verification = verificationRecordSchema.parse({
+      version: CONTRACT_VERSION,
+      id: "00000000-0000-4000-8000-000000000021",
+      taskId: "00000000-0000-4000-8000-000000000022",
+      runId: "00000000-0000-4000-8000-000000000023",
+      securityDomain: "example-domain",
+      verifierId: "independent-fixture",
+      verdict: "pass",
+      summary: "The bounded fixture is independently verified.",
+      implementationEvidenceRefs: ["evidence://fixture/reversible-change"],
+      verifiedAt: "2026-07-30T04:00:00Z",
+    });
+    assert.equal(verification.verdict, "pass");
+    const draft = {
+      version: CONTRACT_VERSION,
+      deliveryId: "00000000-0000-4000-8000-000000000024",
+      idempotencyKey: "draft-delivery-fixture-001",
+      taskId: verification.taskId,
+      runId: verification.runId,
+      securityDomain: verification.securityDomain,
+      repositoryRef: "repo://fixture/reversible-change",
+      headRef: "refs/heads/agentops/fixture-change",
+      baseRef: "refs/heads/main",
+      title: "Fixture reversible change",
+      verificationId: verification.id,
+      policyDecisionId: "00000000-0000-4000-8000-000000000025",
+      draft: true,
+      requestedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(draftPullRequestIntentSchema.parse(draft).draft, true);
+    assert.equal(draftPullRequestIntentSchema.safeParse({ ...draft, draft: false }).success, false);
   });
 });

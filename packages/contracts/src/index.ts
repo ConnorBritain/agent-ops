@@ -373,6 +373,61 @@ export const verificationVerdictSchema = z.enum([
 
 export type VerificationVerdict = z.infer<typeof verificationVerdictSchema>;
 
+const evidenceReferenceSchema = z
+  .string()
+  .regex(/^(?:evidence|test):\/\/[A-Za-z0-9._/-]{1,240}$/);
+
+/**
+ * A verifier records its own conclusion rather than relying on an
+ * implementation provider's observation. Evidence references are opaque,
+ * secret-safe locators; transcript and credential values do not belong here.
+ */
+export const verificationRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  verifierId: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  verdict: verificationVerdictSchema,
+  summary: z.string().min(1).max(1_000),
+  implementationEvidenceRefs: z.array(evidenceReferenceSchema).min(1).max(100),
+  verifiedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type VerificationRecord = z.infer<typeof verificationRecordSchema>;
+
+/**
+ * This is an immutable request to create a draft pull request. It cannot
+ * express merge, review dismissal, release, deployment, or a non-draft write.
+ */
+export const draftPullRequestIntentSchema = z.object({
+  version: contractVersionSchema,
+  deliveryId: uuidSchema,
+  idempotencyKey: z.string().min(8).max(200),
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  repositoryRef: z.string().regex(/^repo:\/\/[A-Za-z0-9._/-]{1,240}$/),
+  headRef: z.string().regex(/^refs\/heads\/[A-Za-z0-9._/-]{1,240}$/),
+  baseRef: z.string().regex(/^refs\/heads\/[A-Za-z0-9._/-]{1,240}$/),
+  title: z.string().min(1).max(240),
+  verificationId: uuidSchema,
+  policyDecisionId: uuidSchema,
+  draft: z.literal(true),
+  requestedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type DraftPullRequestIntent = z.infer<typeof draftPullRequestIntentSchema>;
+
 export const attentionItemSchema = z.object({
   version: contractVersionSchema,
   id: uuidSchema,
