@@ -55,9 +55,9 @@ acceptance_routes:
     status: complete
     test: "pnpm run check:release-recovery"
   - id: ACC-BROWSER-001
-    slice: observed-browser-path
-    status: planned
-    test: "future browser classification and confirmation suite"
+    slice: private-browser-observation-canary
+    status: gated
+    test: "future private human-observed browser canary"
   - id: ACC-MEMORY-001
     slice: graphiti-curation
     status: planned
@@ -519,17 +519,17 @@ requirements:
     owner: SPEC-008
     slice: observed-browser-path
     acceptance: ACC-BROWSER-001
-    status: planned
-    route_role: completion
-    test: "future browser classification and confirmation suite"
+    status: complete
+    route_role: contributing
+    test: "pnpm run check:observed-browser-path"
     required_evidence: "Maturity-manifest check."
   - id: REQ-PROVIDER-006
     owner: SPEC-008
     slice: observed-browser-path
     acceptance: ACC-BROWSER-001
-    status: planned
-    route_role: completion
-    test: "future browser classification and confirmation suite"
+    status: complete
+    route_role: contributing
+    test: "pnpm run check:observed-browser-path"
     required_evidence: "Browser-policy test."
   - id: REQ-SAFE-001
     owner: SPEC-009
@@ -957,11 +957,11 @@ requirements:
     required_evidence: "PR-gate test."
   - id: REQ-TEST-005
     owner: SPEC-017
-    slice: observed-browser-path
+    slice: private-browser-observation-canary
     acceptance: ACC-BROWSER-001
     status: gated
     route_role: completion
-    test: "future browser classification and confirmation suite"
+    test: "future private human-observed browser canary"
     required_evidence: "Scenario catalog review."
     coverage_policy: all
     coverage:
@@ -985,10 +985,10 @@ requirements:
         acceptance: ACC-PROJECTION-001
         status: planned
         test: "pnpm run check:github-portfolio-projections"
-      - slice: observed-browser-path
+      - slice: private-browser-observation-canary
         acceptance: ACC-BROWSER-001
-        status: planned
-        test: "future browser classification and confirmation suite"
+        status: gated
+        test: "future private human-observed browser canary"
   - id: REQ-TEST-006
     owner: SPEC-017
     slice: release-recovery

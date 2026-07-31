@@ -29,7 +29,8 @@ export const routes = {
   skills: route("skills-estimation-finops", "ACC-SKILLS-001", "complete", "pnpm run check:skills-estimation-finops"),
   finops: route("skills-estimation-finops", "ACC-FINOPS-001", "complete", "pnpm run check:skills-estimation-finops"),
   release: route("release-recovery", "ACC-RELEASE-001", "complete", "pnpm run check:release-recovery"),
-  browser: route("observed-browser-path", "ACC-BROWSER-001", "planned", "future browser classification and confirmation suite"),
+  browser: route("observed-browser-path", "ACC-BROWSER-001", "complete", "pnpm run check:observed-browser-path"),
+  browserAcceptance: route("private-browser-observation-canary", "ACC-BROWSER-001", "gated", "future private human-observed browser canary"),
   memory: route("graphiti-curation", "ACC-MEMORY-001", "planned", "future curated-memory contract suite"),
   security: route("restricted-domain-federation", "ACC-SECURITY-001", "gated", "future domain, resource, destructive-action, and restricted-dispatch negative suite"),
   federation: route("restricted-domain-federation", "ACC-FEDERATION-001", "gated", "future authority, sanitization, isolation, and negative-dispatch suite")
@@ -49,7 +50,7 @@ export const acceptanceRoutes = [
   routes.skills,
   routes.finops,
   routes.release,
-  routes.browser,
+  routes.browserAcceptance,
   routes.memory,
   routes.federation
 ];
@@ -64,7 +65,7 @@ const scenarioCatalogCoverage = [
   routes.canary,
   routes.remoteAcceptance,
   routes.projections,
-  routes.browser
+  routes.browserAcceptance
 ];
 
 const completedRequirementIds = new Set([
@@ -154,6 +155,8 @@ const completedRequirementIds = new Set([
   "REQ-OPS-005",
   "REQ-TEST-006",
   "REQ-ROLL-003",
+  "REQ-PROVIDER-005",
+  "REQ-PROVIDER-006",
 ]);
 
 const prefixRoutes = new Map([
@@ -228,7 +231,7 @@ const overrides = new Map(Object.entries({
   "REQ-OPS-006": "projections",
   "REQ-TEST-001": "governance",
   "REQ-TEST-002": "print",
-  "REQ-TEST-005": "browser",
+  "REQ-TEST-005": "browserAcceptance",
   "REQ-TEST-006": "release",
   "REQ-ROLL-001": "governance",
   "REQ-ROLL-003": "release",

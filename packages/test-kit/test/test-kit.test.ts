@@ -10,10 +10,13 @@ import {
   RecordingSlackAttentionOutbox,
   StaticSlackAttentionAudienceResolver,
   StaticSlackWorkspaceActorAuthorizer,
+  StaticHumanBrowserEvidencePort,
   ScriptedJsonRpcTransport,
   StaticResourceInspector,
   assertRebootIdleServiceFixture,
   buildJobEnvelope,
+  buildBrowserObservationEvidence,
+  buildBrowserObservationRequest,
   buildWorkerManifest,
 } from "../src/index.ts";
 
@@ -144,5 +147,15 @@ describe("deterministic worker test kit", () => {
       "worker-replacement-rehearsed",
       "release-gate-passed",
     ]);
+  });
+
+  it("supplies only static redacted browser evidence without a browser or host path", async () => {
+    const request = buildBrowserObservationRequest();
+    const source = new StaticHumanBrowserEvidencePort(buildBrowserObservationEvidence());
+    const evidence = await source.readRedactedEvidence(request);
+    assert.equal(source.requests.length, 1);
+    assert.equal(evidence.source, "human-observer");
+    assert.equal(evidence.rawContentRetained, false);
+    assert.equal(evidence.redactionVerified, true);
   });
 });

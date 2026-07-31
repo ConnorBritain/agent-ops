@@ -68,7 +68,7 @@ scenarios:
   - id: ACC-BROWSER-001
     title: Human-confirmed observed browser path
     requirements: [REQ-PROVIDER-005, REQ-PROVIDER-006, REQ-TEST-005]
-    evidence: future browser classification and confirmation suite
+    evidence: pnpm run check:observed-browser-path deterministic maturity, exact-domain, write-authority, confirmation, redaction, and no-execution suite; private human-observed browser canary remains separately gated
     phase: 9
   - id: ACC-MEMORY-001
     title: Curated ADR memory with supersession and outage isolation

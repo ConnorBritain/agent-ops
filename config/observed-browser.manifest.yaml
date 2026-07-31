@@ -1,0 +1,25 @@
+schema_version: 1
+artifact: agentops-observed-browser-contract
+contract_version: "1.0"
+provider:
+  maturity: human-observed
+  execution_mode: no-execution
+  automation: none
+  autonomous_desktop_control: forbidden
+  supported_controls: [observe, request-human-confirmation]
+request:
+  canonical_allowed_domains: required
+  wildcards_schemes_ports_paths_or_ip_literals: forbidden
+  write_authority: [observe-only, human-confirmed-write]
+  human_confirmation: required
+evidence:
+  source: human-observer
+  raw_content_retained: forbidden
+  redaction_verification: required
+boundaries:
+  browser_launch: separately-authorized
+  browser_input: separately-authorized
+  browser_submission: separately-authorized
+  remote_desktop_control: forbidden
+  scheduler_authority: forbidden
+  secret_values_in_repository: forbidden
