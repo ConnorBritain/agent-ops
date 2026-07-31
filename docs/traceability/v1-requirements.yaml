@@ -60,8 +60,8 @@ acceptance_routes:
     test: "future private human-observed browser canary"
   - id: ACC-MEMORY-001
     slice: graphiti-curation
-    status: planned
-    test: "future curated-memory contract suite"
+    status: complete
+    test: "pnpm run check:graphiti-curation"
   - id: ACC-FEDERATION-001
     slice: restricted-domain-federation
     status: gated
@@ -783,49 +783,49 @@ requirements:
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "ADR review."
   - id: REQ-MEMORY-002
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "Curation pipeline test."
   - id: REQ-MEMORY-003
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "Write-authorization test."
   - id: REQ-MEMORY-004
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "Supersession scenario."
   - id: REQ-MEMORY-005
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "Domain-filter test."
   - id: REQ-MEMORY-006
     owner: SPEC-014
     slice: graphiti-curation
     acceptance: ACC-MEMORY-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future curated-memory contract suite"
+    test: "pnpm run check:graphiti-curation"
     required_evidence: "Outage fixture."
   - id: REQ-DEPLOY-001
     owner: SPEC-015

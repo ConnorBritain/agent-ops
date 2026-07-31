@@ -711,7 +711,7 @@ pis:
         prompt: Keep browser and remote-access actions human-operated; do not submit, persist raw page/session material, or grant scheduler authority.
   - id: phase-10-memory-curation
     title: ADR and temporal-memory curation
-    status: scheduled
+    status: complete
     deps: [phase-9-observed-browser]
     summary: Curate accepted ADRs and reviewed episodes into an optional temporal graph while Git remains canonical.
     exit_criteria: Accepted and superseded ADR fixtures retain provenance, validity, domain labels, and history; graph outage cannot block core operation.
@@ -723,13 +723,14 @@ pis:
     sprints:
       - id: graphiti-curation
         title: Optional Graphiti curation boundary
-        status: scheduled
+        status: complete
         invoke: graphiti-curation
         what: Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [observed-browser-path]
         gate: Curation authorization, supersession, domain filtering, and outage fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/adapters/
           - packages/domain/
@@ -739,7 +740,7 @@ pis:
           - docs/specs/SPEC-003-trust-security-and-federation.md
           - docs/specs/SPEC-014-memory-adrs-and-graph.md
           - docs/specs/SPEC-016-observability-operations-and-runbooks.md
-        resume_action: Implement the backend-neutral port and deterministic fake before deploying a persistent graph service.
+        resume_action: Preserve the backend-neutral deterministic boundary; deploy a graph backend only through a separately authorized private overlay decision.
         priority:
           tier: P2
           weight: 50

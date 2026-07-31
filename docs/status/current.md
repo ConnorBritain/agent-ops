@@ -377,3 +377,21 @@ remote-access connection, website request, account, credential, host change,
 or external mutation. A single human-observed, no-submission private canary
 remains gated on explicit scope, a disposable exact domain, private evidence,
 and an abort procedure.
+
+## Phase 10 — curated ADR memory
+
+Status: **deterministic source-level slice complete** on 2026-07-30; graph
+backend selection and deployment are separately authorized.
+
+Git-backed ADRs remain canonical. The new curation boundary lets workers and
+integrations submit bounded, redacted candidates, but only a same-domain human
+curator may accept an ADR- or curated-episode-derived record. It preserves
+source, repository scope, domain label, and validity history. Supersession is
+two-way and retains the closed prior record rather than overwriting it.
+
+The optional temporal graph is a typed derived-index port, not a source of
+truth or a scheduling/authorization dependency. Deterministic fixtures prove
+candidate non-authority, human curation, accepted-source intake, supersession,
+domain/repository filtering, and non-blocking graph index/retrieval failure.
+They create no Graphiti SDK binding, graph service, Docker container, endpoint,
+database connection, credential, host change, or private memory record.

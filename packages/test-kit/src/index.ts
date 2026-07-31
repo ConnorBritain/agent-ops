@@ -5,6 +5,9 @@ import {
   type BackupVerificationRecord,
   type BrowserObservationEvidence,
   type BrowserObservationRequest,
+  type CuratedMemoryRecord,
+  type MemoryCandidate,
+  type MemoryRetrievalQuery,
   type CompatibilityManifest,
   type CoordinatorProjectionCommand,
   type ExternalProjectionFact,
@@ -32,6 +35,8 @@ import type {
   AttentionResponseRecord,
   CoordinatorDurableStore,
   CoordinatorIntent,
+  CuratedMemoryGraphPort,
+  CuratedMemoryStore,
   CreateJobInput,
   DurableOperationOptions,
   ExternalProjectionClaim,
@@ -45,6 +50,7 @@ import type {
   SchedulingAuditRecord,
   PolicyDecision,
   ReleaseRecoveryLedgerStore,
+  MemorySupersession,
 } from "@agent-ops/domain";
 import type { WorkerSafetySnapshot } from "@agent-ops/policy";
 
@@ -87,6 +93,9 @@ export const testIds = {
   ledgerRecordTwo: "00000000-0000-4000-8000-000000000136",
   releaseGate: "00000000-0000-4000-8000-000000000137",
   browserRequest: "00000000-0000-4000-8000-000000000138",
+  memoryCandidate: "00000000-0000-4000-8000-000000000139",
+  memoryRecord: "00000000-0000-4000-8000-000000000140",
+  memorySuccessor: "00000000-0000-4000-8000-000000000141",
 } as const;
 
 export class DeterministicClock {
@@ -913,6 +922,59 @@ export class StaticHumanBrowserEvidencePort {
   }
 }
 
+/**
+ * Deterministic curation-audit double. It preserves submitted candidates and
+ * human curation facts but cannot create a Git-backed ADR or a graph service.
+ */
+export class InMemoryCuratedMemoryStore implements CuratedMemoryStore {
+  readonly operations: string[] = [];
+  readonly candidates: MemoryCandidate[] = [];
+  readonly acceptances: CuratedMemoryRecord[] = [];
+  readonly supersessions: MemorySupersession[] = [];
+
+  async recordCandidate(candidate: MemoryCandidate): Promise<void> {
+    this.operations.push("candidate");
+    this.candidates.push(candidate);
+  }
+
+  async recordAcceptance(record: CuratedMemoryRecord): Promise<void> {
+    this.operations.push("acceptance");
+    this.acceptances.push(record);
+  }
+
+  async recordSupersession(input: MemorySupersession): Promise<void> {
+    this.operations.push("supersession");
+    this.supersessions.push(input);
+  }
+}
+
+/**
+ * Static derived-memory double. It only returns already-materialized records
+ * and can deterministically simulate an optional graph outage.
+ */
+export class StaticCuratedMemoryGraph implements CuratedMemoryGraphPort {
+  readonly indexed: CuratedMemoryRecord[] = [];
+  readonly queries: MemoryRetrievalQuery[] = [];
+  records: readonly CuratedMemoryRecord[];
+  throwOnIndex = false;
+  throwOnRetrieve = false;
+
+  constructor(records: readonly CuratedMemoryRecord[] = []) {
+    this.records = records;
+  }
+
+  async index(record: CuratedMemoryRecord): Promise<void> {
+    if (this.throwOnIndex) throw new Error("derived-memory-unavailable");
+    this.indexed.push(record);
+  }
+
+  async retrieve(query: MemoryRetrievalQuery): Promise<readonly CuratedMemoryRecord[]> {
+    if (this.throwOnRetrieve) throw new Error("derived-memory-unavailable");
+    this.queries.push(query);
+    return this.records;
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({
@@ -1011,5 +1073,53 @@ export const buildBrowserObservationEvidence = (
   rawContentRetained: false,
   redactionVerified: true,
   observedAt: "2026-07-30T04:00:01Z",
+  ...overrides,
+});
+
+export const buildMemoryCandidate = (
+  overrides: Partial<MemoryCandidate> = {},
+): MemoryCandidate => ({
+  version: CONTRACT_VERSION,
+  id: testIds.memoryCandidate,
+  securityDomain: "example-domain",
+  submittedBy: { id: testIds.worker, kind: "worker", securityDomain: "example-domain" },
+  sourceRefs: ["adr://fixture/adr-0022"],
+  applicableRepositories: ["repo://fixture/agent-ops"],
+  redactedSummary: "A worker proposed a bounded, redacted memory candidate for human review.",
+  submittedAt: "2026-07-30T04:00:00Z",
+  ...overrides,
+});
+
+export const buildCuratedMemoryRecord = (
+  overrides: Partial<CuratedMemoryRecord> = {},
+): CuratedMemoryRecord => ({
+  version: CONTRACT_VERSION,
+  id: testIds.memoryRecord,
+  candidateId: testIds.memoryCandidate,
+  securityDomain: "example-domain",
+  source: {
+    kind: "accepted-adr",
+    sourceRef: "adr://fixture/adr-0022",
+    adrPath: "docs/adr/ADR-0022-curated-memory-is-derived-from-accepted-git-records.md",
+    acceptance: "accepted",
+  },
+  applicableRepositories: ["repo://fixture/agent-ops"],
+  redactedSummary: "A human accepted a concise derived-memory record with retained provenance.",
+  curator: { id: testIds.principal, kind: "human", securityDomain: "example-domain" },
+  state: "accepted",
+  validFrom: "2026-07-30T04:01:00Z",
+  curatedAt: "2026-07-30T04:01:00Z",
+  ...overrides,
+});
+
+export const buildMemoryRetrievalQuery = (
+  overrides: Partial<MemoryRetrievalQuery> = {},
+): MemoryRetrievalQuery => ({
+  version: CONTRACT_VERSION,
+  securityDomain: "example-domain",
+  repositoryRef: "repo://fixture/agent-ops",
+  query: "Find an accepted memory record for the bounded fixture.",
+  includeSuperseded: false,
+  requestedAt: "2026-07-30T04:02:00Z",
   ...overrides,
 });

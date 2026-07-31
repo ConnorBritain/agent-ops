@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   DeterministicClock,
   InMemoryReleaseRecoveryLedger,
+  InMemoryCuratedMemoryStore,
   InMemoryWorkerControlPlane,
   StaticRoadmapReadTransport,
   InMemorySlackIngressStore,
@@ -11,12 +12,16 @@ import {
   StaticSlackAttentionAudienceResolver,
   StaticSlackWorkspaceActorAuthorizer,
   StaticHumanBrowserEvidencePort,
+  StaticCuratedMemoryGraph,
   ScriptedJsonRpcTransport,
   StaticResourceInspector,
   assertRebootIdleServiceFixture,
   buildJobEnvelope,
   buildBrowserObservationEvidence,
   buildBrowserObservationRequest,
+  buildCuratedMemoryRecord,
+  buildMemoryCandidate,
+  buildMemoryRetrievalQuery,
   buildWorkerManifest,
 } from "../src/index.ts";
 
@@ -157,5 +162,16 @@ describe("deterministic worker test kit", () => {
     assert.equal(evidence.source, "human-observer");
     assert.equal(evidence.rawContentRetained, false);
     assert.equal(evidence.redactionVerified, true);
+  });
+
+  it("records memory candidates and simulates derived-memory failure without a graph service", async () => {
+    const store = new InMemoryCuratedMemoryStore();
+    const graph = new StaticCuratedMemoryGraph([buildCuratedMemoryRecord()]);
+    await store.recordCandidate(buildMemoryCandidate());
+    await store.recordAcceptance(buildCuratedMemoryRecord());
+    assert.deepEqual(store.operations, ["candidate", "acceptance"]);
+    assert.equal((await graph.retrieve(buildMemoryRetrievalQuery())).length, 1);
+    graph.throwOnRetrieve = true;
+    await assert.rejects(() => graph.retrieve(buildMemoryRetrievalQuery()), /derived-memory-unavailable/);
   });
 });

@@ -31,7 +31,7 @@ export const routes = {
   release: route("release-recovery", "ACC-RELEASE-001", "complete", "pnpm run check:release-recovery"),
   browser: route("observed-browser-path", "ACC-BROWSER-001", "complete", "pnpm run check:observed-browser-path"),
   browserAcceptance: route("private-browser-observation-canary", "ACC-BROWSER-001", "gated", "future private human-observed browser canary"),
-  memory: route("graphiti-curation", "ACC-MEMORY-001", "planned", "future curated-memory contract suite"),
+  memory: route("graphiti-curation", "ACC-MEMORY-001", "complete", "pnpm run check:graphiti-curation"),
   security: route("restricted-domain-federation", "ACC-SECURITY-001", "gated", "future domain, resource, destructive-action, and restricted-dispatch negative suite"),
   federation: route("restricted-domain-federation", "ACC-FEDERATION-001", "gated", "future authority, sanitization, isolation, and negative-dispatch suite")
 };
@@ -157,6 +157,12 @@ const completedRequirementIds = new Set([
   "REQ-ROLL-003",
   "REQ-PROVIDER-005",
   "REQ-PROVIDER-006",
+  "REQ-MEMORY-001",
+  "REQ-MEMORY-002",
+  "REQ-MEMORY-003",
+  "REQ-MEMORY-004",
+  "REQ-MEMORY-005",
+  "REQ-MEMORY-006",
 ]);
 
 const prefixRoutes = new Map([

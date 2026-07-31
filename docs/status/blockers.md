@@ -29,4 +29,9 @@ None for generalized deterministic implementation and CI verification.
   authorized by the public Phase 9 source slice. Any such test requires a
   separately approved private scope, disposable exact domain, human operator,
   redacted private evidence destination, and abort procedure.
+- No Graphiti or other graph backend selection, deployment, Docker/container
+  creation, endpoint/database connection, credential configuration, private
+  memory ingestion, or live retrieval is authorized by the deterministic Phase
+  10 source slice. Any backend implementation requires a private security,
+  retention, operations, and evidence plan with separate authorization.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.
