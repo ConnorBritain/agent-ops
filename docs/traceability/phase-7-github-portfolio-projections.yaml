@@ -1,0 +1,35 @@
+slice: github-portfolio-projections
+status: complete
+requirements:
+  - REQ-CONTEXT-002
+  - REQ-CONTEXT-004
+  - REQ-CONTEXT-006
+  - REQ-INT-003
+  - REQ-INT-004
+  - REQ-INT-006
+artifacts:
+  - packages/contracts/src/index.ts
+  - packages/contracts/test/contracts.test.ts
+  - packages/domain/src/index.ts
+  - packages/adapters/src/github-portfolio-projections.ts
+  - packages/adapters/test/github-portfolio-projections.test.ts
+  - packages/test-kit/src/index.ts
+  - tools/github-portfolio-projections.test.mjs
+  - docs/architecture/github-portfolio-projections.md
+  - docs/adr/ADR-0018-outbox-projections-are-non-authoritative.md
+tests:
+  - pnpm run check:github-portfolio-projections
+  - pnpm validate
+acceptance:
+  - ACC-PROJECTION-001
+evidence:
+  coordinator_only_projection_authority: passed
+  durable_reservation_before_named_gateway: passed
+  duplicate_delivery_suppression: passed
+  outage_preserves_internal_state_and_leaves_retryable_record: passed
+  explicit_replay_recovers_one_pending_projection: passed
+  provenance_and_multi_link_lineage: passed
+  portfolio_noise_suppression: passed
+  malformed_or_secret_gateway_fact: rejected
+  live_github_portfolio_and_cross_environment_canary: separately-authorized
+catalog_version: 1

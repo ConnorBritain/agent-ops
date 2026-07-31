@@ -25,10 +25,11 @@
 - The Coordinator owns durable ordering and reconciliation decisions but has no
   hosted durable-store binding, timer, scoped runtime identity, worker
   transport, or delivery outbox runner. The Slack Socket Mode adapter and
-  verified-draft fixture supply deterministic ingress/projection contracts
-  only: they have no real app, workspace authorization record, WebSocket,
-  audience/channel configuration, outbox binding, external delivery, provider
-  process, or GitHub connection. A provider acknowledgement is deliberately
+  verified-draft fixture, and GitHub/portfolio projection service supply
+  deterministic ingress/projection contracts only: they have no real app,
+  workspace authorization record, WebSocket, audience/channel configuration,
+  database outbox binding, external delivery, provider process, GitHub
+  connection, or portfolio connection. A provider acknowledgement is deliberately
   insufficient to report a run as executing; the fixture's explicit durable
   answer-and-dispatch path is not autonomous workload restart.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

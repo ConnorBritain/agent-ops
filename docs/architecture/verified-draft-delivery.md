@@ -47,8 +47,10 @@ blocked Coordinator dispatch
 
 The fixture's `repo://fixture/reversible-change` and `draft-pr://fixture/...`
 references are opaque deterministic test data, not a repository or pull
-request. A separately authorized later projection slice may bind the gateway
-to GitHub through a durable outbox, scoped identity, real disposable
-repository, and reviewed rollback plan. That integration must retain the
-same idempotency, verification, policy, draft-only, and no-automatic-restart
-properties.
+request. Phase 7 now supplies a separate deterministic outbox-projection
+contract for bounded draft and CI evidence intents, but it still has no GitHub
+SDK, repository, account, identity, credential, timer, or network binding. A
+future authorized composition may bind the gateway through a durable outbox,
+scoped identity, disposable repository, and reviewed rollback plan. It must
+retain the same idempotency, verification, policy, draft-only, and
+no-automatic-restart properties.

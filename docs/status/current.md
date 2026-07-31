@@ -49,8 +49,9 @@ private-overlay gate.
 Status: **Phase 3 worker core, safety hooks, static service packaging, all
 Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server and Claude
 Code adapters, the local Coordinator application service, the
-non-authoritative Slack attention adapter, and the replayable
-verified-draft-delivery fixture are complete** as of 2026-07-30.
+non-authoritative Slack attention adapter, the replayable
+verified-draft-delivery fixture, and deterministic GitHub/portfolio outbox
+projections are complete** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -267,3 +268,32 @@ The proof contains no installed Claude binary, account, model entitlement,
 credential, local process, provider request, or host change. A real binding,
 budget, authentication, and disposable canary remain separately authorized in
 the private overlay.
+
+## Phase 7 — GitHub and portfolio outbox projections
+
+Status: **deterministic projection layer complete** on 2026-07-30; external
+integration is not started.
+
+`GitHubPortfolioProjectionService` accepts only a versioned
+Coordinator-issued projection command, persists an idempotency reservation,
+and then explicitly claims one durable outbox item before it calls a named
+GitHub or portfolio gateway. Its contract contains only draft pull-request,
+CI-evidence, and portfolio-transition forms; it has no generic issue mutation,
+merge, review, release, deployment, provider-control, or external-write path.
+Returned facts must match the originating task/run/domain/destination and
+retain source, source-event identity, occurrence time, and ingestion time.
+
+Portfolio `running` and `provider-observed` events are intentionally suppressed
+before durable reservation or gateway delivery. Temporary gateway failure or a
+malformed/secret-bearing fact becomes a redacted retryable outbox record; an
+explicit later replay is idempotent and leaves internal operational state
+authoritative. Deterministic fakes prove multi-link issue/slice/pull-request/
+external-session lineage, duplicate suppression, outage recovery, destination
+separation, provenance, and Coordinator-only authorization.
+
+No GitHub SDK, portfolio SDK, endpoint, repository, portfolio account,
+credential, external request, timer, retry daemon, cloud resource, or host
+change was created. The operator-view/dashboard requirement `REQ-OPS-006` and
+the separately gated cross-environment/private-canary coverage in `REQ-TEST-005`
+remain open, so broader `ACC-PROJECTION-001` acceptance is planned rather than
+being claimed from the local fixture alone.
