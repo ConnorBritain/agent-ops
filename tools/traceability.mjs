@@ -19,12 +19,12 @@ export const routes = {
   canary: route("private-worker-canary", "ACC-WORKER-001", "gated", "future private worker canary acceptance"),
   roadmap: route("roadmap-adapter", "ACC-PLANNING-001", "planned", "pnpm run check:roadmap-adapter", "planned"),
   print: route("print-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:print-provider", "planned"),
-  providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future shared conformance suite across PrintProvider and two CLI providers"),
+  providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:provider-conformance", "planned"),
   coordinator: route("coordinator-runtime", "ACC-ATTENTION-001", "complete", "pnpm run check:coordinator-runtime", "planned"),
   slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "complete", "pnpm run check:slack-attention-adapter", "planned"),
   attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
   delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
-  secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future second CLI provider conformance suite"),
+  secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:provider-conformance"),
   projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "future projection replay and noise-suppression suite"),
   skills: route("skills-estimation-finops", "ACC-SKILLS-001", "planned", "future primitive manifest and enforcement suite"),
   finops: route("skills-estimation-finops", "ACC-FINOPS-001", "planned", "future estimation and FinOps lineage suite"),
@@ -123,7 +123,8 @@ const completedRequirementIds = new Set([
   "REQ-V1-005",
   "REQ-TEST-003",
   "REQ-TEST-004",
-  "REQ-ROLL-002"
+  "REQ-ROLL-002",
+  "REQ-V1-003"
 ]);
 
 const prefixRoutes = new Map([

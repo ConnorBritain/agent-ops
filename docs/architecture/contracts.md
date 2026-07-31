@@ -234,4 +234,15 @@ sealed, secret-safe plan per lifecycle operation and reports
 material and contains no process-execution API. It is a test double, not a
 worker launcher or an execution backend.
 
+The two normalized CLI adapters use the same contract but retain distinct
+truthful operation support. `codex-app-server` is an injected local-stdio
+JSON-RPC turn protocol. `claude-code` is an injected local-stdio one-shot print
+mode with JSONL output, policy-supplied turn and budget caps, no session
+persistence, and `dontAsk` permission refusal; its send-input, pause, and
+resume operations are explicitly unsupported. Both reduce provider output to
+secret-safe correlated observations and bounded artifacts, exclude transcripts
+and authentication material, refuse protocol data containing inline secrets,
+and prohibit automatic restart. Neither package includes a process launcher,
+credential binding, or runtime account assumption.
+
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

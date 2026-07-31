@@ -1,0 +1,23 @@
+slice: second-cli-provider
+status: complete
+requirements:
+  - REQ-V1-003
+artifacts:
+  - packages/providers/claude-code
+  - packages/provider-sdk
+  - docs/architecture/claude-code-provider.md
+  - docs/adr/ADR-0017-claude-code-second-cli-provider.md
+tests:
+  - pnpm run check:provider-conformance
+  - pnpm run check:claude-code-provider
+  - pnpm validate
+acceptance: ACC-PROVIDER-001
+evidence:
+  shared_lifecycle_and_observation_normalization: passed
+  claude_print_mode_stream_json_preflight: passed
+  unsupported_steer_pause_and_resume_are_explicit: passed
+  cancellation_and_no_automatic_restart: passed
+  terminal_result_and_artifact_redaction: passed
+  secret_or_unknown_protocol_data: rejected
+  binary_authentication_budget_and_runtime_canary: separately-authorized
+catalog_version: 1

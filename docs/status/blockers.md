@@ -12,7 +12,7 @@ None for generalized deterministic implementation and CI verification.
 - No hosted Supabase migration, production environment, secret, RustDesk relay,
   account, device enrollment, or unattended-access configuration is authorized
   by the public implementation.
-- No live Slack app, provider identity/process, GitHub identity, disposable
-  repository, external draft pull request, or hosted Coordinator composition
-  is authorized by the deterministic verified-draft-delivery fixture.
+- No live Slack app, Codex or Claude provider identity/process, GitHub identity,
+  disposable repository, external draft pull request, or hosted Coordinator
+  composition is authorized by the deterministic fixtures.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.

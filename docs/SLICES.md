@@ -12,21 +12,18 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
 **Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P1]** `/slice second-cli-provider` — Select and implement a second documented CLI provider through the same SDK and conformance suite. · touches `packages/providers/`, `packages/provider-sdk/`, `packages/test-kit/`, `docs/adr/`
-
-**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice github-portfolio-projections` — Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
-**Wave 3** — launch concurrently (disjoint files, deps satisfied):
+**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice skills-estimation-finops` — Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. · touches `packages/adapters/`, `packages/domain/`, `packages/contracts/`, `packages/test-kit/`, `docs/`
 
-**Wave 4** — launch concurrently (disjoint files, deps satisfied):
+**Wave 3** — launch concurrently (disjoint files, deps satisfied):
 - **[P1]** `/slice release-recovery` — Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. · touches `deploy/`, `config/`, `packages/test-kit/`, `docs/runbooks/`, `docs/`
 
-**Wave 5** — launch concurrently (disjoint files, deps satisfied):
+**Wave 4** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice observed-browser-path` — Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. · touches `packages/providers/`, `packages/policy/`, `packages/test-kit/`, `docs/`
 
-**Wave 6** — launch concurrently (disjoint files, deps satisfied):
+**Wave 5** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
 **Held on a human:**
@@ -116,15 +113,15 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | SLACK-ATTENTION-ADAPTER | `/slice slack-attention-adapter` | ✅ Complete · **P0** | — | COORDINATOR-RUNTIME | Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion. |
 | VERIFIED-DRAFT-DELIVERY | `/slice verified-draft-delivery` | ✅ Complete · **P0** | — | SLACK-ATTENTION-ADAPTER | Run the first complete reversible vertical slice through a disposable repository with one blocker, durable answer, independent verifier, and draft pull request. |
 
-### PHASE-7-PROVIDER-PROJECTIONS — Second CLI provider and external projections · ⚪ Scheduled · ~4 sessions remaining
-> Sprints: SECOND-CLI-PROVIDER ⚪ · GITHUB-PORTFOLIO-PROJECTIONS ⚪
-> Exec plan: SECOND-CLI-PROVIDER→GITHUB-PORTFOLIO-PROJECTIONS
+### PHASE-7-PROVIDER-PROJECTIONS — Second CLI provider and external projections · ⚪ Scheduled · ~2 sessions remaining
+> Sprints: SECOND-CLI-PROVIDER ✅ · GITHUB-PORTFOLIO-PROJECTIONS ⚪
+> Exec plan: GITHUB-PORTFOLIO-PROJECTIONS
 > Deps: PHASE-6-ATTENTION-DELIVERY
 > Exit: Both providers pass the same suite; GitHub and portfolio projections are replayable, idempotent, and limited to meaningful transitions.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| SECOND-CLI-PROVIDER | `/slice second-cli-provider` | ⚪ Scheduled · **P1** | ~2 | VERIFIED-DRAFT-DELIVERY | Select and implement a second documented CLI provider through the same SDK and conformance suite. |
+| SECOND-CLI-PROVIDER | `/slice second-cli-provider` | ✅ Complete · **P1** | — | VERIFIED-DRAFT-DELIVERY | Select and implement a second documented CLI provider through the same SDK and conformance suite. |
 | GITHUB-PORTFOLIO-PROJECTIONS | `/slice github-portfolio-projections` | ⚪ Scheduled · **P1** | ~2 | SECOND-CLI-PROVIDER | Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. |
 
 ### PHASE-8-SKILLS-FINOPS-RELEASE — Portable skills, estimation, FinOps, and release recovery · ⚪ Scheduled · ~5 sessions remaining
@@ -187,6 +184,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | COORDINATOR-RUNTIME | PHASE-6-ATTENTION-DELIVERY | — |
 | SLACK-ATTENTION-ADAPTER | PHASE-6-ATTENTION-DELIVERY | — |
 | VERIFIED-DRAFT-DELIVERY | PHASE-6-ATTENTION-DELIVERY | — |
+| SECOND-CLI-PROVIDER | PHASE-7-PROVIDER-PROJECTIONS | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -252,17 +250,6 @@ pnpm validate
 - **Resume / next action:** Wait for explicit private authorization; do not install, authenticate, launch, or enroll a provider from the public template.
 - **Gate:** Private canary evidence proves documented protocol compatibility, cancellation, redaction, no automatic restart, and cleanup
 - **Gated on:** Private owner authorization, scoped provider identity, disposable repository, and reviewed rollback plan (an agent prepares; it does not perform the gate).
-
-### `second-cli-provider`
-- **What:** Select and implement a second documented CLI provider through the same SDK and conformance suite.
-- **Status:** ⚪ Scheduled (PHASE-7-PROVIDER-PROJECTIONS · SECOND-CLI-PROVIDER)
-- **Priority:** P1 · weight 85 — Two equivalent adapters prove the provider-neutral boundary.
-- **Deps:** VERIFIED-DRAFT-DELIVERY
-- **Read-order:**
-  1. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
-  2. docs/specs/SPEC-017-testing-verification-and-release-gates.md
-- **Resume / next action:** Choose a documented control surface and add it without changing domain contracts for vendor-specific behavior.
-- **Gate:** Shared lifecycle, normalization, cancellation, and artifact conformance
 
 ### `github-portfolio-projections`
 - **What:** Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery.

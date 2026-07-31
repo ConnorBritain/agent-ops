@@ -16,11 +16,12 @@
   remaining independently versioned primitive, estimator, and architecture
   dependency references.
 - PrintProvider proves the lifecycle contract without launching anything. The
-  first Codex App Server adapter now proves its injected protocol boundary,
-  crash handling, cancellation, and redacted artifacts with deterministic test
-  doubles only. No real CLI provider has been authenticated, installed by
-  AgentOps, launched, or exercised; the host-specific local-stdio binding and
-  disposable runtime canary remain private, separately authorized work.
+  Codex App Server and Claude Code adapters prove independent injected protocol
+  boundaries, cancellation, explicit unsupported operations, and redacted
+  artifacts through deterministic test doubles only. No real CLI provider has
+  been authenticated, installed by AgentOps, launched, or exercised; the
+  host-specific local-stdio binding and disposable runtime canaries remain
+  private, separately authorized work.
 - The Coordinator owns durable ordering and reconciliation decisions but has no
   hosted durable-store binding, timer, scoped runtime identity, worker
   transport, or delivery outbox runner. The Slack Socket Mode adapter and

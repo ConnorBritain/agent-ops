@@ -4,11 +4,12 @@ Phase 0 created no runtime packages. Phase 2 activated the contract, domain,
 adapter, and Supabase boundaries. Phase 3 adds a transport-neutral worker
 supervisor, deterministic safety policy and monitor, and test kit. Phase 4
 adds the shared provider SDK and a deterministic `PrintProvider` test double.
-Phase 6 now adds a transport-neutral Coordinator application service, a
+Phase 6 adds a transport-neutral Coordinator application service, a
 secret-reference-only Slack Socket Mode attention adapter, and replayable
 independent-verification/draft-delivery ports over durable interfaces; none
 has a listener, real provider launcher, host enrollment, credential, cloud
-deployment, or external GitHub binding.
+deployment, or external GitHub binding. Phase 7 adds a second normalized CLI
+adapter through the same provider SDK; it remains an injected fixture boundary.
 
 | Future location | Responsibility | Must not own |
 | --- | --- | --- |
@@ -20,6 +21,8 @@ deployment, or external GitHub binding.
 | `packages/policy` | Deterministic authorization, resource, destructive-delete, dry-run cleanup, and safety decisions. | Natural-language authority, secret storage, command execution, process control, or filesystem deletion. |
 | `packages/provider-sdk` | Typed provider lifecycle port, capability-only routing, observation normalization, and shared conformance harness. | Coordinator state mutation, process control, credentials, or vendor selection without explicit human preference. |
 | `packages/providers/print` | Deterministic no-execution provider that emits sealed, redacted plans and test artifacts for every lifecycle operation. | Process execution, shell access, provider-session creation, task/run mutation, or secret rendering. |
+| `packages/providers/codex-app-server` | Injected local-stdio JSON-RPC adapter for one bounded Codex App Server session. | A child-process binding, listener, credential handling, direct state mutation, or automatic restart. |
+| `packages/providers/claude-code` | Injected local-stdio, bounded Claude Code print-mode/JSONL adapter. | A child-process binding, remote control, generic tool auto-approval, credential handling, direct state mutation, or automatic restart. |
 | `packages/adapters` | Supabase, Roadmap, Slack attention, independent verification/draft-delivery, portfolio, GitHub, memory, and RustDesk adapter implementations. | Domain ownership outside their explicit port, a Slack connection/listener, Slack-derived Scheduler/provider authority, merge/release behavior, or unreviewed external writes. |
 | `packages/test-kit` | Deterministic clocks, resources, control-plane recordings, fixtures, contract suites, and acceptance harnesses. | Production credentials or host inventory. |
 | `deploy/worker-supervisor` | Versioned service-manager templates and read-only clean-host verification scripts. | Installation, account creation, artifact download, service activation, or workload restart. |
