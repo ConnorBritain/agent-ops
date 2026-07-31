@@ -12,12 +12,9 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
 **Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P1]** `/slice release-recovery` — Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. · touches `deploy/`, `config/`, `packages/test-kit/`, `docs/runbooks/`, `docs/`
-
-**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice observed-browser-path` — Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. · touches `packages/providers/`, `packages/policy/`, `packages/test-kit/`, `docs/`
 
-**Wave 3** — launch concurrently (disjoint files, deps satisfied):
+**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
 **Held on a human:**
@@ -117,16 +114,15 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | SECOND-CLI-PROVIDER | `/slice second-cli-provider` | ✅ Complete · **P1** | — | VERIFIED-DRAFT-DELIVERY | Select and implement a second documented CLI provider through the same SDK and conformance suite. |
 | GITHUB-PORTFOLIO-PROJECTIONS | `/slice github-portfolio-projections` | ✅ Complete · **P1** | — | SECOND-CLI-PROVIDER | Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery. |
 
-### PHASE-8-SKILLS-FINOPS-RELEASE — Portable skills, estimation, FinOps, and release recovery · ⚪ Scheduled · ~2 sessions remaining
-> Sprints: SKILLS-ESTIMATION-FINOPS ✅ · RELEASE-RECOVERY ⚪
-> Exec plan: RELEASE-RECOVERY
+### PHASE-8-SKILLS-FINOPS-RELEASE — Portable skills, estimation, FinOps, and release recovery · ✅ Complete
+> Sprints: SKILLS-ESTIMATION-FINOPS ✅ · RELEASE-RECOVERY ✅
 > Deps: PHASE-7-PROVIDER-PROJECTIONS
 > Exit: A completed task retains skill enforcement, estimate/actual/cost lineage, compatibility evidence, and a simulated development-to-canary-to-stable recovery record.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
 | SKILLS-ESTIMATION-FINOPS | `/slice skills-estimation-finops` | ✅ Complete · **P1** | — | GITHUB-PORTFOLIO-PROJECTIONS | Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. |
-| RELEASE-RECOVERY | `/slice release-recovery` | ⚪ Scheduled · **P1** | ~2 | SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING | Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. |
+| RELEASE-RECOVERY | `/slice release-recovery` | ✅ Complete · **P1** | — | SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING | Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. |
 
 ### PHASE-9-OBSERVED-BROWSER — Observed browser path · ⚪ Scheduled · ~2 sessions remaining
 > Sprints: OBSERVED-BROWSER-PATH ⚪
@@ -180,6 +176,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | SECOND-CLI-PROVIDER | PHASE-7-PROVIDER-PROJECTIONS | — |
 | GITHUB-PORTFOLIO-PROJECTIONS | PHASE-7-PROVIDER-PROJECTIONS | — |
 | SKILLS-ESTIMATION-FINOPS | PHASE-8-SKILLS-FINOPS-RELEASE | — |
+| RELEASE-RECOVERY | PHASE-8-SKILLS-FINOPS-RELEASE | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -245,19 +242,6 @@ pnpm validate
 - **Resume / next action:** Wait for explicit private authorization; do not install, authenticate, launch, or enroll a provider from the public template.
 - **Gate:** Private canary evidence proves documented protocol compatibility, cancellation, redaction, no automatic restart, and cleanup
 - **Gated on:** Private owner authorization, scoped provider identity, disposable repository, and reviewed rollback plan (an agent prepares; it does not perform the gate).
-
-### `release-recovery`
-- **What:** Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement.
-- **Status:** ⚪ Scheduled (PHASE-8-SKILLS-FINOPS-RELEASE · RELEASE-RECOVERY)
-- **Priority:** P1 · weight 75 — Reinstallability and controlled recovery are v1 acceptance properties.
-- **Deps:** SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING
-- **Read-order:**
-  1. docs/specs/SPEC-015-deployment-upgrades-and-disaster-recovery.md
-  2. docs/specs/SPEC-016-observability-operations-and-runbooks.md
-  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
-  4. docs/specs/SPEC-018-v1-rollout-and-milestones.md
-- **Resume / next action:** Use simulated environments until explicit private canary and backup authorization exists.
-- **Gate:** Compatibility, promotion, migration, backup, and replacement acceptance suite
 
 ### `observed-browser-path`
 - **What:** Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary.

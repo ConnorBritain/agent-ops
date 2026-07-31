@@ -1,17 +1,24 @@
 import type {
   AttentionItem,
   AllocationRecord,
+  BackupVerificationRecord,
+  CompatibilityManifest,
   Command,
   CoordinatorProjectionCommand,
   EffortMeasurement,
   EstimateRecord,
   ExternalProjectionFact,
+  MigrationGate,
   NormalizedEvent,
   PlanningFeedback,
+  PromotionRecord,
   RateCard,
+  ReleaseCompatibilityComponent,
+  ReleaseGateRecord,
   ResourceBudget,
   SkillRequirement,
   SignedJobEnvelope,
+  WorkerReplacementRecord,
   WorkerMode,
   WorkerResourceSnapshot,
 } from "@agent-ops/contracts";
@@ -327,6 +334,203 @@ export function assertFinOpsLineage(input: FinOpsLineageInput): FinOpsLineageInp
     if (!allocationById.has(allocationId)) {
       throw new Error("Planning feedback must reference an allocation retained by the same lineage set.");
     }
+  }
+  return input;
+}
+
+export type CompatibilityObservation = {
+  readonly component: ReleaseCompatibilityComponent;
+  readonly version: string;
+};
+
+const hasSameIdentifiers = (left: readonly string[], right: readonly string[]): boolean => {
+  if (left.length !== right.length) return false;
+  const leftIds = new Set(left);
+  const rightIds = new Set(right);
+  return leftIds.size === left.length
+    && rightIds.size === right.length
+    && [...leftIds].every((id) => rightIds.has(id));
+};
+
+/**
+ * Evaluates only the small declarative range grammar from the public contract.
+ * It is a compatibility gate, not a package manager, updater, installer, or
+ * deployment controller.
+ */
+export function compatibilityVersionSatisfies(version: string, range: string): boolean {
+  if (range === "*") return Boolean(parseVersion(version));
+  const observed = parseVersion(version);
+  if (!observed) return false;
+  const comparators = range.trim().split(/\s+/);
+  return comparators.every((comparator) => {
+    const match = /^(\^|~|>=|>|<=|<)?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/.exec(comparator);
+    if (!match) return false;
+    const expected = parseVersion(match[2]!);
+    if (!expected) return false;
+    const comparison = compareVersions(observed, expected);
+    switch (match[1] ?? "") {
+      case ">=": return comparison >= 0;
+      case ">": return comparison > 0;
+      case "<=": return comparison <= 0;
+      case "<": return comparison < 0;
+      case "^":
+        return expected[0] > 0
+          ? observed[0] === expected[0] && comparison >= 0
+          : expected[1] > 0
+            ? observed[0] === 0 && observed[1] === expected[1] && comparison >= 0
+            : observed[0] === 0 && observed[1] === 0 && observed[2] === expected[2];
+      case "~":
+        return observed[0] === expected[0]
+          && observed[1] === expected[1]
+          && comparison >= 0;
+      default: return comparison === 0;
+    }
+  });
+}
+
+/**
+ * Checks a declared release manifest against independently supplied component
+ * observations. The manifest has no vendor, host, credential, or transport
+ * authority; an incompatibility simply blocks promotion.
+ */
+export function assertReleaseCompatibility(input: {
+  readonly manifest: CompatibilityManifest;
+  readonly observations: readonly CompatibilityObservation[];
+}): typeof input {
+  const observedByComponent = new Map(input.observations.map((entry) => [entry.component, entry]));
+  if (observedByComponent.size !== input.observations.length) {
+    throw new Error("Compatibility observations must contain each component at most once.");
+  }
+  for (const declaration of input.manifest.declarations) {
+    const observed = observedByComponent.get(declaration.component);
+    if (!observed) {
+      throw new Error(`Missing compatibility observation: ${declaration.component}.`);
+    }
+    if (!compatibilityVersionSatisfies(observed.version, declaration.acceptsVersionRange)) {
+      throw new Error(`Incompatible ${declaration.component} version: ${observed.version}.`);
+    }
+  }
+  return input;
+}
+
+export interface ReleaseRecoveryLedgerStore {
+  recordCompatibilityManifest(manifest: CompatibilityManifest): Promise<void>;
+  recordPromotion(promotion: PromotionRecord): Promise<void>;
+  recordMigrationGate(migration: MigrationGate): Promise<void>;
+  recordBackupVerification(backup: BackupVerificationRecord): Promise<void>;
+  recordWorkerReplacement(replacement: WorkerReplacementRecord): Promise<void>;
+  recordReleaseGate(gate: ReleaseGateRecord): Promise<void>;
+}
+
+export type ReleaseRecoveryLineageInput = {
+  readonly manifest: CompatibilityManifest;
+  readonly observations: readonly CompatibilityObservation[];
+  readonly promotions: readonly PromotionRecord[];
+  readonly migrations: readonly MigrationGate[];
+  readonly backups: readonly BackupVerificationRecord[];
+  readonly replacement: WorkerReplacementRecord;
+  readonly gate: ReleaseGateRecord;
+};
+
+const hasFullBackupCoverage = (backup: BackupVerificationRecord): boolean => {
+  const required = new Set([
+    "durable-operational-state",
+    "versioned-configuration",
+    "persistent-memory-data",
+    "documented-secret-references",
+  ]);
+  return backup.integrity === "verified"
+    && backup.restoration === "verified"
+    && backup.coverage.length === required.size
+    && backup.coverage.every((entry) => required.has(entry));
+};
+
+/**
+ * Validates a complete deterministic release/recovery rehearsal. It does not
+ * call a backup provider, apply a migration, register a worker, control a
+ * service, or change a host. A caller must persist approved source facts
+ * through its own durable port after this pure gate passes.
+ */
+export function assertReleaseRecoveryLineage(
+  input: ReleaseRecoveryLineageInput,
+): ReleaseRecoveryLineageInput {
+  assertReleaseCompatibility({ manifest: input.manifest, observations: input.observations });
+  const releaseId = input.manifest.releaseId;
+  const mustMatchRelease = [
+    ...input.promotions,
+    ...input.migrations,
+    ...input.backups,
+    input.replacement,
+    input.gate,
+  ];
+  if (mustMatchRelease.some((record) => record.releaseId !== releaseId)) {
+    throw new Error("Release-recovery evidence must retain one immutable internal release identity.");
+  }
+  if (input.gate.compatibilityManifestId !== input.manifest.id) {
+    throw new Error("Release gate must reference the compatibility manifest it evaluated.");
+  }
+
+  const expectedPromotions: ReadonlyArray<readonly ["development" | "canary", "canary" | "stable"]> = [
+    ["development", "canary"],
+    ["canary", "stable"],
+  ];
+  if (input.promotions.length !== expectedPromotions.length) {
+    throw new Error("Release recovery requires recorded development-to-canary and canary-to-stable promotions.");
+  }
+  for (const [fromChannel, toChannel] of expectedPromotions) {
+    const promotion = input.promotions.find(
+      (record) => record.fromChannel === fromChannel && record.toChannel === toChannel,
+    );
+    if (!promotion || promotion.compatibilityManifestId !== input.manifest.id) {
+      throw new Error(`Release promotion is missing a passed compatibility record: ${fromChannel}->${toChannel}.`);
+    }
+  }
+  if (!hasSameIdentifiers(input.gate.promotionIds, input.promotions.map((record) => record.id))) {
+    throw new Error("Release gate must reference exactly the recorded promotion path.");
+  }
+
+  if (!input.migrations.length || !hasSameIdentifiers(
+    input.gate.migrationGateIds,
+    input.migrations.map((record) => record.id),
+  )) {
+    throw new Error("Release gate must reference every append-only migration gate.");
+  }
+  const backup = input.backups.find((record) => record.id === input.gate.backupVerificationId);
+  if (!backup || !hasFullBackupCoverage(backup)) {
+    throw new Error("Release gate requires a verified, restoration-tested full backup record.");
+  }
+  for (const migration of input.migrations) {
+    if (!migration.appendOnly || migration.strategy !== "expand-before-contract") {
+      throw new Error("Migration gates must remain append-only and expand-before-contract.");
+    }
+    if (migration.operation === "destructive") {
+      const migrationBackup = input.backups.find((record) => record.id === migration.backupVerificationId);
+      if (!migrationBackup || !hasFullBackupCoverage(migrationBackup)) {
+        throw new Error("Destructive migration is blocked without verified full backup coverage.");
+      }
+      if (!migration.approval || !migration.forwardRepairRunbookRef) {
+        throw new Error("Destructive migration is blocked without human approval and forward repair instructions.");
+      }
+    }
+  }
+
+  if (input.gate.replacementRecordId !== input.replacement.id) {
+    throw new Error("Release gate must reference its simulated worker replacement record.");
+  }
+  if (!hasSameIdentifiers(
+    input.replacement.durableLedger.immutableRecordIds,
+    input.replacement.restoredLedgerRecordIds,
+  )) {
+    throw new Error("Worker replacement is blocked because it did not preserve the durable ledger.");
+  }
+  if (input.gate.redactionVerification !== "passed") {
+    throw new Error("Release gate is blocked by failed redaction verification.");
+  }
+  if (!input.gate.criticalSafetyTests.length || input.gate.criticalSafetyTests.some((test) => test.status !== "passed")) {
+    throw new Error("Release gate is blocked by an unaddressed critical safety test.");
+  }
+  if (input.gate.verdict !== "passed") {
+    throw new Error("Release gate must record a passed verdict only after every prerequisite passes.");
   }
   return input;
 }

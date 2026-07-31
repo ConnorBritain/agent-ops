@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   DeterministicClock,
+  InMemoryReleaseRecoveryLedger,
   InMemoryWorkerControlPlane,
   StaticRoadmapReadTransport,
   InMemorySlackIngressStore,
@@ -123,5 +124,25 @@ describe("deterministic worker test kit", () => {
     assert.deepEqual(ingress.operations, ["ingress-reserve", "ingress-complete:accepted", "ingress-reserve"]);
     assert.deepEqual(acknowledger.acknowledgements, [{ envelopeId: "envelope-001" }]);
     assert.equal(outbox.messages.length, 1);
+  });
+
+  it("records release-recovery evidence without a backup or host control path", async () => {
+    const ledger = new InMemoryReleaseRecoveryLedger();
+    await ledger.recordCompatibilityManifest({ id: "manifest" } as never);
+    await ledger.recordPromotion({ fromChannel: "development", toChannel: "canary" } as never);
+    await ledger.recordPromotion({ fromChannel: "canary", toChannel: "stable" } as never);
+    await ledger.recordMigrationGate({ operation: "destructive" } as never);
+    await ledger.recordBackupVerification({ id: "backup" } as never);
+    await ledger.recordWorkerReplacement({ id: "replacement" } as never);
+    await ledger.recordReleaseGate({ id: "gate" } as never);
+    assert.deepEqual(ledger.operations, [
+      "compatibility-manifest",
+      "development-to-canary",
+      "canary-to-stable",
+      "migration:destructive",
+      "backup-verified",
+      "worker-replacement-rehearsed",
+      "release-gate-passed",
+    ]);
   });
 });

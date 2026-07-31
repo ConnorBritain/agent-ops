@@ -1,0 +1,40 @@
+schema_version: 1
+artifact: agentops-release-recovery-contract
+contract_version: "1.0"
+compatibility:
+  required_components:
+    - coordinator-api
+    - worker-runtime
+    - provider-sdk
+    - provider-adapter
+    - policy
+    - database-schema
+    - job-contract
+    - event-contract
+    - skill-bundle
+  backward_compatibility_declaration: required
+promotion:
+  channels: [development, canary, stable]
+  allowed_transitions: [development-to-canary, canary-to-stable]
+  compatibility_check: required
+  human_approval: required
+migration:
+  append_only: required
+  strategy: expand-before-contract
+  destructive_requires: [verified-backup, human-approval, forward-repair-runbook]
+backup:
+  required_coverage:
+    - durable-operational-state
+    - versioned-configuration
+    - persistent-memory-data
+    - documented-secret-references
+  restoration_verification: required
+replacement:
+  durable_ledger_preservation: required
+  controlled_enrollment: [bootstrap, registration, validation, provisioning, health, controlled-drain]
+boundaries:
+  deployment_execution: separately-authorized
+  backup_execution: separately-authorized
+  migration_execution: separately-authorized
+  worker_enrollment: separately-authorized
+  secret_values_in_repository: forbidden

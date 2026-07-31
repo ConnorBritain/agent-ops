@@ -8,8 +8,13 @@ import {
   draftPullRequestIntentSchema,
   externalProjectionFactSchema,
   assertPortablePrimitiveBundle,
+  backupVerificationRecordSchema,
+  compatibilityManifestSchema,
   estimateRecordSchema,
+  migrationGateSchema,
   planningFeedbackSchema,
+  promotionRecordSchema,
+  releaseGateRecordSchema,
   normalizedEventSchema,
   providerCapabilityManifestSchema,
   providerInvocationSchema,
@@ -21,6 +26,7 @@ import {
   workerHeartbeatSchema,
   workerManifestSchema,
   workerRegistrationSchema,
+  workerReplacementRecordSchema,
 } from "../src/index.ts";
 
 const ids = {
@@ -34,6 +40,15 @@ const ids = {
   worker: "00000000-0000-4000-8000-000000000008",
   boot: "00000000-0000-4000-8000-000000000009",
   registration: "00000000-0000-4000-8000-000000000010",
+  release: "00000000-0000-4000-8000-000000000011",
+  manifest: "00000000-0000-4000-8000-000000000012",
+  promotionCanary: "00000000-0000-4000-8000-000000000013",
+  promotionStable: "00000000-0000-4000-8000-000000000014",
+  migration: "00000000-0000-4000-8000-000000000015",
+  backup: "00000000-0000-4000-8000-000000000016",
+  replacement: "00000000-0000-4000-8000-000000000017",
+  replacementWorker: "00000000-0000-4000-8000-000000000018",
+  gate: "00000000-0000-4000-8000-000000000019",
 };
 
 describe("versioned contracts", () => {
@@ -359,6 +374,136 @@ describe("versioned contracts", () => {
       recordedAt: "2026-07-30T04:00:00Z",
       currency: "USD",
     }).success, false);
+  });
+
+  it("requires recorded compatibility, recoverable migration, and durable-ledger replacement evidence", () => {
+    const declarations = [
+      "coordinator-api", "worker-runtime", "provider-sdk", "provider-adapter", "policy",
+      "database-schema", "job-contract", "event-contract", "skill-bundle",
+    ].map((component) => ({
+      component,
+      currentVersion: "1.0.0",
+      acceptsVersionRange: ">=1.0.0 <2.0.0",
+      backwardCompatibility: component === "database-schema"
+        ? "requires-expand-migration"
+        : "backward-compatible",
+    }));
+    const manifest = {
+      version: CONTRACT_VERSION,
+      id: ids.manifest,
+      releaseId: ids.release,
+      releaseRef: "release://fixture/recovery-1",
+      declarations,
+      generatedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(compatibilityManifestSchema.parse(manifest).declarations.length, 9);
+
+    const backup = {
+      version: CONTRACT_VERSION,
+      id: ids.backup,
+      releaseId: ids.release,
+      backupRef: "backup://fixture/recovery-1",
+      coverage: [
+        "durable-operational-state",
+        "versioned-configuration",
+        "persistent-memory-data",
+        "documented-secret-references",
+      ],
+      integrity: "verified",
+      restoration: "verified",
+      evidenceRefs: ["evidence://fixture/backup-restore"],
+      verifiedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(backupVerificationRecordSchema.parse(backup).restoration, "verified");
+
+    const approval = {
+      approvalRef: "approval://fixture/recovery-1",
+      approvedBy: { id: ids.actor, kind: "human", securityDomain: "example-domain" },
+      approvedAt: "2026-07-30T04:00:00Z",
+    };
+    const canaryPromotion = {
+      version: CONTRACT_VERSION,
+      id: ids.promotionCanary,
+      releaseId: ids.release,
+      compatibilityManifestId: ids.manifest,
+      fromChannel: "development",
+      toChannel: "canary",
+      compatibilityCheck: {
+        verdict: "passed",
+        evidenceRefs: ["test://fixture/compatibility-canary"],
+        checkedAt: "2026-07-30T04:00:00Z",
+      },
+      approval,
+      promotedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(promotionRecordSchema.parse(canaryPromotion).toChannel, "canary");
+    assert.equal(promotionRecordSchema.safeParse({ ...canaryPromotion, toChannel: "stable" }).success, false);
+
+    const migration = {
+      version: CONTRACT_VERSION,
+      id: ids.migration,
+      releaseId: ids.release,
+      migrationRef: "migration://fixture/expand-contract-1",
+      sourceSchemaVersion: "1.0.0",
+      targetSchemaVersion: "1.1.0",
+      appendOnly: true,
+      strategy: "expand-before-contract",
+      operation: "destructive",
+      backupVerificationId: ids.backup,
+      approval,
+      forwardRepairRunbookRef: "runbook://release-recovery/forward-repair",
+      gatedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(migrationGateSchema.parse(migration).operation, "destructive");
+    assert.equal(migrationGateSchema.safeParse({ ...migration, backupVerificationId: undefined }).success, false);
+
+    const replacement = {
+      version: CONTRACT_VERSION,
+      id: ids.replacement,
+      releaseId: ids.release,
+      retiredWorkerId: ids.worker,
+      replacementWorkerId: ids.replacementWorker,
+      durableLedger: {
+        ledgerRef: "ledger://fixture/task-run-event",
+        immutableRecordIds: [ids.task, ids.run],
+      },
+      restoredLedgerRecordIds: [ids.task, ids.run],
+      enrollment: {
+        bootstrap: true,
+        registration: true,
+        validation: true,
+        provisioning: true,
+        health: true,
+        controlledDrain: true,
+      },
+      rehearsedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(workerReplacementRecordSchema.parse(replacement).retiredWorkerId, ids.worker);
+    assert.equal(workerReplacementRecordSchema.safeParse({
+      ...replacement,
+      replacementWorkerId: ids.worker,
+    }).success, false);
+
+    const gate = {
+      version: CONTRACT_VERSION,
+      id: ids.gate,
+      releaseId: ids.release,
+      compatibilityManifestId: ids.manifest,
+      promotionIds: [ids.promotionCanary, ids.promotionStable],
+      migrationGateIds: [ids.migration],
+      backupVerificationId: ids.backup,
+      replacementRecordId: ids.replacement,
+      redactionVerification: "passed",
+      criticalSafetyTests: [{
+        id: "release-recovery-fixture",
+        status: "passed",
+        evidenceRefs: ["test://fixture/release-gate"],
+      }],
+      verdict: "passed",
+      checkedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(releaseGateRecordSchema.parse(gate).verdict, "passed");
+    assert.equal(releaseGateRecordSchema.safeParse({ ...gate, redactionVerification: "failed" }).success, false);
   });
 
   it("requires a complete provider lifecycle and secret-safe invocation", () => {

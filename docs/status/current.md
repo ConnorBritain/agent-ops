@@ -51,8 +51,8 @@ Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server and Claude
 Code adapters, the local Coordinator application service, the
 non-authoritative Slack attention adapter, the replayable
 verified-draft-delivery fixture, and deterministic GitHub/portfolio outbox
-projections, portable primitive enforcement, and independent FinOps lineage
-are complete** as of 2026-07-30.
+projections, portable primitive enforcement, independent FinOps lineage, and
+deterministic release recovery are complete** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -328,5 +328,31 @@ redacted operational relay, estimate lineage, separate measures, allocation
 trace, external accounting truth, and no relative-points-to-currency conversion.
 No primitive is installed or executed, and no registry, estimator, rate-card
 source, accounting product, network connection, credential, worker process,
-or host change is included. The next local slice is simulated release recovery;
-any private live composition remains separately authorized.
+or host change is included. The deterministic release-recovery gate is now
+complete; any private live composition remains separately authorized.
+
+## Phase 8 — compatibility, promotion, and recovery rehearsal
+
+Status: **deterministic source-level slice complete** on 2026-07-30; live
+promotion, backup, migration, restoration, and worker enrollment are not
+started.
+
+`CompatibilityManifest` declares current and accepted version ranges plus
+backwards-compatibility behavior for every release component. The pure gate
+requires exactly human-approved development-to-canary and canary-to-stable
+promotion records, append-only expand-before-contract migration gates,
+restoration-tested full backup coverage, a controlled replacement rehearsal,
+passed redaction verification, and passed critical safety evidence.
+
+The in-memory fixture rejects an incompatible schema/job contract, destructive
+migration without verified backup/approval/forward repair, incomplete backup
+coverage, lost immutable durable-ledger records, failed redaction, or
+unaddressed critical safety tests. Static templates and the runbook provide
+safe record-review guidance only; no release controller, backup provider,
+migration runner, service manager, worker enrollment, environment connection,
+credential, or host action exists in the public source.
+
+The next source-only slice is human-confirmed observed browser classification.
+A real private release remains separately authorized and must retain private
+operator, environment, backup/restore, migration, rollout, and recovery
+evidence outside this repository.

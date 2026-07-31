@@ -2,20 +2,26 @@ import {
   CONTRACT_VERSION,
   type AllocationRecord,
   type AttentionItem,
+  type BackupVerificationRecord,
+  type CompatibilityManifest,
   type CoordinatorProjectionCommand,
   type ExternalProjectionFact,
   type ExternalProjectionIntent,
   type EffortMeasurement,
   type EstimateRecord,
+  type MigrationGate,
   type NormalizedEvent,
   type ProviderInvocation,
   type PrimitiveBundleManifest,
   type PlanningFeedback,
+  type PromotionRecord,
   type RateCard,
+  type ReleaseGateRecord,
   type SignedJobEnvelope,
   type VerificationRecord,
   type WorkerHeartbeat,
   type WorkerManifest,
+  type WorkerReplacementRecord,
   type WorkerRegistration,
   type WorkerResourceSnapshot,
 } from "@agent-ops/contracts";
@@ -36,6 +42,7 @@ import type {
   ReconciliationSnapshot,
   SchedulingAuditRecord,
   PolicyDecision,
+  ReleaseRecoveryLedgerStore,
 } from "@agent-ops/domain";
 import type { WorkerSafetySnapshot } from "@agent-ops/policy";
 
@@ -65,6 +72,18 @@ export const testIds = {
   planningFeedback: "00000000-0000-4000-8000-000000000123",
   allocationHuman: "00000000-0000-4000-8000-000000000124",
   allocationFailure: "00000000-0000-4000-8000-000000000125",
+  release: "00000000-0000-4000-8000-000000000126",
+  compatibilityManifest: "00000000-0000-4000-8000-000000000127",
+  promotionCanary: "00000000-0000-4000-8000-000000000128",
+  promotionStable: "00000000-0000-4000-8000-000000000129",
+  migrationGate: "00000000-0000-4000-8000-000000000130",
+  backupVerification: "00000000-0000-4000-8000-000000000131",
+  replacement: "00000000-0000-4000-8000-000000000132",
+  retiredWorker: "00000000-0000-4000-8000-000000000133",
+  replacementWorker: "00000000-0000-4000-8000-000000000134",
+  ledgerRecordOne: "00000000-0000-4000-8000-000000000135",
+  ledgerRecordTwo: "00000000-0000-4000-8000-000000000136",
+  releaseGate: "00000000-0000-4000-8000-000000000137",
 } as const;
 
 export class DeterministicClock {
@@ -825,6 +844,51 @@ export class InMemoryFinOpsLedger implements FinOpsLedgerStore {
   async recordPlanningFeedback(feedback: PlanningFeedback): Promise<void> {
     this.operations.push("planning-feedback");
     this.planningFeedback.push(feedback);
+  }
+}
+
+/**
+ * Deterministic release-recovery ledger double. It stores already-validated
+ * generic records only; it cannot access a backup target, execute a migration,
+ * alter a service, enroll a worker, or recover a host.
+ */
+export class InMemoryReleaseRecoveryLedger implements ReleaseRecoveryLedgerStore {
+  readonly operations: string[] = [];
+  readonly manifests: CompatibilityManifest[] = [];
+  readonly promotions: PromotionRecord[] = [];
+  readonly migrations: MigrationGate[] = [];
+  readonly backups: BackupVerificationRecord[] = [];
+  readonly replacements: WorkerReplacementRecord[] = [];
+  readonly gates: ReleaseGateRecord[] = [];
+
+  async recordCompatibilityManifest(manifest: CompatibilityManifest): Promise<void> {
+    this.operations.push("compatibility-manifest");
+    this.manifests.push(manifest);
+  }
+
+  async recordPromotion(promotion: PromotionRecord): Promise<void> {
+    this.operations.push(`${promotion.fromChannel}-to-${promotion.toChannel}`);
+    this.promotions.push(promotion);
+  }
+
+  async recordMigrationGate(migration: MigrationGate): Promise<void> {
+    this.operations.push(`migration:${migration.operation}`);
+    this.migrations.push(migration);
+  }
+
+  async recordBackupVerification(backup: BackupVerificationRecord): Promise<void> {
+    this.operations.push("backup-verified");
+    this.backups.push(backup);
+  }
+
+  async recordWorkerReplacement(replacement: WorkerReplacementRecord): Promise<void> {
+    this.operations.push("worker-replacement-rehearsed");
+    this.replacements.push(replacement);
+  }
+
+  async recordReleaseGate(gate: ReleaseGateRecord): Promise<void> {
+    this.operations.push("release-gate-passed");
+    this.gates.push(gate);
   }
 }
 

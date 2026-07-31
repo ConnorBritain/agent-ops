@@ -22,6 +22,12 @@
   accounting reconciliation, hosted ledger adapter, or private composition.
   Accounting transactions and invoices remain intentionally outside AgentOps
   operational truth; planning points remain intentionally non-monetary.
+- Release recovery has deterministic compatibility, promotion, migration-gate,
+  backup-verification, and durable-ledger replacement coverage only. There is
+  no live release controller, environment binding, backup target, restoration,
+  migration executor, operator approval record, service control, worker
+  enrollment, or private canary/recovery rehearsal. Those operations require
+  separately authorized private procedures and private-only evidence.
 - PrintProvider proves the lifecycle contract without launching anything. The
   Codex App Server and Claude Code adapters prove independent injected protocol
   boundaries, cancellation, explicit unsupported operations, and redacted

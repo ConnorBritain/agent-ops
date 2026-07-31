@@ -20,4 +20,8 @@ None for generalized deterministic implementation and CI verification.
   rate-card source, accounting connection, invoice/transaction import, or
   hosted FinOps ledger binding is authorized by the deterministic Phase 8
   source slice.
+- No live release promotion, backup/restore, migration, service action, worker
+  replacement, environment connection, or operator approval is authorized by
+  the deterministic release-recovery fixture. Private execution requires its
+  own approved scope, protected evidence, and rollback/forward-repair record.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.

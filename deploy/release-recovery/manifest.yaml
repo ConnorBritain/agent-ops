@@ -1,0 +1,20 @@
+schema_version: 1
+name: agentops-release-recovery
+artifact_kind: static-governance-record-template
+contract_version: "1.0"
+actions: none
+records:
+  - compatibility-manifest
+  - development-to-canary-promotion
+  - canary-to-stable-promotion
+  - append-only-migration-gate
+  - backup-verification
+  - worker-replacement-rehearsal
+  - release-gate
+invariants:
+  automatic-promotion: forbidden
+  destructive-migration-without-backup-approval-and-forward-repair: forbidden
+  replacement-with-ledger-loss: forbidden
+  inline-secrets: forbidden
+  host-control: forbidden
+private_execution: separately-authorized

@@ -1,0 +1,45 @@
+slice: release-recovery
+status: complete
+requirements:
+  - REQ-CHARTER-006
+  - REQ-DATA-002
+  - REQ-CONTRACT-006
+  - REQ-DEPLOY-002
+  - REQ-DEPLOY-003
+  - REQ-DEPLOY-004
+  - REQ-DEPLOY-005
+  - REQ-DEPLOY-006
+  - REQ-OPS-005
+  - REQ-TEST-006
+  - REQ-ROLL-003
+artifacts:
+  - packages/contracts/src/index.ts
+  - packages/contracts/test/contracts.test.ts
+  - packages/domain/src/index.ts
+  - packages/domain/test/domain.test.ts
+  - packages/test-kit/src/index.ts
+  - packages/test-kit/test/test-kit.test.ts
+  - config/release-recovery.manifest.yaml
+  - deploy/release-recovery/manifest.yaml
+  - deploy/release-recovery/README.md
+  - tools/release-recovery.test.mjs
+  - docs/architecture/release-recovery.md
+  - docs/runbooks/release-recovery.md
+  - docs/adr/ADR-0020-release-compatibility-and-recovery-are-recorded-human-gates.md
+tests:
+  - pnpm run check:release-recovery
+  - pnpm validate
+acceptance:
+  - ACC-RELEASE-001
+evidence:
+  complete_component_compatibility_manifest_with_backwards_behavior: passed
+  development_to_canary_to_stable_human_approved_promotions: passed
+  incompatible_schema_or_job_contract: rejected
+  append_only_expand_before_contract_migration_gate: passed
+  destructive_migration_without_backup_approval_or_forward_repair: rejected
+  restoration_tested_full_backup_coverage: passed
+  worker_replacement_with_durable_ledger_loss: rejected
+  safe_diagnostic_runbook_and_explicit_stop_conditions: passed
+  failed_redaction_or_unaddressed_critical_safety_test: rejected
+  live_promotion_backup_migration_restore_or_worker_enrollment: separately-authorized
+catalog_version: 1

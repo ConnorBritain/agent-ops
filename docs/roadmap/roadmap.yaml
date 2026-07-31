@@ -586,7 +586,7 @@ pis:
         prompt: Project only meaningful transitions, retain all correlation mappings, and recover from external outages by replaying the outbox.
   - id: phase-8-skills-finops-release
     title: Portable skills, estimation, FinOps, and release recovery
-    status: scheduled
+    status: complete
     deps: [phase-7-provider-projections]
     summary: Compose portable primitives and independent estimates, retain allocation-ready cost lineage, and prove versioned canary promotion and recovery.
     exit_criteria: A completed task retains skill enforcement, estimate/actual/cost lineage, compatibility evidence, and a simulated development-to-canary-to-stable recovery record.
@@ -624,13 +624,14 @@ pis:
         prompt: Keep host facts and secrets out of primitives, distinguish enforcement levels, preserve ranges and calibration basis, and never equate planning points with money.
       - id: release-recovery
         title: Compatibility, promotion, backup, and replacement rehearsal
-        status: scheduled
+        status: complete
         invoke: release-recovery
         what: Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [skills-estimation-finops, worker-service-packaging]
         gate: Compatibility, promotion, migration, backup, and replacement acceptance suite
+        completed_on: "2026-07-30"
         touches:
           - deploy/
           - config/
@@ -642,7 +643,7 @@ pis:
           - docs/specs/SPEC-016-observability-operations-and-runbooks.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
           - docs/specs/SPEC-018-v1-rollout-and-milestones.md
-        resume_action: Use simulated environments until explicit private canary and backup authorization exists.
+        resume_action: Preserve the deterministic compatibility and recovery gate; proceed to observed browser classification without a live promotion, backup, migration, restoration, or worker-enrollment action.
         priority:
           tier: P1
           weight: 75
