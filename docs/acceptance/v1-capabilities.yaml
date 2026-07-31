@@ -73,7 +73,7 @@ scenarios:
   - id: ACC-MEMORY-001
     title: Curated ADR memory with supersession and outage isolation
     requirements: [REQ-MEMORY-001, REQ-MEMORY-002, REQ-MEMORY-003, REQ-MEMORY-004, REQ-MEMORY-005, REQ-MEMORY-006]
-    evidence: future curated-memory contract suite
+    evidence: pnpm run check:graphiti-curation deterministic candidate, curation, supersession, domain-filter, and outage-isolation suite; graph deployment remains separately authorized
     phase: 10
   - id: ACC-FEDERATION-001
     title: Separately authorized sanitizing federation boundary

@@ -15,6 +15,9 @@ import {
   compatibilityManifestSchema,
   estimateRecordSchema,
   migrationGateSchema,
+  memoryCandidateSchema,
+  memoryRetrievalQuerySchema,
+  curatedMemoryRecordSchema,
   planningFeedbackSchema,
   promotionRecordSchema,
   releaseGateRecordSchema,
@@ -123,6 +126,55 @@ describe("versioned contracts", () => {
       }).success,
       false,
     );
+  });
+
+  it("accepts only redacted, domain-scoped curated memory with an accepted source and human curator", () => {
+    const candidate = {
+      version: CONTRACT_VERSION,
+      id: ids.manifest,
+      securityDomain: "example-domain",
+      submittedBy: { id: ids.worker, kind: "worker", securityDomain: "example-domain" },
+      sourceRefs: ["adr://fixture/adr-0022"],
+      applicableRepositories: ["repo://fixture/agent-ops"],
+      redactedSummary: "Worker proposed a bounded memory candidate.",
+      submittedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(memoryCandidateSchema.parse(candidate).submittedBy.kind, "worker");
+
+    const record = {
+      version: CONTRACT_VERSION,
+      id: ids.release,
+      candidateId: ids.manifest,
+      securityDomain: "example-domain",
+      source: {
+        kind: "accepted-adr",
+        sourceRef: "adr://fixture/adr-0022",
+        adrPath: "docs/adr/ADR-0022-curated-memory-is-derived-from-accepted-git-records.md",
+        acceptance: "accepted",
+      },
+      applicableRepositories: ["repo://fixture/agent-ops"],
+      redactedSummary: "Human-curated record retains only redacted provenance.",
+      curator: { id: ids.actor, kind: "human", securityDomain: "example-domain" },
+      state: "accepted",
+      validFrom: "2026-07-30T04:01:00Z",
+      curatedAt: "2026-07-30T04:01:00Z",
+    };
+    assert.equal(curatedMemoryRecordSchema.parse(record).source.kind, "accepted-adr");
+    assert.equal(curatedMemoryRecordSchema.safeParse({
+      ...record,
+      curator: { id: ids.worker, kind: "worker", securityDomain: "example-domain" },
+    }).success, false);
+    assert.equal(curatedMemoryRecordSchema.safeParse({
+      ...record,
+      source: { ...record.source, acceptance: "proposed" },
+    }).success, false);
+    assert.equal(memoryRetrievalQuerySchema.safeParse({
+      version: CONTRACT_VERSION,
+      securityDomain: "example-domain",
+      query: "ghp_inline-secret-like-value",
+      includeSuperseded: false,
+      requestedAt: "2026-07-30T04:02:00Z",
+    }).success, false);
   });
 
   it("validates unique worker manifests, registrations, and heartbeats", () => {

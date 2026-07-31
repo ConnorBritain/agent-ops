@@ -21,6 +21,9 @@ import type {
   WorkerReplacementRecord,
   WorkerMode,
   WorkerResourceSnapshot,
+  CuratedMemoryRecord,
+  MemoryCandidate,
+  MemoryRetrievalQuery,
 } from "@agent-ops/contracts";
 
 export type PolicyDecision = {
@@ -808,4 +811,80 @@ export function evaluateWorkerPreflight(
   }
 
   return reasons.length ? { accepted: false, reasons } : { accepted: true };
+}
+
+/**
+ * Git-backed ADRs remain canonical. This port records a curation audit only;
+ * it cannot create, amend, or approve an ADR or any other canonical record.
+ */
+export interface CuratedMemoryStore {
+  recordCandidate(candidate: MemoryCandidate): Promise<void>;
+  recordAcceptance(record: CuratedMemoryRecord): Promise<void>;
+  recordSupersession(input: MemorySupersession): Promise<void>;
+}
+
+/**
+ * An optional derived-memory backend such as a temporal graph. It is not a
+ * system of record and must never be used to authorize or schedule work.
+ */
+export interface CuratedMemoryGraphPort {
+  index(record: CuratedMemoryRecord): Promise<void>;
+  retrieve(query: MemoryRetrievalQuery): Promise<readonly CuratedMemoryRecord[]>;
+}
+
+export type MemorySupersession = {
+  readonly prior: CuratedMemoryRecord;
+  readonly successor: CuratedMemoryRecord;
+};
+
+/**
+ * Validates that a human-curated record narrows, rather than promotes, a
+ * candidate. A worker is therefore allowed to propose a candidate but cannot
+ * cause its own proposal to become an accepted memory record.
+ */
+export function assertCuratedMemoryLineage(input: {
+  readonly candidate: MemoryCandidate;
+  readonly record: CuratedMemoryRecord;
+}): CuratedMemoryRecord {
+  const { candidate, record } = input;
+  if (record.candidateId !== candidate.id) {
+    throw new Error("Curated memory record must retain its candidate identifier.");
+  }
+  if (record.securityDomain !== candidate.securityDomain) {
+    throw new Error("Curated memory record and candidate must share a security domain.");
+  }
+  if (!candidate.sourceRefs.includes(record.source.sourceRef)) {
+    throw new Error("Curated memory source must be present in the submitted candidate.");
+  }
+  const candidateRepositories = new Set(candidate.applicableRepositories);
+  if (!record.applicableRepositories.every((repository) => candidateRepositories.has(repository))) {
+    throw new Error("Curated memory record cannot broaden the candidate repository scope.");
+  }
+  if (record.state !== "accepted") {
+    throw new Error("Initial curation must create an accepted memory record.");
+  }
+  return record;
+}
+
+/**
+ * Supersession is append-only at the boundary: the prior record remains in
+ * history with its source, rationale, validity closure, and successor link.
+ */
+export function assertMemorySupersession(input: MemorySupersession): MemorySupersession {
+  const { prior, successor } = input;
+  if (prior.state !== "superseded" || successor.state !== "accepted") {
+    throw new Error("A supersession requires a closed prior record and an accepted successor.");
+  }
+  if (prior.securityDomain !== successor.securityDomain) {
+    throw new Error("Superseded memory records must remain in one security domain.");
+  }
+  if (prior.supersededByMemoryId !== successor.id || successor.supersedesMemoryId !== prior.id) {
+    throw new Error("Supersession records must link prior and successor in both directions.");
+  }
+  const priorValidTo = Date.parse(prior.validTo ?? "");
+  const successorValidFrom = Date.parse(successor.validFrom);
+  if (!Number.isFinite(priorValidTo) || !Number.isFinite(successorValidFrom) || priorValidTo > successorValidFrom) {
+    throw new Error("Supersession must close prior validity no later than successor validity.");
+  }
+  return input;
 }

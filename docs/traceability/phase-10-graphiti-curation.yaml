@@ -1,0 +1,36 @@
+slice: graphiti-curation
+status: complete
+requirements:
+  - REQ-MEMORY-001
+  - REQ-MEMORY-002
+  - REQ-MEMORY-003
+  - REQ-MEMORY-004
+  - REQ-MEMORY-005
+  - REQ-MEMORY-006
+artifacts:
+  - packages/contracts/src/index.ts
+  - packages/contracts/test/contracts.test.ts
+  - packages/domain/src/index.ts
+  - packages/domain/test/domain.test.ts
+  - packages/adapters/src/graphiti-curation.ts
+  - packages/adapters/test/graphiti-curation.test.ts
+  - packages/test-kit/src/index.ts
+  - config/curated-memory.manifest.yaml
+  - tools/graphiti-curation.test.mjs
+  - docs/architecture/curated-memory.md
+  - docs/runbooks/curated-memory.md
+  - docs/adr/ADR-0022-curated-memory-is-derived-from-accepted-git-records.md
+tests:
+  - pnpm run check:graphiti-curation
+  - pnpm validate
+acceptance:
+  - ACC-MEMORY-001
+evidence:
+  git_backed_adr_canonical: passed
+  worker_candidate_has_no_canonical_or_graph_authority: passed
+  accepted_source_and_human_curation_required: passed
+  supersession_provenance_and_validity_history: passed
+  security_domain_and_repository_filtering: passed
+  graph_failure_non_blocking: passed
+  graph_backend_deployment: separately-authorized
+catalog_version: 1

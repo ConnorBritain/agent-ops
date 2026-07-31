@@ -1,0 +1,28 @@
+version: 1
+boundary: curated-memory
+canonical_record: git-backed-adrs
+derived_memory:
+  status: source-only
+  backend: optional-separately-authorized
+  graphiti_compatibility: permitted-not-required
+  deployment: separately-authorized
+authority:
+  candidate_submission: permitted
+  canonical_acceptance: human-curator-only
+  adr_mutation: forbidden
+  scheduler_authority: forbidden
+  authorization_authority: forbidden
+data:
+  accepted_sources_only: required
+  raw_agent_conclusions: forbidden
+  inline_secrets: forbidden
+  security_domain_label: required
+  repository_scope: required
+  supersession_history: required
+failure_handling:
+  graph_index_failure: non-blocking-unavailable
+  graph_retrieval_failure: non-blocking-unavailable
+  automatic_retry_or_service_start: forbidden
+operations:
+  docker_or_graph_service_connection: separately-authorized
+  credentials_or_endpoint_configuration: private-overlay-only

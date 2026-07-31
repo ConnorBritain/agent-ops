@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertFinOpsLineage,
+  assertCuratedMemoryLineage,
+  assertMemorySupersession,
   assertReleaseRecoveryLineage,
   compatibilityVersionSatisfies,
   evaluateWorkerPreflight,
@@ -155,6 +157,49 @@ describe("FinOps lineage", () => {
       allocations: [allocation] as never,
       planningFeedback: feedback as never,
     }).estimate.id, estimate.id);
+  });
+});
+
+describe("curated-memory lineage", () => {
+  it("requires human acceptance, narrow candidate scope, and two-way supersession history", () => {
+    const candidate = {
+      id: "00000000-0000-4000-8000-000000000501",
+      securityDomain: "domain-a",
+      sourceRefs: ["adr://fixture/adr-0022"],
+      applicableRepositories: ["repo://fixture/agent-ops"],
+    };
+    const accepted = {
+      id: "00000000-0000-4000-8000-000000000502",
+      candidateId: candidate.id,
+      securityDomain: candidate.securityDomain,
+      source: { sourceRef: candidate.sourceRefs[0] },
+      applicableRepositories: candidate.applicableRepositories,
+      state: "accepted" as const,
+      validFrom: "2026-07-30T04:01:00Z",
+    };
+    assert.equal(assertCuratedMemoryLineage({ candidate: candidate as never, record: accepted as never }).id, accepted.id);
+    assert.throws(() => assertCuratedMemoryLineage({
+      candidate: candidate as never,
+      record: { ...accepted, applicableRepositories: ["repo://fixture/other"] } as never,
+    }), /broaden/);
+
+    const successor = {
+      ...accepted,
+      id: "00000000-0000-4000-8000-000000000503",
+      supersedesMemoryId: accepted.id,
+      validFrom: "2026-07-30T04:03:00Z",
+    };
+    const prior = {
+      ...accepted,
+      state: "superseded" as const,
+      validTo: "2026-07-30T04:03:00Z",
+      supersededByMemoryId: successor.id,
+    };
+    assert.equal(assertMemorySupersession({ prior: prior as never, successor: successor as never }).successor.id, successor.id);
+    assert.throws(() => assertMemorySupersession({
+      prior: prior as never,
+      successor: { ...successor, supersedesMemoryId: undefined } as never,
+    }), /both directions/);
   });
 });
 

@@ -1437,6 +1437,148 @@ export interface HumanBrowserEvidencePort {
   readRedactedEvidence(request: BrowserObservationRequest): Promise<BrowserObservationEvidence>;
 }
 
+const memoryReferenceSchema = z.string().regex(
+  /^(?:adr|evidence):\/\/[A-Za-z0-9._/-]{1,240}$/,
+  "expected an opaque ADR or evidence reference",
+);
+
+const repositoryReferenceSchema = z.string().regex(
+  /^repo:\/\/[A-Za-z0-9._/-]{1,240}$/,
+  "expected an opaque repository reference",
+);
+
+export const memoryCandidateSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  securityDomain: securityDomainSchema,
+  submittedBy: actorRefSchema,
+  sourceRefs: z.array(memoryReferenceSchema).min(1).max(25),
+  applicableRepositories: z.array(repositoryReferenceSchema).min(1).max(50),
+  redactedSummary: z.string().min(1).max(4_000),
+  submittedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.sourceRefs, "memory candidate source reference", context);
+  addDuplicateIssues(value.applicableRepositories, "memory candidate repository", context);
+  const finding = findInlineSecret({ redactedSummary: value.redactedSummary });
+  if (finding) {
+    context.addIssue({
+      code: "custom",
+      message: "Memory candidate summary contains token-like material.",
+      path: ["redactedSummary"],
+    });
+  }
+  if (value.submittedBy.securityDomain !== value.securityDomain) {
+    context.addIssue({
+      code: "custom",
+      message: "Memory candidate submitter and record must share a security domain.",
+      path: ["submittedBy", "securityDomain"],
+    });
+  }
+});
+
+export type MemoryCandidate = z.infer<typeof memoryCandidateSchema>;
+
+export const curatedMemorySourceSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("accepted-adr"),
+    sourceRef: memoryReferenceSchema.regex(/^adr:\/\//),
+    adrPath: z.string().regex(/^docs\/adr\/ADR-\d{4}-[a-z0-9-]+\.md$/),
+    acceptance: z.literal("accepted"),
+  }).strict(),
+  z.object({
+    kind: z.literal("curated-episode"),
+    sourceRef: memoryReferenceSchema.regex(/^evidence:\/\//),
+    acceptance: z.literal("accepted"),
+  }).strict(),
+]);
+
+export type CuratedMemorySource = z.infer<typeof curatedMemorySourceSchema>;
+
+export const curatedMemoryRecordSchema = z.object({
+  version: contractVersionSchema,
+  id: uuidSchema,
+  candidateId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  source: curatedMemorySourceSchema,
+  applicableRepositories: z.array(repositoryReferenceSchema).min(1).max(50),
+  redactedSummary: z.string().min(1).max(4_000),
+  curator: actorRefSchema,
+  state: z.enum(["accepted", "superseded"]),
+  validFrom: rfc3339Schema,
+  validTo: rfc3339Schema.optional(),
+  supersedesMemoryId: uuidSchema.optional(),
+  supersededByMemoryId: uuidSchema.optional(),
+  curatedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.applicableRepositories, "curated memory repository", context);
+  const finding = findInlineSecret({ redactedSummary: value.redactedSummary });
+  if (finding) {
+    context.addIssue({
+      code: "custom",
+      message: "Curated memory summary contains token-like material.",
+      path: ["redactedSummary"],
+    });
+  }
+  if (value.curator.kind !== "human") {
+    context.addIssue({
+      code: "custom",
+      message: "Only a human curator may accept canonical memory.",
+      path: ["curator", "kind"],
+    });
+  }
+  if (value.curator.securityDomain !== value.securityDomain) {
+    context.addIssue({
+      code: "custom",
+      message: "Curator and memory record must share a security domain.",
+      path: ["curator", "securityDomain"],
+    });
+  }
+  if (value.state === "accepted" && (value.validTo || value.supersededByMemoryId)) {
+    context.addIssue({
+      code: "custom",
+      message: "An accepted memory record cannot have supersession closure fields.",
+      path: ["state"],
+    });
+  }
+  if (value.state === "superseded") {
+    if (!value.validTo || !value.supersededByMemoryId) {
+      context.addIssue({
+        code: "custom",
+        message: "A superseded memory record requires validity closure and its successor.",
+        path: ["state"],
+      });
+    }
+    if (value.supersededByMemoryId === value.id) {
+      context.addIssue({
+        code: "custom",
+        message: "A memory record cannot supersede itself.",
+        path: ["supersededByMemoryId"],
+      });
+    }
+  }
+});
+
+export type CuratedMemoryRecord = z.infer<typeof curatedMemoryRecordSchema>;
+
+export const memoryRetrievalQuerySchema = z.object({
+  version: contractVersionSchema,
+  securityDomain: securityDomainSchema,
+  repositoryRef: repositoryReferenceSchema.optional(),
+  query: z.string().min(1).max(2_000),
+  includeSuperseded: z.literal(false).default(false),
+  requestedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret({ query: value.query });
+  if (!finding) return;
+  context.addIssue({
+    code: "custom",
+    message: "Memory retrieval query contains token-like material.",
+    path: ["query"],
+  });
+});
+
+export type MemoryRetrievalQuery = z.infer<typeof memoryRetrievalQuerySchema>;
+
 export interface Provider {
   inspectCapabilities(): Promise<ProviderCapabilityManifest>;
   validateEnvironment(input: ProviderInvocation): Promise<ProviderEnvironmentVerdict>;

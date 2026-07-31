@@ -56,6 +56,7 @@ const required = [
   "docs/traceability/phase-8-skills-estimation-finops.yaml",
   "docs/traceability/phase-8-release-recovery.yaml",
   "docs/traceability/phase-9-observed-browser-path.yaml",
+  "docs/traceability/phase-10-graphiti-curation.yaml",
   "docs/traceability/v1-requirements.yaml",
   "docs/status/current.md",
   "docs/status/blockers.md",
@@ -70,6 +71,7 @@ const required = [
   "docs/architecture/portable-skills-and-finops.md",
   "docs/architecture/release-recovery.md",
   "docs/architecture/observed-browser-path.md",
+  "docs/architecture/curated-memory.md",
   "docs/architecture/coordinator-runtime.md",
   "docs/architecture/verified-draft-delivery.md",
   "docs/architecture/remote-access.md",
@@ -85,13 +87,16 @@ const required = [
   "docs/adr/ADR-0019-portable-skills-and-independent-finops-lineage.md",
   "docs/adr/ADR-0020-release-compatibility-and-recovery-are-recorded-human-gates.md",
   "docs/adr/ADR-0021-human-observed-browser-evidence-is-not-automation.md",
+  "docs/adr/ADR-0022-curated-memory-is-derived-from-accepted-git-records.md",
   "config/roadmap-adapter.manifest.yaml",
   "config/release-recovery.manifest.yaml",
   "config/observed-browser.manifest.yaml",
+  "config/curated-memory.manifest.yaml",
   "deploy/release-recovery/manifest.yaml",
   "deploy/release-recovery/README.md",
   "docs/runbooks/release-recovery.md",
   "docs/runbooks/observed-browser-path.md",
+  "docs/runbooks/curated-memory.md",
   ".github/workflows/ci.yml"
 ];
 for (const file of required) await requireFile(file);
@@ -382,6 +387,7 @@ const phase7ProjectionsTraceability = await readFile(path.join(root, "docs/trace
 const phase8SkillsFinopsTraceability = await readFile(path.join(root, "docs/traceability/phase-8-skills-estimation-finops.yaml"), "utf8");
 const phase8ReleaseRecoveryTraceability = await readFile(path.join(root, "docs/traceability/phase-8-release-recovery.yaml"), "utf8");
 const phase9ObservedBrowserTraceability = await readFile(path.join(root, "docs/traceability/phase-9-observed-browser-path.yaml"), "utf8");
+const phase10GraphitiCurationTraceability = await readFile(path.join(root, "docs/traceability/phase-10-graphiti-curation.yaml"), "utf8");
 const v1Traceability = await readFile(path.join(root, "docs/traceability/v1-requirements.yaml"), "utf8");
 const roadmap = await readFile(path.join(root, "docs/roadmap/roadmap.yaml"), "utf8");
 const roadmapSlices = new Set(
@@ -439,7 +445,7 @@ for (const acceptanceCatalogId of acceptanceRequirements.keys()) {
 }
 
 const tracedIds = new Set();
-const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}\n${phase6CoordinatorTraceability}\n${phase6SlackTraceability}\n${phase6VerifiedDraftTraceability}\n${phase7SecondProviderTraceability}\n${phase7ProjectionsTraceability}\n${phase8SkillsFinopsTraceability}\n${phase8ReleaseRecoveryTraceability}\n${phase9ObservedBrowserTraceability}`;
+const completedEvidence = `${traceability}\n${phase2Traceability}\n${phase3Traceability}\n${phase3SafetyTraceability}\n${phase3ServiceTraceability}\n${phase4RoadmapTraceability}\n${phase4PrintTraceability}\n${phase6CoordinatorTraceability}\n${phase6SlackTraceability}\n${phase6VerifiedDraftTraceability}\n${phase7SecondProviderTraceability}\n${phase7ProjectionsTraceability}\n${phase8SkillsFinopsTraceability}\n${phase8ReleaseRecoveryTraceability}\n${phase9ObservedBrowserTraceability}\n${phase10GraphitiCurationTraceability}`;
 for (const entry of traceabilityEntries) {
   if (tracedIds.has(entry.id)) errors.push(`Duplicate traceability entry: ${entry.id}`);
   tracedIds.add(entry.id);

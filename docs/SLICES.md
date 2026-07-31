@@ -11,9 +11,7 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
-**Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
-
+_No agent-runnable slices right now._
 **Held on a human:**
 - `/slice private-host-baseline` — gated on **private owner authorization and relay-security decision** — Record owner-authorized private inventory and evaluate RustDesk enrollment without changing hosts.
 - `/slice supabase-remote-verification` — gated on **Private project authorization, scoped connection, backup decision, and secret-plane identity provisioning** — Apply the reviewed migration through a private overlay, run advisors and acceptance checks, and record secret-safe evidence.
@@ -132,15 +130,14 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | OBSERVED-BROWSER-PATH | `/slice observed-browser-path` | ✅ Complete · **P2** | — | RELEASE-RECOVERY | Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. |
 | PRIVATE-BROWSER-OBSERVATION-CANARY | `/slice private-browser-observation-canary` | 🔒 Gated · **P2** | ~1 | OBSERVED-BROWSER-PATH | Independently rehearse one human-observed, no-submission browser handoff on a disposable exact domain with private-only evidence. |
 
-### PHASE-10-MEMORY-CURATION — ADR and temporal-memory curation · ⚪ Scheduled · ~2 sessions remaining
-> Sprints: GRAPHITI-CURATION ⚪
-> Exec plan: GRAPHITI-CURATION
+### PHASE-10-MEMORY-CURATION — ADR and temporal-memory curation · ✅ Complete
+> Sprints: GRAPHITI-CURATION ✅
 > Deps: PHASE-9-OBSERVED-BROWSER
 > Exit: Accepted and superseded ADR fixtures retain provenance, validity, domain labels, and history; graph outage cannot block core operation.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| GRAPHITI-CURATION | `/slice graphiti-curation` | ⚪ Scheduled · **P2** | ~2 | OBSERVED-BROWSER-PATH | Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. |
+| GRAPHITI-CURATION | `/slice graphiti-curation` | ✅ Complete · **P2** | — | OBSERVED-BROWSER-PATH | Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. |
 
 ### PHASE-11-RESTRICTED-FEDERATION — Separately authorized restricted-domain federation · 🔒 Gated · ~3 sessions remaining
 > Sprints: RESTRICTED-DOMAIN-FEDERATION 🔒
@@ -176,6 +173,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | SKILLS-ESTIMATION-FINOPS | PHASE-8-SKILLS-FINOPS-RELEASE | — |
 | RELEASE-RECOVERY | PHASE-8-SKILLS-FINOPS-RELEASE | — |
 | OBSERVED-BROWSER-PATH | PHASE-9-OBSERVED-BROWSER | — |
+| GRAPHITI-CURATION | PHASE-10-MEMORY-CURATION | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -254,18 +252,6 @@ pnpm validate
   4. docs/specs/SPEC-017-testing-verification-and-release-gates.md
 - **Resume / next action:** Stop before connecting to a browser, device, or remote-access session until the private gate is explicitly approved.
 - **Gate:** Owner authorization, scoped human identity, disposable exact domain, approved redacted evidence destination, no-submission procedure, abort plan, and private-only records
-
-### `graphiti-curation`
-- **What:** Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port.
-- **Status:** ⚪ Scheduled (PHASE-10-MEMORY-CURATION · GRAPHITI-CURATION)
-- **Priority:** P2 · weight 50 — Canonical truth remains in reviewed Git-backed records.
-- **Deps:** OBSERVED-BROWSER-PATH
-- **Read-order:**
-  1. docs/specs/SPEC-003-trust-security-and-federation.md
-  2. docs/specs/SPEC-014-memory-adrs-and-graph.md
-  3. docs/specs/SPEC-016-observability-operations-and-runbooks.md
-- **Resume / next action:** Implement the backend-neutral port and deterministic fake before deploying a persistent graph service.
-- **Gate:** Curation authorization, supersession, domain filtering, and outage fixtures
 
 ### `restricted-domain-federation`
 - **What:** Create a dedicated ADR and sanitizing status protocol, then perform only the separately authorized bounded federation canary.

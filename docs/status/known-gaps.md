@@ -51,3 +51,9 @@
   capture, remote-desktop integration, endpoint/account binding, or interactive
   canary. A confirmation record deliberately cannot drive a browser, provider,
   desktop, or scheduler action.
+- Curated memory has deterministic candidate, curation, supersession, filtering,
+  and outage-isolation coverage only. There is no Graphiti SDK binding, graph
+  service, Docker/container deployment, endpoint, database, credential,
+  retention/backup implementation, private data ingestion, or live retrieval.
+  Git-backed ADRs remain canonical; any backend deployment needs a separately
+  authorized private overlay and protected operational evidence.
