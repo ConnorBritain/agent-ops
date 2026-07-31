@@ -12,9 +12,6 @@ Use `roadmap show <name>` to orient on a menu entry; `roadmap plan` computes rea
 Derived from the dependency graph: which slices can run concurrently right now, what waits behind them, and what is held on a human. Change the cap with `roadmap plan --cap N` or `roadmap fan --cap N`.
 
 **Wave 1** — launch concurrently (disjoint files, deps satisfied):
-- **[P2]** `/slice observed-browser-path` — Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. · touches `packages/providers/`, `packages/policy/`, `packages/test-kit/`, `docs/`
-
-**Wave 2** — launch concurrently (disjoint files, deps satisfied):
 - **[P2]** `/slice graphiti-curation` — Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port. · touches `packages/adapters/`, `packages/domain/`, `packages/test-kit/`, `docs/`
 
 **Held on a human:**
@@ -124,15 +121,16 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | SKILLS-ESTIMATION-FINOPS | `/slice skills-estimation-finops` | ✅ Complete · **P1** | — | GITHUB-PORTFOLIO-PROJECTIONS | Integrate portable primitive manifests and an independent estimator, then record separate execution, blocked, human, verification, and cost measures. |
 | RELEASE-RECOVERY | `/slice release-recovery` | ✅ Complete · **P1** | — | SKILLS-ESTIMATION-FINOPS, WORKER-SERVICE-PACKAGING | Add compatibility manifests, development/canary/stable promotion records, append-only migration gates, backup verification, and simulated host replacement. |
 
-### PHASE-9-OBSERVED-BROWSER — Observed browser path · ⚪ Scheduled · ~2 sessions remaining
-> Sprints: OBSERVED-BROWSER-PATH ⚪
-> Exec plan: OBSERVED-BROWSER-PATH
+### PHASE-9-OBSERVED-BROWSER — Observed browser path · 🔒 Gated · ~1 session remaining
+> Sprints: OBSERVED-BROWSER-PATH ✅ · PRIVATE-BROWSER-OBSERVATION-CANARY 🔒
+> Exec plan: PRIVATE-BROWSER-OBSERVATION-CANARY
 > Deps: PHASE-8-SKILLS-FINOPS-RELEASE
 > Exit: Domain and write-authority policy, maturity metadata, redaction, human confirmation, and failure recovery pass in an approved interactive fixture.
 
 | Sprint | Invoke | Status | Sessions | Deps | What |
 |---|---|---|---|---|---|
-| OBSERVED-BROWSER-PATH | `/slice observed-browser-path` | ⚪ Scheduled · **P2** | ~2 | RELEASE-RECOVERY | Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. |
+| OBSERVED-BROWSER-PATH | `/slice observed-browser-path` | ✅ Complete · **P2** | — | RELEASE-RECOVERY | Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary. |
+| PRIVATE-BROWSER-OBSERVATION-CANARY | `/slice private-browser-observation-canary` | 🔒 Gated · **P2** | ~1 | OBSERVED-BROWSER-PATH | Independently rehearse one human-observed, no-submission browser handoff on a disposable exact domain with private-only evidence. |
 
 ### PHASE-10-MEMORY-CURATION — ADR and temporal-memory curation · ⚪ Scheduled · ~2 sessions remaining
 > Sprints: GRAPHITI-CURATION ⚪
@@ -177,6 +175,7 @@ Derived from the dependency graph: which slices can run concurrently right now, 
 | GITHUB-PORTFOLIO-PROJECTIONS | PHASE-7-PROVIDER-PROJECTIONS | — |
 | SKILLS-ESTIMATION-FINOPS | PHASE-8-SKILLS-FINOPS-RELEASE | — |
 | RELEASE-RECOVERY | PHASE-8-SKILLS-FINOPS-RELEASE | — |
+| OBSERVED-BROWSER-PATH | PHASE-9-OBSERVED-BROWSER | — |
 
 **Default verification gate** (every slice, unless its entry overrides `gate`):
 
@@ -243,17 +242,18 @@ pnpm validate
 - **Gate:** Private canary evidence proves documented protocol compatibility, cancellation, redaction, no automatic restart, and cleanup
 - **Gated on:** Private owner authorization, scoped provider identity, disposable repository, and reviewed rollback plan (an agent prepares; it does not perform the gate).
 
-### `observed-browser-path`
-- **What:** Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary.
-- **Status:** ⚪ Scheduled (PHASE-9-OBSERVED-BROWSER · OBSERVED-BROWSER-PATH)
-- **Priority:** P2 · weight 55 — Desktop automation is explicitly outside the initial headless proof.
-- **Deps:** RELEASE-RECOVERY
+### `private-browser-observation-canary`
+- **What:** Independently rehearse one human-observed, no-submission browser handoff on a disposable exact domain with private-only evidence.
+- **Status:** 🔒 Gated (PHASE-9-OBSERVED-BROWSER · PRIVATE-BROWSER-OBSERVATION-CANARY)
+- **Priority:** P2 · weight 55 — Source fixtures cannot establish authorization or evidence for a real interactive browser session.
+- **Deps:** OBSERVED-BROWSER-PATH
 - **Read-order:**
-  1. docs/specs/SPEC-003-trust-security-and-federation.md
-  2. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
-  3. docs/specs/SPEC-017-testing-verification-and-release-gates.md
-- **Resume / next action:** Implement observation and confirmation contracts before any real interactive-host integration.
-- **Gate:** Browser classification, domain refusal, confirmation, and redaction fixtures
+  1. docs/runbooks/observed-browser-path.md
+  2. docs/specs/SPEC-003-trust-security-and-federation.md
+  3. docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+  4. docs/specs/SPEC-017-testing-verification-and-release-gates.md
+- **Resume / next action:** Stop before connecting to a browser, device, or remote-access session until the private gate is explicitly approved.
+- **Gate:** Owner authorization, scoped human identity, disposable exact domain, approved redacted evidence destination, no-submission procedure, abort plan, and private-only records
 
 ### `graphiti-curation`
 - **What:** Implement curated memory candidates, accepted-source ingestion, supersession, retrieval, and outage isolation through a backend-neutral graph port.

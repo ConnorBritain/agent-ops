@@ -1,11 +1,125 @@
 import {
   CONTRACT_VERSION,
+  browserCapabilityDeclarationSchema,
+  browserHumanConfirmationSchema,
+  browserObservationEvidenceSchema,
+  browserObservationRequestSchema,
+  providerCapabilityManifestSchema,
   safetyAuditRecordSchema,
+  type BrowserHumanConfirmation,
+  type BrowserObservationEvidence,
+  type BrowserObservationRequest,
+  type ProviderCapabilityManifest,
   type SafetyAuditRecord,
   type SafetyFinding,
   type WorkerResourceSnapshot,
   workerResourceSnapshotSchema,
 } from "@agent-ops/contracts";
+
+export type BrowserObservationPolicyDecision = {
+  readonly decision: "allow-human-observation" | "require-human-confirmation" | "block";
+  readonly reason:
+    | "human-observation-required"
+    | "human-confirmation-required"
+    | "target-domain-not-allowed"
+    | "observation-control-not-declared"
+    | "confirmation-control-not-declared"
+    | "write-authority-observe-only"
+    | "provider-not-human-observed"
+    | "provider-must-not-execute";
+  readonly execution: "not-executed";
+};
+
+export type BrowserConfirmationPolicyDecision = {
+  readonly decision: "recorded" | "rejected" | "block";
+  readonly reason:
+    | "human-confirmation-recorded"
+    | "human-confirmation-rejected"
+    | "confirmation-not-required"
+    | "confirmation-request-mismatch";
+  readonly execution: "not-executed";
+};
+
+const hasBrowserControl = (
+  manifest: ProviderCapabilityManifest,
+  control: "observe" | "request-human-confirmation",
+): boolean => manifest.browser?.supportedControls.includes(control) === true;
+
+/**
+ * Classifies a browser handoff. A positive decision authorizes only evidence
+ * intake from a human; it never launches or manipulates a browser or desktop.
+ */
+export function evaluateBrowserObservationPolicy(input: {
+  readonly manifest: ProviderCapabilityManifest;
+  readonly request: BrowserObservationRequest;
+}): BrowserObservationPolicyDecision {
+  const manifest = providerCapabilityManifestSchema.parse(input.manifest);
+  const request = browserObservationRequestSchema.parse(input.request);
+  const browser = manifest.browser;
+  if (!browser || browserCapabilityDeclarationSchema.safeParse(browser).success === false) {
+    return { decision: "block", reason: "provider-not-human-observed", execution: "not-executed" };
+  }
+  if (manifest.executionMode !== "no-execution") {
+    return { decision: "block", reason: "provider-must-not-execute", execution: "not-executed" };
+  }
+  if (!request.allowedDomains.includes(request.targetDomain)) {
+    return { decision: "block", reason: "target-domain-not-allowed", execution: "not-executed" };
+  }
+  if (!hasBrowserControl(manifest, "observe")) {
+    return { decision: "block", reason: "observation-control-not-declared", execution: "not-executed" };
+  }
+  if (request.requestedAction === "observe") {
+    return { decision: "allow-human-observation", reason: "human-observation-required", execution: "not-executed" };
+  }
+  if (request.writeAuthority === "observe-only") {
+    return { decision: "block", reason: "write-authority-observe-only", execution: "not-executed" };
+  }
+  if (!hasBrowserControl(manifest, "request-human-confirmation")) {
+    return { decision: "block", reason: "confirmation-control-not-declared", execution: "not-executed" };
+  }
+  return { decision: "require-human-confirmation", reason: "human-confirmation-required", execution: "not-executed" };
+}
+
+/** Validates only the audit record for a human decision, never a browser write. */
+export function evaluateBrowserHumanConfirmation(input: {
+  readonly request: BrowserObservationRequest;
+  readonly confirmation: BrowserHumanConfirmation;
+}): BrowserConfirmationPolicyDecision {
+  const request = browserObservationRequestSchema.parse(input.request);
+  const confirmation = browserHumanConfirmationSchema.parse(input.confirmation);
+  if (
+    request.requestedAction !== "propose-write"
+    || request.writeAuthority !== "human-confirmed-write"
+  ) {
+    return { decision: "block", reason: "confirmation-not-required", execution: "not-executed" };
+  }
+  if (
+    confirmation.requestId !== request.requestId
+    || confirmation.securityDomain !== request.securityDomain
+    || confirmation.targetDomain !== request.targetDomain
+  ) {
+    return { decision: "block", reason: "confirmation-request-mismatch", execution: "not-executed" };
+  }
+  return confirmation.decision === "approved"
+    ? { decision: "recorded", reason: "human-confirmation-recorded", execution: "not-executed" }
+    : { decision: "rejected", reason: "human-confirmation-rejected", execution: "not-executed" };
+}
+
+/** Ensures a human-supplied summary is correlated and safe for durable evidence. */
+export function assertRedactedBrowserEvidence(input: {
+  readonly request: BrowserObservationRequest;
+  readonly evidence: BrowserObservationEvidence;
+}): BrowserObservationEvidence {
+  const request = browserObservationRequestSchema.parse(input.request);
+  const evidence = browserObservationEvidenceSchema.parse(input.evidence);
+  if (evidence.requestId !== request.requestId || evidence.targetDomain !== request.targetDomain) {
+    throw new Error("Redacted browser evidence must match the approved observation request.");
+  }
+  if (request.requestedAction === "observe" && evidence.classification !== "read-only-observation") {
+    throw new Error("An observe-only browser request cannot record write-intent evidence.");
+  }
+  return evidence;
+}
 
 export type WorkerSafetyPolicy = {
   readonly version: string;

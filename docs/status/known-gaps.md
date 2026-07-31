@@ -46,3 +46,8 @@
   insufficient to report a run as executing; the fixture's explicit durable
   answer-and-dispatch path is not autonomous workload restart.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.
+- Observed browser support is a no-execution, human-evidence boundary only.
+  There is no browser launcher, browser input/submission, screen/session
+  capture, remote-desktop integration, endpoint/account binding, or interactive
+  canary. A confirmation record deliberately cannot drive a browser, provider,
+  desktop, or scheduler action.

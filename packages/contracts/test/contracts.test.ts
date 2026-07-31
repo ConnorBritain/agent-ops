@@ -9,6 +9,9 @@ import {
   externalProjectionFactSchema,
   assertPortablePrimitiveBundle,
   backupVerificationRecordSchema,
+  browserHumanConfirmationSchema,
+  browserObservationEvidenceSchema,
+  browserObservationRequestSchema,
   compatibilityManifestSchema,
   estimateRecordSchema,
   migrationGateSchema,
@@ -552,6 +555,66 @@ describe("versioned contracts", () => {
       input: { accessToken: "inline-value" },
       requestedAt: "2026-07-30T04:00:00Z",
     }).success, false);
+  });
+
+  it("requires exact browser domains, human confirmation, and redacted human evidence", () => {
+    const request = {
+      version: CONTRACT_VERSION,
+      requestId: ids.manifest,
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      targetDomain: "console.example.test",
+      allowedDomains: ["console.example.test"],
+      requestedAction: "propose-write",
+      writeAuthority: "human-confirmed-write",
+      humanConfirmationRequired: true,
+      redactionPolicyRef: "policy://redaction/default",
+      requestedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(browserObservationRequestSchema.parse(request).targetDomain, "console.example.test");
+    assert.equal(browserObservationRequestSchema.safeParse({
+      ...request,
+      targetDomain: "https://console.example.test/unsafe",
+    }).success, false);
+    assert.equal(browserObservationRequestSchema.safeParse({
+      ...request,
+      allowedDomains: ["console.example.test", "console.example.test"],
+    }).success, false);
+
+    const evidence = {
+      version: CONTRACT_VERSION,
+      evidenceId: "browser-observation-001",
+      requestId: request.requestId,
+      targetDomain: request.targetDomain,
+      source: "human-observer",
+      classification: "write-intent-presented",
+      redactedSummary: "A human supplied a bounded redacted summary.",
+      rawContentRetained: false,
+      redactionVerified: true,
+      observedAt: "2026-07-30T04:00:01Z",
+    };
+    assert.equal(browserObservationEvidenceSchema.parse(evidence).source, "human-observer");
+    assert.equal(browserObservationEvidenceSchema.safeParse({
+      ...evidence,
+      rawContentRetained: true,
+    }).success, false);
+    assert.equal(browserObservationEvidenceSchema.safeParse({
+      ...evidence,
+      redactedSummary: `must-not-retain-${"ghp_"}${"a".repeat(36)}`,
+    }).success, false);
+
+    assert.equal(browserHumanConfirmationSchema.parse({
+      version: CONTRACT_VERSION,
+      confirmationId: ids.backup,
+      requestId: request.requestId,
+      actor: { id: ids.actor, kind: "human", securityDomain: "example-domain" },
+      securityDomain: "example-domain",
+      targetDomain: request.targetDomain,
+      writeAuthority: "human-confirmed-write",
+      decision: "approved",
+      occurredAt: "2026-07-30T04:00:02Z",
+    }).decision, "approved");
   });
 
   it("keeps independent verification and draft delivery secret-safe and draft-only", () => {

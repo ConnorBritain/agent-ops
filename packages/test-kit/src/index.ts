@@ -3,6 +3,8 @@ import {
   type AllocationRecord,
   type AttentionItem,
   type BackupVerificationRecord,
+  type BrowserObservationEvidence,
+  type BrowserObservationRequest,
   type CompatibilityManifest,
   type CoordinatorProjectionCommand,
   type ExternalProjectionFact,
@@ -84,6 +86,7 @@ export const testIds = {
   ledgerRecordOne: "00000000-0000-4000-8000-000000000135",
   ledgerRecordTwo: "00000000-0000-4000-8000-000000000136",
   releaseGate: "00000000-0000-4000-8000-000000000137",
+  browserRequest: "00000000-0000-4000-8000-000000000138",
 } as const;
 
 export class DeterministicClock {
@@ -892,6 +895,24 @@ export class InMemoryReleaseRecoveryLedger implements ReleaseRecoveryLedgerStore
   }
 }
 
+/**
+ * Static, already-redacted browser evidence for deterministic tests. It has no
+ * browser, desktop, process, network, host, or credential access.
+ */
+export class StaticHumanBrowserEvidencePort {
+  readonly requests: BrowserObservationRequest[] = [];
+  result: BrowserObservationEvidence;
+
+  constructor(result: BrowserObservationEvidence) {
+    this.result = result;
+  }
+
+  async readRedactedEvidence(request: BrowserObservationRequest): Promise<BrowserObservationEvidence> {
+    this.requests.push({ ...request, allowedDomains: [...request.allowedDomains] });
+    return { ...this.result };
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({
@@ -956,5 +977,39 @@ export const buildProviderInvocation = (
   envelope: buildJobEnvelope(),
   input: {},
   requestedAt: "2026-07-30T04:00:00Z",
+  ...overrides,
+});
+
+export const buildBrowserObservationRequest = (
+  overrides: Partial<BrowserObservationRequest> = {},
+): BrowserObservationRequest => ({
+  version: CONTRACT_VERSION,
+  requestId: testIds.browserRequest,
+  taskId: testIds.task,
+  runId: testIds.run,
+  securityDomain: "example-domain",
+  targetDomain: "console.example.test",
+  allowedDomains: ["console.example.test"],
+  requestedAction: "observe",
+  writeAuthority: "observe-only",
+  humanConfirmationRequired: true,
+  redactionPolicyRef: "policy://redaction/default",
+  requestedAt: "2026-07-30T04:00:00Z",
+  ...overrides,
+});
+
+export const buildBrowserObservationEvidence = (
+  overrides: Partial<BrowserObservationEvidence> = {},
+): BrowserObservationEvidence => ({
+  version: CONTRACT_VERSION,
+  evidenceId: "browser-observation-001",
+  requestId: testIds.browserRequest,
+  targetDomain: "console.example.test",
+  source: "human-observer",
+  classification: "read-only-observation",
+  redactedSummary: "Human observer recorded a generic read-only status summary.",
+  rawContentRetained: false,
+  redactionVerified: true,
+  observedAt: "2026-07-30T04:00:01Z",
   ...overrides,
 });

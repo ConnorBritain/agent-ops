@@ -1202,6 +1202,40 @@ export const providerLifecycleDeclarationSchema = z.object({
   support: z.enum(["supported", "unsupported"]),
 }).strict();
 
+/**
+ * This is intentionally a narrow declaration. A browser-capable provider can
+ * describe a human-observed path, but it cannot represent autonomous browser
+ * input or desktop control as a capability of this architecture.
+ */
+export const browserProviderMaturitySchema = z.literal("human-observed");
+export type BrowserProviderMaturity = z.infer<typeof browserProviderMaturitySchema>;
+
+export const browserSupportedControlSchema = z.enum([
+  "observe",
+  "request-human-confirmation",
+]);
+export type BrowserSupportedControl = z.infer<typeof browserSupportedControlSchema>;
+
+export const browserCapabilityDeclarationSchema = z.object({
+  maturity: browserProviderMaturitySchema,
+  automation: z.literal("none"),
+  autonomousDesktopControl: z.literal(false),
+  supportedControls: z.array(browserSupportedControlSchema).min(2).max(2),
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.supportedControls, "supported browser control", context);
+  for (const control of browserSupportedControlSchema.options) {
+    if (!value.supportedControls.includes(control)) {
+      context.addIssue({
+        code: "custom",
+        message: `missing supported browser control: ${control}`,
+        path: ["supportedControls"],
+      });
+    }
+  }
+});
+
+export type BrowserCapabilityDeclaration = z.infer<typeof browserCapabilityDeclarationSchema>;
+
 export const providerCapabilityManifestSchema = z.object({
   version: contractVersionSchema,
   providerId: providerIdSchema,
@@ -1209,6 +1243,7 @@ export const providerCapabilityManifestSchema = z.object({
   executionMode: z.enum(["no-execution", "bounded-execution"]),
   capabilities: z.array(capabilitySchema).max(100),
   lifecycle: z.array(providerLifecycleDeclarationSchema).length(PROVIDER_OPERATIONS.length),
+  browser: browserCapabilityDeclarationSchema.optional(),
 }).strict().superRefine((value, context) => {
   addDuplicateIssues(value.capabilities, "capabilities", context);
   addDuplicateIssues(value.lifecycle.map((entry) => entry.operation), "lifecycle operation", context);
@@ -1220,6 +1255,24 @@ export const providerCapabilityManifestSchema = z.object({
         message: `missing lifecycle declaration: ${operation}`,
         path: ["lifecycle"],
       });
+    }
+  }
+  if (value.browser) {
+    if (value.executionMode !== "no-execution") {
+      context.addIssue({
+        code: "custom",
+        message: "A human-observed browser provider must declare no-execution mode.",
+        path: ["executionMode"],
+      });
+    }
+    for (const capability of ["browser:observe", "browser:human-confirmation"]) {
+      if (!value.capabilities.includes(capability)) {
+        context.addIssue({
+          code: "custom",
+          message: `Browser provider missing required capability: ${capability}`,
+          path: ["capabilities"],
+        });
+      }
     }
   }
 });
@@ -1285,6 +1338,104 @@ export const providerArtifactSchema = z.object({
 }).strict();
 
 export type ProviderArtifact = z.infer<typeof providerArtifactSchema>;
+
+const browserDomainSchema = z.string()
+  .trim()
+  .toLowerCase()
+  .regex(
+    /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/,
+    "expected a canonical DNS hostname without a scheme, path, wildcard, or port",
+  );
+
+export const browserWriteAuthoritySchema = z.enum([
+  "observe-only",
+  "human-confirmed-write",
+]);
+export type BrowserWriteAuthority = z.infer<typeof browserWriteAuthoritySchema>;
+
+export const browserObservationRequestSchema = z.object({
+  version: contractVersionSchema,
+  requestId: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  targetDomain: browserDomainSchema,
+  allowedDomains: z.array(browserDomainSchema).min(1).max(50),
+  requestedAction: z.enum(["observe", "propose-write"]),
+  writeAuthority: browserWriteAuthoritySchema,
+  humanConfirmationRequired: z.literal(true),
+  redactionPolicyRef: z.string().min(1).max(200),
+  requestedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  addDuplicateIssues(value.allowedDomains, "allowed browser domain", context);
+});
+
+export type BrowserObservationRequest = z.infer<typeof browserObservationRequestSchema>;
+
+/**
+ * This carries a summary deliberately prepared for durable records. Raw page
+ * content, cookies, credentials, screenshots, and device identifiers are not
+ * part of the public browser contract.
+ */
+export const browserObservationEvidenceSchema = z.object({
+  version: contractVersionSchema,
+  evidenceId: z.string().regex(/^[a-z][a-z0-9:_-]{2,160}$/),
+  requestId: uuidSchema,
+  targetDomain: browserDomainSchema,
+  source: z.literal("human-observer"),
+  classification: z.enum(["read-only-observation", "write-intent-presented"]),
+  redactedSummary: z.string().min(1).max(4_000),
+  rawContentRetained: z.literal(false),
+  redactionVerified: z.literal(true),
+  observedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  const finding = findInlineSecret({ redactedSummary: value.redactedSummary });
+  if (!finding) return;
+  context.addIssue({
+    code: "custom",
+    message: "Browser evidence summary contains token-like material.",
+    path: ["redactedSummary"],
+  });
+});
+
+export type BrowserObservationEvidence = z.infer<typeof browserObservationEvidenceSchema>;
+
+export const browserHumanConfirmationSchema = z.object({
+  version: contractVersionSchema,
+  confirmationId: uuidSchema,
+  requestId: uuidSchema,
+  actor: actorRefSchema,
+  securityDomain: securityDomainSchema,
+  targetDomain: browserDomainSchema,
+  writeAuthority: z.literal("human-confirmed-write"),
+  decision: z.enum(["approved", "rejected"]),
+  occurredAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  if (value.actor.kind !== "human") {
+    context.addIssue({
+      code: "custom",
+      message: "Browser confirmation must be made by a human actor.",
+      path: ["actor", "kind"],
+    });
+  }
+  if (value.actor.securityDomain !== value.securityDomain) {
+    context.addIssue({
+      code: "custom",
+      message: "Browser confirmation actor and record must share a security domain.",
+      path: ["actor", "securityDomain"],
+    });
+  }
+});
+
+export type BrowserHumanConfirmation = z.infer<typeof browserHumanConfirmationSchema>;
+
+/**
+ * The only permitted adapter port is evidence intake from a human observer.
+ * Implementations must not open, control, or automate a browser or desktop.
+ */
+export interface HumanBrowserEvidencePort {
+  readRedactedEvidence(request: BrowserObservationRequest): Promise<BrowserObservationEvidence>;
+}
 
 export interface Provider {
   inspectCapabilities(): Promise<ProviderCapabilityManifest>;

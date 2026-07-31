@@ -24,4 +24,9 @@ None for generalized deterministic implementation and CI verification.
   replacement, environment connection, or operator approval is authorized by
   the deterministic release-recovery fixture. Private execution requires its
   own approved scope, protected evidence, and rollback/forward-repair record.
+- No interactive browser observation, browser login/input/submission,
+  remote-desktop control, browser/session capture, or private browser canary is
+  authorized by the public Phase 9 source slice. Any such test requires a
+  separately approved private scope, disposable exact domain, human operator,
+  redacted private evidence destination, and abort procedure.
 - Restricted-domain federation remains disabled pending a dedicated ADR and policy approval.

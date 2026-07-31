@@ -356,3 +356,24 @@ The next source-only slice is human-confirmed observed browser classification.
 A real private release remains separately authorized and must retain private
 operator, environment, backup/restore, migration, rollout, and recovery
 evidence outside this repository.
+
+## Phase 9 — human-confirmed observed browser path
+
+Status: **deterministic source-level slice complete** on 2026-07-30; an
+interactive private canary is gated.
+
+`ObservedBrowserProvider` declares only `human-observed` maturity and
+`no-execution`. It accepts only human-supplied, redacted evidence through a
+narrow port after pure policy verifies an exact declared domain, security
+domain, write authority, and required human confirmation. An observation-only
+request refuses write intent; an approved write proposal remains an attention
+record and never becomes a browser action, desktop action, provider launch, or
+Coordinator scheduling decision.
+
+The deterministic suite proves maturity declaration, domain refusal, write
+authority refusal, confirmation correlation, redaction, absence of browser or
+desktop-control I/O, and no automatic restart. It creates no browser session,
+remote-access connection, website request, account, credential, host change,
+or external mutation. A single human-observed, no-submission private canary
+remains gated on explicit scope, a disposable exact domain, private evidence,
+and an abort procedure.

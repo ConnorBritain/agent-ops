@@ -651,7 +651,7 @@ pis:
         prompt: Favor expand-before-contract, block destructive migration without backup and approval, and prove replacement without losing the durable ledger.
   - id: phase-9-observed-browser
     title: Observed browser path
-    status: scheduled
+    status: gated
     deps: [phase-8-skills-finops-release]
     summary: Add a maturity-declared, human-confirmed browser observation path without granting autonomous desktop authority.
     exit_criteria: Domain and write-authority policy, maturity metadata, redaction, human confirmation, and failure recovery pass in an approved interactive fixture.
@@ -663,13 +663,14 @@ pis:
     sprints:
       - id: observed-browser-path
         title: Human-confirmed browser observation adapter
-        status: scheduled
+        status: complete
         invoke: observed-browser-path
         what: Implement declared-domain browser observation, explicit write-authority classification, redacted evidence, and human confirmation through the provider boundary.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [release-recovery]
         gate: Browser classification, domain refusal, confirmation, and redaction fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/providers/
           - packages/policy/
@@ -679,12 +680,35 @@ pis:
           - docs/specs/SPEC-003-trust-security-and-federation.md
           - docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
-        resume_action: Implement observation and confirmation contracts before any real interactive-host integration.
+        resume_action: Preserve the no-execution boundary; proceed only to an independently authorized private interactive canary.
         priority:
           tier: P2
           weight: 55
           reason: Desktop automation is explicitly outside the initial headless proof.
         prompt: Declare maturity honestly, require allowed domains and write authority, and never convert RustDesk or browser observation into autonomous scheduling authority.
+      - id: private-browser-observation-canary
+        title: Private interactive browser-observation canary
+        status: gated
+        invoke: private-browser-observation-canary
+        what: Independently rehearse one human-observed, no-submission browser handoff on a disposable exact domain with private-only evidence.
+        est_sessions: 1
+        weight: small
+        deps: [observed-browser-path]
+        gate: Owner authorization, scoped human identity, disposable exact domain, approved redacted evidence destination, no-submission procedure, abort plan, and private-only records
+        touches:
+          - docs/private/
+          - config/private/
+        read_order:
+          - docs/runbooks/observed-browser-path.md
+          - docs/specs/SPEC-003-trust-security-and-federation.md
+          - docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
+          - docs/specs/SPEC-017-testing-verification-and-release-gates.md
+        resume_action: Stop before connecting to a browser, device, or remote-access session until the private gate is explicitly approved.
+        priority:
+          tier: P2
+          weight: 55
+          reason: Source fixtures cannot establish authorization or evidence for a real interactive browser session.
+        prompt: Keep browser and remote-access actions human-operated; do not submit, persist raw page/session material, or grant scheduler authority.
   - id: phase-10-memory-curation
     title: ADR and temporal-memory curation
     status: scheduled
