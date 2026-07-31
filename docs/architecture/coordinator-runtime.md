@@ -46,9 +46,12 @@ leaves a durable, actionable record and returns a deferred delivery result; the
 application service does not retry in-process. `AnswerAttentionItem` persists
 its secret-safe response before the response projection is attempted.
 
-The future Slack adapter may implement this projection port, but Slack is not
-an authority or system of record. Provider and worker sessions remain behind
-their own bounded ports.
+The Slack Socket Mode adapter implements this projection port as a
+non-authoritative, secret-reference-only ingress and attention surface. It
+reserves its own durable deduplication receipt and requires Coordinator durable
+confirmation before Socket acknowledgement; Slack is not an authority or
+system of record. Provider and worker sessions remain behind their own bounded
+ports.
 
 ## Current implementation limits
 

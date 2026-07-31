@@ -1,0 +1,28 @@
+slice: slack-attention-adapter
+status: complete
+requirements:
+  - REQ-CHARTER-001
+  - REQ-INT-005
+artifacts:
+  - packages/adapters/src/slack-attention.ts
+  - packages/adapters/test/slack-attention.test.ts
+  - packages/test-kit/src/index.ts
+  - docs/architecture/slack-attention-adapter.md
+  - docs/adr/ADR-0015-slack-is-a-non-authoritative-socket-mode-attention-projection.md
+tests:
+  - pnpm run check:slack-attention-adapter
+  - pnpm --filter @agent-ops/adapters test
+  - pnpm validate
+acceptance: ACC-ATTENTION-001
+evidence:
+  secret_reference_only_socket_mode_config: passed
+  no_http_signing_or_public_ingress: passed
+  authenticated_workspace_actor_mapping_required: passed
+  inbound_receipt_and_coordinator_durability_before_socket_ack: passed
+  duplicate_envelope_is_acknowledged_without_second_command: passed
+  raw_token_and_response_url_fields_not_retained: passed
+  summary_and_exact_question_are_distinct_projections: passed
+  authentication_handoff_and_answer_redaction: passed
+  real_slack_app_socket_connection_and_workspace_enrollment: separately-authorized
+  worker_resume_and_disposable_end_to_end_delivery: deferred-to-verified-draft-delivery
+catalog_version: 1

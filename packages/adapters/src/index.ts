@@ -314,3 +314,4 @@ export class SupabaseDurableOperationalStore implements DurableOperationalStore 
     );
   }
 }
+export * from "./slack-attention.ts";

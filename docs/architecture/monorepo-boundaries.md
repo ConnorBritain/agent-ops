@@ -4,9 +4,10 @@ Phase 0 created no runtime packages. Phase 2 activated the contract, domain,
 adapter, and Supabase boundaries. Phase 3 adds a transport-neutral worker
 supervisor, deterministic safety policy and monitor, and test kit. Phase 4
 adds the shared provider SDK and a deterministic `PrintProvider` test double.
-Phase 6 now adds a transport-neutral Coordinator application service over
-durable ports; it still has no listener, real provider launcher, host
-enrollment, credential, or cloud deployment.
+Phase 6 now adds a transport-neutral Coordinator application service and a
+secret-reference-only Slack Socket Mode attention adapter over durable ports;
+neither has a listener, real provider launcher, host enrollment, credential,
+or cloud deployment.
 
 | Future location | Responsibility | Must not own |
 | --- | --- | --- |
@@ -18,7 +19,7 @@ enrollment, credential, or cloud deployment.
 | `packages/policy` | Deterministic authorization, resource, destructive-delete, dry-run cleanup, and safety decisions. | Natural-language authority, secret storage, command execution, process control, or filesystem deletion. |
 | `packages/provider-sdk` | Typed provider lifecycle port, capability-only routing, observation normalization, and shared conformance harness. | Coordinator state mutation, process control, credentials, or vendor selection without explicit human preference. |
 | `packages/providers/print` | Deterministic no-execution provider that emits sealed, redacted plans and test artifacts for every lifecycle operation. | Process execution, shell access, provider-session creation, task/run mutation, or secret rendering. |
-| `packages/adapters` | Supabase, Roadmap, chat, portfolio, GitHub, memory, and RustDesk adapter implementations. | Domain ownership outside their explicit port. |
+| `packages/adapters` | Supabase, Roadmap, Slack attention, portfolio, GitHub, memory, and RustDesk adapter implementations. | Domain ownership outside their explicit port, a Slack connection/listener, or Slack-derived Scheduler/provider authority. |
 | `packages/test-kit` | Deterministic clocks, resources, control-plane recordings, fixtures, contract suites, and acceptance harnesses. | Production credentials or host inventory. |
 | `deploy/worker-supervisor` | Versioned service-manager templates and read-only clean-host verification scripts. | Installation, account creation, artifact download, service activation, or workload restart. |
 | `supabase` | Append-only migrations, local configuration, database policy definitions, and pgTAP tests. | Runtime secrets or hosted-project identifiers. |

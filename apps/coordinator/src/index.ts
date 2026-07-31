@@ -9,6 +9,8 @@ import {
 import {
   reconcileObservedState,
   selectPlacement,
+  type AttentionDeliveryAttempt,
+  type AttentionProjectionPort,
   type AttentionDraft,
   type CoordinatorDurableStore,
   type PlacementCandidate,
@@ -52,22 +54,12 @@ export interface CoordinatorWorkerDispatch {
   >;
 }
 
-export type AttentionDeliveryAttempt = {
-  readonly status: "delivered" | "deferred";
-  readonly deliveryReference?: string;
-};
-
 /**
  * A human-facing transport (such as a future chat adapter) is a projection
  * only. The durable attention item must already exist before this port runs.
  */
-export interface CoordinatorAttentionDelivery {
-  deliver(attention: AttentionItem): Promise<AttentionDeliveryAttempt>;
-  deliverResponse(input: {
-    readonly attention: AttentionItem;
-    readonly response: Readonly<Record<string, unknown>>;
-  }): Promise<AttentionDeliveryAttempt>;
-}
+export type { AttentionDeliveryAttempt } from "@agent-ops/domain";
+export type CoordinatorAttentionDelivery = AttentionProjectionPort;
 
 export type CoordinatorRuntimePorts = {
   readonly clock: CoordinatorClock;
