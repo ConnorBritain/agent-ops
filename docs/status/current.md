@@ -47,10 +47,10 @@ private-overlay gate.
 ## Ordered v1 implementation
 
 Status: **Phase 3 worker core, safety hooks, static service packaging, all
-Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server adapter,
-the local Coordinator application service, the non-authoritative Slack
-attention adapter, and the replayable verified-draft-delivery fixture are
-complete** as of 2026-07-30.
+Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server and Claude
+Code adapters, the local Coordinator application service, the
+non-authoritative Slack attention adapter, and the replayable
+verified-draft-delivery fixture are complete** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -152,8 +152,7 @@ conformance harness. `PrintProvider` passes that harness and records one
 redacted, sealed `execution: not-started` plan for every lifecycle operation.
 It contains no process execution path and cannot update Coordinator, task, or
 run state. `REQ-PROVIDER-001` through `REQ-PROVIDER-004` and `REQ-TEST-002`
-are complete as local evidence; `ACC-PROVIDER-001` remains planned until two
-real CLI providers pass the same suite.
+are complete as local evidence.
 
 ## Phase 5 — First CLI-provider selection
 
@@ -244,6 +243,27 @@ second draft.
 The fixture uses only in-memory stores and injected ports. It does not create
 a Slack app, WebSocket, provider session, hosted Coordinator, GitHub
 repository, external pull request, credential, host change, or cloud resource.
-The next implementation slice is the second normalized CLI provider; a live
-Slack/provider/GitHub disposable-repository canary remains a private,
+A live Slack/provider/GitHub disposable-repository canary remains a private,
 separately authorized composition task.
+
+## Phase 7 — second normalized CLI provider
+
+Status: **deterministic adapter complete** on 2026-07-30; real provider
+binding remains separately gated.
+
+`ClaudeCodeProvider` joins `CodexAppServerProvider` and `PrintProvider` under
+the exact shared lifecycle/conformance path. It is an injected local-stdio
+print-mode JSONL adapter with policy-supplied model, turn, and budget limits;
+the selected profile requires bare mode, disabled session persistence, and
+`dontAsk` permission refusal. It explicitly declares same-session input,
+pause, and resume unsupported. It reduces only safe init/stream event classes
+to correlated observations, retains no response, transcript, auth, cost, or
+usage content, requests cancellation through its injected port, and forbids
+automatic restart.
+
+`pnpm run check:provider-conformance` now passes the common suite for
+PrintProvider plus deterministic Codex App Server and Claude Code fixtures.
+The proof contains no installed Claude binary, account, model entitlement,
+credential, local process, provider request, or host change. A real binding,
+budget, authentication, and disposable canary remain separately authorized in
+the private overlay.

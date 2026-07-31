@@ -16,8 +16,8 @@ acceptance_routes:
     test: "future private worker canary acceptance"
   - id: ACC-PROVIDER-001
     slice: second-cli-provider
-    status: planned
-    test: "future shared conformance suite across PrintProvider and two CLI providers"
+    status: complete
+    test: "pnpm run check:provider-conformance"
   - id: ACC-ATTENTION-001
     slice: verified-draft-delivery
     status: complete
@@ -159,9 +159,9 @@ requirements:
     owner: SPEC-001
     slice: second-cli-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
-    route_role: contributing
-    test: "future second CLI provider conformance suite"
+    status: complete
+    route_role: completion
+    test: "pnpm run check:provider-conformance"
     required_evidence: "Provider conformance fixture."
   - id: REQ-V1-004
     owner: SPEC-001

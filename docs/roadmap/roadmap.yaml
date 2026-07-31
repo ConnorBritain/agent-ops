@@ -537,13 +537,14 @@ pis:
     sprints:
       - id: second-cli-provider
         title: Second normalized CLI provider
-        status: scheduled
+        status: complete
         invoke: second-cli-provider
         what: Select and implement a second documented CLI provider through the same SDK and conformance suite.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [verified-draft-delivery]
         gate: Shared lifecycle, normalization, cancellation, and artifact conformance
+        completed_on: "2026-07-30"
         touches:
           - packages/providers/
           - packages/provider-sdk/
@@ -552,12 +553,12 @@ pis:
         read_order:
           - docs/specs/SPEC-008-provider-sdk-and-capability-routing.md
           - docs/specs/SPEC-017-testing-verification-and-release-gates.md
-        resume_action: Choose a documented control surface and add it without changing domain contracts for vendor-specific behavior.
+        resume_action: Claude Code print-mode stream fixtures pass alongside the first provider. Preserve the injected local-stdio, no-session-persistence, no-auto-restart boundary; move to GitHub/portfolio projection fakes next.
         priority:
           tier: P1
           weight: 85
           reason: Two equivalent adapters prove the provider-neutral boundary.
-        prompt: Normalize lifecycle and artifacts exactly as the first provider; represent unsupported operations explicitly.
+        prompt: "Complete: Claude Code print-mode JSONL is the second deterministic adapter; lifecycle and artifacts conform without vendor-specific domain contracts, and unsupported steer/pause/resume are explicit."
       - id: github-portfolio-projections
         title: GitHub and portfolio outbox projections
         status: scheduled
