@@ -48,9 +48,9 @@ private-overlay gate.
 
 Status: **Phase 3 worker core, safety hooks, static service packaging, all
 Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server adapter,
-the local Coordinator application service, and the non-authoritative Slack
-attention adapter are complete; the replayable verified-delivery scenario is
-next** as of 2026-07-30.
+the local Coordinator application service, the non-authoritative Slack
+attention adapter, and the replayable verified-draft-delivery fixture are
+complete** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -58,10 +58,12 @@ two CLI providers, the first attention-and-verified-delivery vertical slice,
 external projections, skills and FinOps, release recovery, observed browser
 support, optional curated memory, and separately authorized federation.
 
-The durable core is an executable foundation, not the first completed product
-vertical slice. `REQ-BUILD-003` and `REQ-ROLL-002` remain planned against
-`verified-draft-delivery`, which must prove the complete attention-and-delivery
-loop before broader automation is considered complete.
+The durable core is an executable foundation. The deterministic
+`verified-draft-delivery` slice now proves the complete attention-and-delivery
+loop before broader automation: one blocked attention, durable answer, same-run
+continuation, independent verification, policy gate, replay-safe draft-only
+delivery, and negative verifier/policy refusal. Hosted composition and real
+external projection remain separately authorized.
 
 Every one of the 130 normative requirements now has an enforced primary
 requirement-to-slice-to-acceptance-to-test mapping in
@@ -220,6 +222,28 @@ separation, response redaction, and no external SDK or connection behavior.
 
 No Slack app, app-level token, bot token, Socket URL, WebSocket, workspace
 record, channel, outbox runner, external message, real worker response, or
-provider resumption was created. The next slice is a disposable, replayable
-attention-and-draft-delivery scenario using test doubles unless the required
-private integration authorization is granted.
+provider process was created. The deterministic test double composes the
+reviewed contracts but is not a live Slack or worker deployment.
+
+## Phase 6 — replayable verified draft delivery
+
+Status: **deterministic vertical fixture complete** on 2026-07-30; external
+integration is not started.
+
+The fixture creates exactly one policy-blocked attention item, projects it
+through the Slack Socket Mode boundary, reserves a durable ingress receipt,
+records the authorized human answer before calling a new Coordinator dispatch
+for the retained task and run, and records only a provider acknowledgement as
+an observation. A scripted Codex App Server protocol produces secret-safe
+implementation evidence without a binary or process. A distinct independent
+`VerificationRecord` and matching policy decision must be persisted before the
+draft-only gateway can return a safe `draft-pr://` reference. Failed verifier
+or policy gates never call the gateway; a completed delivery replay creates no
+second draft.
+
+The fixture uses only in-memory stores and injected ports. It does not create
+a Slack app, WebSocket, provider session, hosted Coordinator, GitHub
+repository, external pull request, credential, host change, or cloud resource.
+The next implementation slice is the second normalized CLI provider; a live
+Slack/provider/GitHub disposable-repository canary remains a private,
+separately authorized composition task.

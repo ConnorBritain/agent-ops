@@ -9,7 +9,8 @@
   authority, admission, resource refusal, dry-run remediation, audit, and
   reboot-idle packaging boundaries. Provider launch, actual signature
   verification, actual service installation, durable attention routing, and
-  full end-to-end fixtures remain future work.
+  live external end-to-end integration remain future work. A complete
+  deterministic attention-to-verified-draft fixture now exists.
 - The Roadmap read adapter resolves only ready-wave and worktree intent. It
   does not create worktrees, launch agents, mutate Roadmap, or satisfy the
   remaining independently versioned primitive, estimator, and architecture
@@ -22,10 +23,11 @@
   disposable runtime canary remain private, separately authorized work.
 - The Coordinator owns durable ordering and reconciliation decisions but has no
   hosted durable-store binding, timer, scoped runtime identity, worker
-  transport, or delivery outbox runner. The Slack Socket Mode adapter now
-  supplies deterministic ingress/projection contracts only: it has no real app,
-  workspace authorization record, WebSocket, audience/channel configuration,
-  outbox binding, or external delivery. A provider acknowledgement is
-  deliberately insufficient to report a run as executing, and a Slack answer
-  does not by itself resume a worker.
+  transport, or delivery outbox runner. The Slack Socket Mode adapter and
+  verified-draft fixture supply deterministic ingress/projection contracts
+  only: they have no real app, workspace authorization record, WebSocket,
+  audience/channel configuration, outbox binding, external delivery, provider
+  process, or GitHub connection. A provider acknowledgement is deliberately
+  insufficient to report a run as executing; the fixture's explicit durable
+  answer-and-dispatch path is not autonomous workload restart.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

@@ -19,6 +19,8 @@
     "@agent-ops/domain": "workspace:*"
   },
   "devDependencies": {
+    "@agent-ops/adapters": "workspace:*",
+    "@agent-ops/provider-codex-app-server": "workspace:*",
     "@agent-ops/test-kit": "workspace:*"
   }
 }

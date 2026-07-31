@@ -59,7 +59,7 @@ const candidate = (overrides: Partial<PlacementCandidate> = {}): PlacementCandid
 
 class FixturePolicy implements CoordinatorPolicyEngine {
   readonly calls: string[];
-  readonly decision: PolicyDecision;
+  decision: PolicyDecision;
 
   constructor(calls: string[], decision: PolicyDecision) {
     this.calls = calls;
@@ -130,14 +130,15 @@ const runtimeFixture = (decision: PolicyDecision = {
   const store = new InMemoryCoordinatorDurableStore();
   const workerDispatch = new FixtureWorkerDispatch(calls);
   const attentionDelivery = new FixtureAttentionDelivery(calls, store);
+  const policy = new FixturePolicy(calls, decision);
   const runtime = new CoordinatorRuntime({
     clock: new DeterministicClock(),
     store,
-    policy: new FixturePolicy(calls, decision),
+    policy,
     workerDispatch,
     attentionDelivery,
   } satisfies CoordinatorRuntimePorts);
-  return { runtime, calls, store, workerDispatch, attentionDelivery };
+  return { runtime, calls, store, workerDispatch, attentionDelivery, policy };
 };
 
 describe("Coordinator dispatch", () => {
@@ -275,5 +276,73 @@ describe("Coordinator attention", () => {
       }),
       /Inline secret rejected/,
     );
+  });
+
+  it("resumes only the answered attention item's retained run after persisting the human response", async () => {
+    const fixture = runtimeFixture({
+      id: testIds.policy,
+      decision: "requires-approval",
+      securityDomain: "example-domain",
+      rationale: "need an explicit human answer",
+    });
+    const blocked = await fixture.runtime.dispatch({
+      command: dispatchCommand(),
+      envelope: buildJobEnvelope(),
+      candidates: [candidate()],
+    });
+    assert.equal(blocked.kind, "attention-required");
+    fixture.policy.decision = {
+      id: testIds.policy,
+      decision: "allow",
+      securityDomain: "example-domain",
+      rationale: "human answer was recorded",
+    };
+
+    const result = await fixture.runtime.answerAndResume({
+      answer: {
+        command: attentionCommand(),
+        response: { approval: "resume the bounded fixture" },
+      },
+      dispatch: {
+        command: dispatchCommand({ idempotencyKey: "dispatch-after-attention-001" }),
+        envelope: buildJobEnvelope(),
+        candidates: [candidate()],
+      },
+    });
+
+    assert.equal(result.dispatch.kind, "queued");
+    assert.deepEqual(fixture.store.operations, [
+      "intent", "scheduling", "attention", "attention-response",
+      "intent", "scheduling", "job", "provider-acknowledgement",
+    ]);
+    assert.deepEqual(fixture.calls, [
+      "policy", "attention-delivery", "response-delivery", "policy", "worker-dispatch",
+    ]);
+  });
+
+  it("refuses an answer from one run as authority to resume another", async () => {
+    const fixture = runtimeFixture({
+      id: testIds.policy,
+      decision: "requires-approval",
+      securityDomain: "example-domain",
+      rationale: "need an explicit human answer",
+    });
+    await fixture.runtime.dispatch({
+      command: dispatchCommand(),
+      envelope: buildJobEnvelope(),
+      candidates: [candidate()],
+    });
+    await assert.rejects(
+      () => fixture.runtime.answerAndResume({
+        answer: { command: attentionCommand(), response: { approval: "bounded answer" } },
+        dispatch: {
+          command: dispatchCommand({ idempotencyKey: "dispatch-wrong-run-001" }),
+          envelope: buildJobEnvelope({ runId: "00000000-0000-4000-8000-000000000199" }),
+          candidates: [candidate()],
+        },
+      }),
+      /retained task and run/,
+    );
+    assert.equal(fixture.store.jobs.length, 0);
   });
 });
