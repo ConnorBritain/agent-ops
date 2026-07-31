@@ -18,7 +18,7 @@ export const routes = {
   service: route("worker-service-packaging", "ACC-WORKER-001", "complete", "pnpm run check:service-packaging && pnpm --filter @agent-ops/test-kit test", "planned"),
   canary: route("private-worker-canary", "ACC-WORKER-001", "gated", "future private worker canary acceptance"),
   roadmap: route("roadmap-adapter", "ACC-PLANNING-001", "planned", "pnpm run check:roadmap-adapter", "planned"),
-  print: route("print-provider", "ACC-PROVIDER-001", "planned", "future shared provider and PrintProvider conformance suite"),
+  print: route("print-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:print-provider", "planned"),
   providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future shared conformance suite across PrintProvider and two CLI providers"),
   coordinator: route("coordinator-runtime", "ACC-ATTENTION-001", "planned", "future Coordinator application-service fixtures"),
   slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "planned", "future Slack attention adapter contract suite"),
@@ -106,7 +106,12 @@ const completedRequirementIds = new Set([
   "REQ-SAFE-004",
   "REQ-SAFE-005",
   "REQ-SAFE-006",
-  "REQ-SAFE-007"
+  "REQ-SAFE-007",
+  "REQ-PROVIDER-001",
+  "REQ-PROVIDER-002",
+  "REQ-PROVIDER-003",
+  "REQ-PROVIDER-004",
+  "REQ-TEST-002"
 ]);
 
 const prefixRoutes = new Map([

@@ -92,16 +92,36 @@ type NormalizedEvent = {
 };
 
 interface Provider {
-  inspectCapabilities(): Promise<CapabilityManifest>;
-  validateEnvironment(input: ProviderPreflight): Promise<PreflightResult>;
-  start(input: ProviderStart): Promise<ProviderObservation>;
-  sendInput(input: ProviderInput): Promise<ProviderObservation>;
-  inspect(input: ProviderInspection): Promise<ProviderObservation>;
-  pause(input: ProviderControl): Promise<ProviderObservation>;
-  resume(input: ProviderControl): Promise<ProviderObservation>;
-  cancel(input: ProviderControl): Promise<ProviderObservation>;
-  collectArtifacts(input: ProviderInspection): Promise<Artifact[]>;
+  inspectCapabilities(): Promise<ProviderCapabilityManifest>;
+  validateEnvironment(input: ProviderInvocation): Promise<ProviderEnvironmentVerdict>;
+  start(input: ProviderInvocation): Promise<ProviderObservation>;
+  sendInput(input: ProviderInvocation): Promise<ProviderObservation>;
+  inspect(input: ProviderInvocation): Promise<ProviderObservation>;
+  pause(input: ProviderInvocation): Promise<ProviderObservation>;
+  resume(input: ProviderInvocation): Promise<ProviderObservation>;
+  cancel(input: ProviderInvocation): Promise<ProviderObservation>;
+  collectArtifacts(input: ProviderInvocation): Promise<ProviderArtifact[]>;
 }
+
+type ProviderInvocation = {
+  version: string;
+  invocationId: string;
+  operation: "validate-environment" | "start" | "send-input" | "inspect" | "pause" | "resume" | "cancel" | "collect-artifacts";
+  envelope: JobEnvelope;
+  input: Record<string, unknown>; // secret-safe only
+  requestedAt: string;
+};
+
+type ProviderObservation = {
+  version: string;
+  providerId: ProviderId;
+  invocationId: string;
+  operation: ProviderInvocation["operation"];
+  observedAt: string;
+  state: "pending" | "starting" | "running" | "paused" | "attention" | "failed" | "cancelled" | "complete" | "unknown";
+  sourceEventId: string;
+  detail: Record<string, unknown>; // secret-safe only
+};
 
 type VerificationVerdict = "pass" | "conditional-pass" | "needs-human-review" | "fail";
 
@@ -154,5 +174,15 @@ operations. It validates a current ready wave and gate, preserves stable
 correlation/task/run/slice/worktree references, and emits a `not-started`
 worktree intent. It never parses the Roadmap graph directly, creates a
 worktree, launches an agent, or invokes a mutating Roadmap operation.
+
+The provider SDK validates a complete lifecycle declaration, routes only by
+declared capability (with a human-selected provider preference as a tie-breaker
+only), and normalizes correlated provider observations before a future durable
+core can consume them. Providers never update task or run state directly.
+`PrintProvider` is the deterministic reference implementation: it records one
+sealed, secret-safe plan per lifecycle operation and reports
+`execution: "not-started"`. It does not render job body, callback, or signature
+material and contains no process-execution API. It is a test double, not a
+worker launcher or an execution backend.
 
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

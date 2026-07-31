@@ -15,7 +15,7 @@ meta:
   links:
     narrative: docs/specs/SPEC-000-program-charter.md
     status: docs/status/current.md
-    tracker: docs/traceability/phase-4-roadmap-adapter.yaml
+    tracker: docs/traceability/phase-4-print-provider.yaml
     bootstrap: docs/specs/BUILD-001-initial-implementation-prompt.md
 pis:
   - id: phase-0-governance
@@ -283,7 +283,7 @@ pis:
         prompt: Keep all host, network, identity, and service evidence private; stop if any safety threshold or authorization is missing.
   - id: phase-4-roadmap-print-provider
     title: Roadmap composition and PrintProvider
-    status: active
+    status: complete
     deps: [phase-0-governance, phase-3-worker-safety]
     summary: Compose Roadmap for readiness and worktree intent, then prove the provider lifecycle through a deterministic no-execution provider.
     exit_criteria: A bounded fixture resolves a ready slice, retains stable correlation references, and produces a complete no-execution launch plan through the shared provider conformance suite.
@@ -320,13 +320,14 @@ pis:
         prompt: Preserve Roadmap as source of readiness and worktree intent; validate all output and retain stable task, run, slice, and worktree identifiers.
       - id: print-provider
         title: Provider SDK and deterministic PrintProvider
-        status: scheduled
+        status: complete
         invoke: print-provider
         what: Implement the common provider lifecycle, capability manifest, observation normalization, conformance kit, and no-execution PrintProvider.
         est_sessions: 2
         weight: medium
         deps: [roadmap-adapter, worker-safety-hooks]
         gate: Shared provider conformance suite and PrintProvider dry-run acceptance
+        completed_on: "2026-07-30"
         touches:
           - packages/contracts/
           - packages/provider-sdk/
@@ -345,7 +346,7 @@ pis:
         prompt: PrintProvider must never execute a process; it renders the exact authorized plan and normalized observations used by the shared conformance suite.
   - id: phase-5-first-cli-provider
     title: First bounded CLI provider
-    status: scheduled
+    status: active
     deps: [phase-4-roadmap-print-provider]
     summary: Select and implement one documented CLI control surface through the shared provider SDK without vendor authority leaking into domain contracts.
     exit_criteria: A disposable fixture executes, blocks, resumes, cancels, and collects artifacts through the provider conformance suite with redacted evidence.
@@ -357,7 +358,7 @@ pis:
     sprints:
       - id: first-cli-provider-spike
         title: Select and prove a stable CLI control surface
-        status: scheduled
+        status: next
         invoke: first-cli-provider-spike
         what: Compare documented CLI provider surfaces and record the chosen bounded launch, input, inspection, cancellation, and artifact protocol in an ADR.
         est_sessions: 1

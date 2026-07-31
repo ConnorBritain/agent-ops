@@ -18,7 +18,7 @@ scenarios:
   - id: ACC-PROVIDER-001
     title: Provider conformance and dry-run planning
     requirements: [REQ-V1-003, REQ-PROVIDER-001, REQ-PROVIDER-002, REQ-PROVIDER-003, REQ-PROVIDER-004, REQ-TEST-002]
-    evidence: future provider contract suite
+    evidence: PrintProvider conformance passed; future cross-provider conformance across two CLI providers
     phase: 7
   - id: ACC-ATTENTION-001
     title: Attention and verified draft delivery loop

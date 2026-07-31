@@ -487,33 +487,33 @@ requirements:
     owner: SPEC-008
     slice: print-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "pnpm run check:print-provider"
     required_evidence: "Provider conformance suite."
   - id: REQ-PROVIDER-002
     owner: SPEC-008
     slice: print-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "pnpm run check:print-provider"
     required_evidence: "Capability-routing test."
   - id: REQ-PROVIDER-003
     owner: SPEC-008
     slice: print-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "pnpm run check:print-provider"
     required_evidence: "Normalization fixture."
   - id: REQ-PROVIDER-004
     owner: SPEC-008
     slice: print-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "pnpm run check:print-provider"
     required_evidence: "Dry-run test."
   - id: REQ-PROVIDER-005
     owner: SPEC-008
@@ -935,9 +935,9 @@ requirements:
     owner: SPEC-017
     slice: print-provider
     acceptance: ACC-PROVIDER-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future shared provider and PrintProvider conformance suite"
+    test: "pnpm run check:print-provider"
     required_evidence: "Provider conformance suite."
   - id: REQ-TEST-003
     owner: SPEC-017
