@@ -21,7 +21,7 @@ export const routes = {
   print: route("print-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:print-provider", "planned"),
   providerAcceptance: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future shared conformance suite across PrintProvider and two CLI providers"),
   coordinator: route("coordinator-runtime", "ACC-ATTENTION-001", "complete", "pnpm run check:coordinator-runtime", "planned"),
-  slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "planned", "future Slack attention adapter contract suite"),
+  slack: route("slack-attention-adapter", "ACC-ATTENTION-001", "complete", "pnpm run check:slack-attention-adapter", "planned"),
   attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "planned", "future replayable attention and verified draft-delivery scenario"),
   delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "planned", "future disposable-repository end-to-end scenario"),
   secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "planned", "future second CLI provider conformance suite"),
@@ -115,7 +115,9 @@ const completedRequirementIds = new Set([
   "REQ-PROVIDER-002",
   "REQ-PROVIDER-003",
   "REQ-PROVIDER-004",
-  "REQ-TEST-002"
+  "REQ-TEST-002",
+  "REQ-CHARTER-001",
+  "REQ-INT-005"
 ]);
 
 const prefixRoutes = new Map([

@@ -473,13 +473,14 @@ pis:
         prompt: Persist intent and attention before delivery, record scheduling exclusions and rationale, and treat provider acknowledgement as observation rather than running truth.
       - id: slack-attention-adapter
         title: Slack Socket Mode attention and authentication adapter
-        status: scheduled
+        status: complete
         invoke: slack-attention-adapter
         what: Implement a transport adapter and deterministic Slack fixtures for authorized commands, concise escalation, exact worker questions, authentication handoff, and durable response ingestion.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [coordinator-runtime]
         gate: Slack signature/identity, duplicate-delivery, redaction, and attention-response contract tests
+        completed_on: "2026-07-30"
         touches:
           - packages/adapters/
           - apps/coordinator/
@@ -490,12 +491,12 @@ pis:
           - docs/specs/SPEC-006-coordinator-runtime.md
           - docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
           - docs/specs/SPEC-016-observability-operations-and-runbooks.md
-        resume_action: Implement against fakes and secret references; private Slack app creation and tokens remain separately gated.
+        resume_action: Preserve the non-authoritative Socket Mode boundary; the next slice is the replayable disposable attention-and-draft-delivery scenario. Private Slack app creation and tokens remain separately gated.
         priority:
           tier: P0
           weight: 95
           reason: Attention management is the primary human-facing product.
-        prompt: Slack is a non-authoritative projection. Authorize workspace and actor, persist before acknowledging, separate summaries from verbatim questions, and never store token values.
+        prompt: "Complete: Slack remains a non-authoritative projection. Workspace/actor authorization, ingress persistence before acknowledgement, summary/question separation, response redaction, duplicate acknowledgement, and secret-reference-only configuration are proven with deterministic fixtures."
       - id: verified-draft-delivery
         title: Disposable end-to-end attention and draft-PR delivery
         status: scheduled

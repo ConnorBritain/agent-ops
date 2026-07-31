@@ -95,9 +95,9 @@ requirements:
     owner: SPEC-000
     slice: slack-attention-adapter
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Slack attention adapter contract suite"
+    test: "pnpm run check:slack-attention-adapter"
     required_evidence: "Attention-item scenario."
   - id: REQ-CHARTER-002
     owner: SPEC-000
@@ -169,7 +169,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Slack attention adapter contract suite"
+    test: "pnpm run check:slack-attention-adapter"
     required_evidence: "Intervention scenario."
   - id: REQ-V1-005
     owner: SPEC-001
@@ -671,9 +671,9 @@ requirements:
     owner: SPEC-011
     slice: slack-attention-adapter
     acceptance: ACC-ATTENTION-001
-    status: planned
+    status: complete
     route_role: contributing
-    test: "future Slack attention adapter contract suite"
+    test: "pnpm run check:slack-attention-adapter"
     required_evidence: "Verbatim-question UI test."
   - id: REQ-INT-006
     owner: SPEC-011
@@ -905,7 +905,7 @@ requirements:
     acceptance: ACC-ATTENTION-001
     status: planned
     route_role: contributing
-    test: "future Slack attention adapter contract suite"
+    test: "pnpm run check:slack-attention-adapter"
     required_evidence: "Noise-suppression test."
   - id: REQ-OPS-005
     owner: SPEC-016

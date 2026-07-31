@@ -175,6 +175,16 @@ correlation/task/run/slice/worktree references, and emits a `not-started`
 worktree intent. It never parses the Roadmap graph directly, creates a
 worktree, launches an agent, or invokes a mutating Roadmap operation.
 
+The Slack attention adapter accepts only a minimized Socket Mode envelope and
+maps an authorized workspace actor to an internal human principal. It reserves
+a durable ingress receipt before invoking the Coordinator-owned command port,
+completes that receipt before Socket acknowledgement, and reuses the same
+idempotency key for a retry. Its configuration holds `secret://` references
+only; HTTP ingress and signing-secret configuration are rejected. An attention
+summary and an exact worker question are separate domain-scoped projections,
+and authentication remains out-of-band. Slack has no task/run, worker,
+provider, or Scheduler authority.
+
 The provider SDK validates a complete lifecycle declaration, routes only by
 declared capability (with a human-selected provider preference as a tie-breaker
 only), and normalizes correlated provider observations before a future durable

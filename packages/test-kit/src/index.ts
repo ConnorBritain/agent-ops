@@ -371,6 +371,108 @@ export class ScriptedJsonRpcTransport {
   }
 }
 
+/**
+ * Structural fakes for the Slack attention adapter. These types intentionally
+ * live below the adapter boundary so the test kit never depends on a concrete
+ * chat implementation, SDK, credential, workspace, or network connection.
+ */
+export type SlackIngressFixtureReceipt = {
+  readonly receiptId: string;
+  readonly envelopeId: string;
+  readonly workspaceId: string;
+  readonly actorExternalId: string;
+  readonly receivedAt: string;
+};
+
+export class InMemorySlackIngressStore {
+  readonly operations: string[] = [];
+  readonly receipts = new Map<string, {
+    readonly receipt: SlackIngressFixtureReceipt;
+    outcome?: "accepted" | "rejected";
+  }>();
+
+  async reserve(receipt: SlackIngressFixtureReceipt): Promise<
+    | { readonly state: "pending" }
+    | { readonly state: "completed"; readonly outcome: "accepted" | "rejected" }
+  > {
+    this.operations.push("ingress-reserve");
+    const existing = this.receipts.get(receipt.receiptId);
+    if (existing?.outcome) return { state: "completed", outcome: existing.outcome };
+    if (!existing) this.receipts.set(receipt.receiptId, { receipt });
+    return { state: "pending" };
+  }
+
+  async complete(input: {
+    readonly receiptId: string;
+    readonly outcome: "accepted" | "rejected";
+    readonly completedAt: string;
+  }): Promise<void> {
+    this.operations.push(`ingress-complete:${input.outcome}`);
+    const existing = this.receipts.get(input.receiptId);
+    if (!existing) throw new Error("Slack ingress receipt was not reserved.");
+    this.receipts.set(input.receiptId, { ...existing, outcome: input.outcome });
+  }
+}
+
+export class StaticSlackWorkspaceActorAuthorizer {
+  authorization: {
+    readonly authorized: true;
+    readonly principalId: string;
+    readonly securityDomain: string;
+  } | {
+    readonly authorized: false;
+    readonly reason: "unknown-workspace" | "unknown-actor" | "domain-not-authorized";
+  } = {
+    authorized: true,
+    principalId: testIds.principal,
+    securityDomain: "example-domain",
+  };
+  readonly calls: { workspaceId: string; actorExternalId: string }[] = [];
+
+  async authorize(input: { readonly workspaceId: string; readonly actorExternalId: string }) {
+    this.calls.push({ ...input });
+    return this.authorization;
+  }
+}
+
+export class RecordingSlackSocketAcknowledger {
+  readonly acknowledgements: { envelopeId: string }[] = [];
+
+  async acknowledge(input: { readonly envelopeId: string }): Promise<void> {
+    this.acknowledgements.push({ ...input });
+  }
+}
+
+export class StaticSlackAttentionAudienceResolver {
+  audience: { readonly recipientRef: string } | undefined = {
+    recipientRef: "slack-recipient:fixture",
+  };
+  readonly calls: { securityDomain: string; purpose: string }[] = [];
+
+  async resolve(input: { readonly securityDomain: string; readonly purpose: string }) {
+    this.calls.push({ ...input });
+    return this.audience;
+  }
+}
+
+export class RecordingSlackAttentionOutbox {
+  readonly messages: unknown[] = [];
+  result: { readonly status: "delivered" | "deferred"; readonly deliveryReference?: string } = {
+    status: "delivered",
+    deliveryReference: "slack-outbox:fixture",
+  };
+  throwOnSend = false;
+
+  async send(message: unknown): Promise<{
+    readonly status: "delivered" | "deferred";
+    readonly deliveryReference?: string;
+  }> {
+    this.messages.push(message);
+    if (this.throwOnSend) throw new Error("fixture Slack outbox unavailable");
+    return this.result;
+  }
+}
+
 export const buildWorkerManifest = (
   overrides: Partial<WorkerManifest> = {},
 ): WorkerManifest => ({

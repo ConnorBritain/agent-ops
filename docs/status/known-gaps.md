@@ -21,7 +21,11 @@
   AgentOps, launched, or exercised; the host-specific local-stdio binding and
   disposable runtime canary remain private, separately authorized work.
 - The Coordinator owns durable ordering and reconciliation decisions but has no
-  hosted durable-store binding, timer, scoped runtime identity, worker transport,
-  chat projection, or delivery outbox runner. A provider acknowledgement is
-  deliberately insufficient to report a run as executing.
+  hosted durable-store binding, timer, scoped runtime identity, worker
+  transport, or delivery outbox runner. The Slack Socket Mode adapter now
+  supplies deterministic ingress/projection contracts only: it has no real app,
+  workspace authorization record, WebSocket, audience/channel configuration,
+  outbox binding, or external delivery. A provider acknowledgement is
+  deliberately insufficient to report a run as executing, and a Slack answer
+  does not by itself resume a worker.
 - The public repository intentionally omits private source specifications, fleet inventory, network topology, and secret references beyond generic examples.

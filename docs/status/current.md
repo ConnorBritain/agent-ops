@@ -48,8 +48,9 @@ private-overlay gate.
 
 Status: **Phase 3 worker core, safety hooks, static service packaging, all
 Phase 4 Roadmap/PrintProvider work, the normalized Codex App Server adapter,
-and the local Coordinator application service are complete; the non-authoritative
-Slack attention projection is next** as of 2026-07-30.
+the local Coordinator application service, and the non-authoritative Slack
+attention adapter are complete; the replayable verified-delivery scenario is
+next** as of 2026-07-30.
 
 The Roadmap now represents the complete normative rollout from the local
 durable foundation through worker safety, Roadmap composition, PrintProvider,
@@ -195,3 +196,30 @@ No timer, listener, hosted database binding, scoped service identity, chat
 workspace, provider process, worker connection, credential, or external
 message was created. A future private composition root must independently bind
 the reviewed durable schema and delivery transports.
+
+## Phase 6 — Slack attention adapter
+
+Status: **local Socket Mode contract implementation complete** on 2026-07-30;
+real Slack composition is not started.
+
+`SlackSocketModeAttentionAdapter` is a typed, deterministic ingress and
+projection boundary. It accepts `secret://` token references only, rejects
+HTTP ingress and signing-secret configuration, strips raw wire token and
+response URL fields, maps a workspace actor to an authorized internal human
+principal, and reserves a durable deduplication receipt before calling the
+Coordinator command port. It completes the receipt only after durable command
+confirmation and then acknowledges the Socket envelope; a failed durable call
+leaves the receipt pending and unacknowledged for safe retry.
+
+Attention summaries and exact worker questions are separately audience-scoped
+messages. Authentication is an out-of-band handoff, and chat confirms a
+durably recorded answer without echoing its body or claiming worker resume.
+Deterministic fixtures prove authorization refusal, duplicate delivery,
+ingress/Coordinator/acknowledgement ordering, raw-field minimization, summary
+separation, response redaction, and no external SDK or connection behavior.
+
+No Slack app, app-level token, bot token, Socket URL, WebSocket, workspace
+record, channel, outbox runner, external message, real worker response, or
+provider resumption was created. The next slice is a disposable, replayable
+attention-and-draft-delivery scenario using test doubles unless the required
+private integration authorization is granted.

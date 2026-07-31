@@ -4,6 +4,11 @@ import {
   DeterministicClock,
   InMemoryWorkerControlPlane,
   StaticRoadmapReadTransport,
+  InMemorySlackIngressStore,
+  RecordingSlackSocketAcknowledger,
+  RecordingSlackAttentionOutbox,
+  StaticSlackAttentionAudienceResolver,
+  StaticSlackWorkspaceActorAuthorizer,
   ScriptedJsonRpcTransport,
   StaticResourceInspector,
   assertRebootIdleServiceFixture,
@@ -85,5 +90,38 @@ describe("deterministic worker test kit", () => {
       "initialize", "thread/start", "turn/start", "turn/steer", "thread/read", "turn/interrupt",
     ]);
     assert.deepEqual(transport.notifications, [{ method: "initialized", params: {} }]);
+  });
+
+  it("provides structural Slack ingress and projection fakes without an SDK or workspace", async () => {
+    const ingress = new InMemorySlackIngressStore();
+    const authorization = new StaticSlackWorkspaceActorAuthorizer();
+    const acknowledger = new RecordingSlackSocketAcknowledger();
+    const audience = new StaticSlackAttentionAudienceResolver();
+    const outbox = new RecordingSlackAttentionOutbox();
+    const receipt = {
+      receiptId: "slack:T-EXAMPLE:envelope-001",
+      envelopeId: "envelope-001",
+      workspaceId: "T-EXAMPLE",
+      actorExternalId: "U-EXAMPLE",
+      receivedAt: "2026-07-30T04:00:00Z",
+    };
+
+    assert.deepEqual(await ingress.reserve(receipt), { state: "pending" });
+    await ingress.complete({
+      receiptId: receipt.receiptId,
+      outcome: "accepted",
+      completedAt: "2026-07-30T04:00:01Z",
+    });
+    assert.deepEqual(await ingress.reserve(receipt), { state: "completed", outcome: "accepted" });
+    assert.equal((await authorization.authorize({
+      workspaceId: receipt.workspaceId,
+      actorExternalId: receipt.actorExternalId,
+    })).authorized, true);
+    await acknowledger.acknowledge({ envelopeId: receipt.envelopeId });
+    await audience.resolve({ securityDomain: "example-domain", purpose: "attention-summary" });
+    await outbox.send({ kind: "fixture" });
+    assert.deepEqual(ingress.operations, ["ingress-reserve", "ingress-complete:accepted", "ingress-reserve"]);
+    assert.deepEqual(acknowledger.acknowledgements, [{ envelopeId: "envelope-001" }]);
+    assert.equal(outbox.messages.length, 1);
   });
 });

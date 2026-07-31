@@ -189,6 +189,30 @@ export type AttentionResponseRecord = {
 };
 
 /**
+ * A delivery result is deliberately narrower than an execution state. A
+ * projection can report that it accepted or deferred a message, but it cannot
+ * claim that a person, worker, or provider acted on it.
+ */
+export type AttentionDeliveryAttempt = {
+  readonly status: "delivered" | "deferred";
+  readonly deliveryReference?: string;
+};
+
+/**
+ * Human-facing transports are projections of durable attention only. They
+ * never become an alternate operational store or a source of task/run state.
+ * Keeping this port in the domain package lets a Coordinator composition use a
+ * chat adapter without making apps depend on adapters.
+ */
+export interface AttentionProjectionPort {
+  deliver(attention: AttentionItem): Promise<AttentionDeliveryAttempt>;
+  deliverResponse(input: {
+    readonly attention: AttentionItem;
+    readonly response: Readonly<Record<string, unknown>>;
+  }): Promise<AttentionDeliveryAttempt>;
+}
+
+/**
  * An acknowledgement is an observation only. It never establishes that the
  * corresponding run is executing; the reconciler must later obtain that fact
  * independently from worker/provider observations.
