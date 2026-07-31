@@ -41,7 +41,7 @@ acceptance_routes:
   - id: ACC-PROJECTION-001
     slice: github-portfolio-projections
     status: planned
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
   - id: ACC-SKILLS-001
     slice: skills-estimation-finops
     status: planned
@@ -207,9 +207,9 @@ requirements:
     owner: SPEC-002
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Outage tests."
   - id: REQ-CONTEXT-003
     owner: SPEC-002
@@ -223,9 +223,9 @@ requirements:
     owner: SPEC-002
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Provenance assertion."
   - id: REQ-CONTEXT-005
     owner: SPEC-002
@@ -239,9 +239,9 @@ requirements:
     owner: SPEC-002
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Outbox replay scenario."
   - id: REQ-SEC-001
     owner: SPEC-003
@@ -655,17 +655,17 @@ requirements:
     owner: SPEC-011
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Noise-suppression test."
   - id: REQ-INT-004
     owner: SPEC-011
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Multi-link lineage test."
   - id: REQ-INT-005
     owner: SPEC-011
@@ -679,9 +679,9 @@ requirements:
     owner: SPEC-011
     slice: github-portfolio-projections
     acceptance: ACC-PROJECTION-001
-    status: planned
+    status: complete
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Integration replay test."
   - id: REQ-SKILL-001
     owner: SPEC-012
@@ -921,7 +921,7 @@ requirements:
     acceptance: ACC-PROJECTION-001
     status: planned
     route_role: completion
-    test: "future projection replay and noise-suppression suite"
+    test: "pnpm run check:github-portfolio-projections"
     required_evidence: "Operator-view acceptance."
   - id: REQ-TEST-001
     owner: SPEC-017
@@ -984,7 +984,7 @@ requirements:
       - slice: github-portfolio-projections
         acceptance: ACC-PROJECTION-001
         status: planned
-        test: "future projection replay and noise-suppression suite"
+        test: "pnpm run check:github-portfolio-projections"
       - slice: observed-browser-path
         acceptance: ACC-BROWSER-001
         status: planned

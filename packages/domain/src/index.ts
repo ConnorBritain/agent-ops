@@ -1,6 +1,8 @@
 import type {
   AttentionItem,
   Command,
+  CoordinatorProjectionCommand,
+  ExternalProjectionFact,
   NormalizedEvent,
   ResourceBudget,
   SignedJobEnvelope,
@@ -210,6 +212,45 @@ export interface AttentionProjectionPort {
     readonly attention: AttentionItem;
     readonly response: Readonly<Record<string, unknown>>;
   }): Promise<AttentionDeliveryAttempt>;
+}
+
+/**
+ * A durable outbox reservation is the authority boundary for external
+ * projections. It holds an already-issued Coordinator command and never
+ * represents task/run state itself. The runner is explicitly invoked; there is
+ * no in-process retry loop or autonomous external recovery here.
+ */
+export type ExternalProjectionOutboxRecord = {
+  readonly command: CoordinatorProjectionCommand;
+  readonly state: "pending" | "processing" | "delivered" | "dead-letter";
+  readonly attempts: number;
+  readonly fact?: ExternalProjectionFact;
+  readonly lastErrorCode?: "external-unavailable" | "protocol-invalid";
+};
+
+export type ExternalProjectionReservation =
+  | { readonly state: "new" }
+  | { readonly state: "pending" | "processing" | "dead-letter" }
+  | { readonly state: "delivered"; readonly fact: ExternalProjectionFact };
+
+export type ExternalProjectionClaim =
+  | { readonly state: "claimed"; readonly record: ExternalProjectionOutboxRecord }
+  | { readonly state: "not-ready" }
+  | { readonly state: "delivered"; readonly fact: ExternalProjectionFact };
+
+export interface ExternalProjectionOutboxStore {
+  reserve(command: CoordinatorProjectionCommand): Promise<ExternalProjectionReservation>;
+  claim(projectionId: string): Promise<ExternalProjectionClaim>;
+  markDelivered(input: {
+    readonly projectionId: string;
+    readonly fact: ExternalProjectionFact;
+    readonly deliveredAt: string;
+  }): Promise<void>;
+  markRetryable(input: {
+    readonly projectionId: string;
+    readonly errorCode: "external-unavailable" | "protocol-invalid";
+    readonly availableAt: string;
+  }): Promise<void>;
 }
 
 /**

@@ -155,6 +155,43 @@ type DraftPullRequestIntent = {
   requestedAt: string;
 };
 
+type CoordinatorProjectionCommand = {
+  version: string;
+  commandId: string;
+  actor: { id: string; kind: "coordinator"; securityDomain: SecurityDomain };
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  projection: ExternalProjectionIntent;
+  issuedAt: string;
+};
+
+type ExternalProjectionIntent =
+  | { kind: "github-draft-pull-request"; draft: true; verificationId: string; repositoryRef: string; title: string; links: ProjectionLink[] }
+  | { kind: "github-ci-evidence"; pullRequestRef: string; evidenceRef: string; conclusion: VerificationVerdict; links: ProjectionLink[] }
+  | { kind: "portfolio-transition"; transition: "created" | "ready-for-review" | "blocked" | "completed" | "failed" | "running" | "provider-observed"; summary: string; links: ProjectionLink[] };
+
+type ProjectionLink = {
+  kind: "issue" | "slice" | "pull-request" | "external-session";
+  system: "github" | "portfolio" | "roadmap" | "external";
+  externalRef: string; // bounded opaque reference, never an endpoint or credential
+};
+
+type ExternalProjectionFact = {
+  version: string;
+  projectionId: string;
+  taskId: string;
+  runId: string;
+  securityDomain: SecurityDomain;
+  system: "github" | "portfolio";
+  externalRef: string;
+  source: { kind: "integration"; id: string };
+  sourceEventId: string;
+  occurredAt: string;
+  ingestedAt: string;
+  metadata: Record<string, unknown>; // secret-safe only
+};
+
 type AttentionItem = {
   id: string;
   runId: string;
@@ -244,5 +281,15 @@ secret-safe correlated observations and bounded artifacts, exclude transcripts
 and authentication material, refuse protocol data containing inline secrets,
 and prohibit automatic restart. Neither package includes a process launcher,
 credential binding, or runtime account assumption.
+
+External projections are Coordinator-issued requests, not a generic external
+write API. The projection service reserves a durable idempotency record before
+calling a named GitHub or portfolio gateway, accepts only a source-provenance
+fact that matches the task/run/domain/destination, and converts an outage or
+bad fact to a redacted retryable state. Portfolio `running` and
+`provider-observed` transitions are suppressed before either durable or
+external delivery. Explicit replay is owned by a future authorized outbox
+runner; this source contains no SDK, network client, credentials, timer, or
+background retry loop.
 
 Contract evolution requires compatibility behavior, acceptance updates, and an ADR when the architectural boundary changes.

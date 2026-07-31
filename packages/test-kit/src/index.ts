@@ -1,6 +1,9 @@
 import {
   CONTRACT_VERSION,
   type AttentionItem,
+  type CoordinatorProjectionCommand,
+  type ExternalProjectionFact,
+  type ExternalProjectionIntent,
   type NormalizedEvent,
   type ProviderInvocation,
   type SignedJobEnvelope,
@@ -17,6 +20,10 @@ import type {
   CoordinatorIntent,
   CreateJobInput,
   DurableOperationOptions,
+  ExternalProjectionClaim,
+  ExternalProjectionOutboxRecord,
+  ExternalProjectionOutboxStore,
+  ExternalProjectionReservation,
   LeaseGrant,
   ProviderAcknowledgement,
   ReconciliationSnapshot,
@@ -39,6 +46,7 @@ export const testIds = {
   attention: "00000000-0000-4000-8000-000000000111",
   verification: "00000000-0000-4000-8000-000000000112",
   delivery: "00000000-0000-4000-8000-000000000113",
+  projection: "00000000-0000-4000-8000-000000000114",
 } as const;
 
 export class DeterministicClock {
@@ -591,6 +599,146 @@ export class RecordingDraftPullRequestGateway {
     this.intents.push(intent);
     if (this.throwOnCreate) throw new Error("fixture draft gateway unavailable");
     return this.result;
+  }
+}
+
+/**
+ * Deterministic outbox double for external projections. It keeps retryable
+ * records independently from delivery results, so fixture failures can prove
+ * that a later explicit replay is duplicate-safe without an actual runner or
+ * remote destination.
+ */
+export class InMemoryExternalProjectionOutbox implements ExternalProjectionOutboxStore {
+  readonly operations: string[] = [];
+  readonly records = new Map<string, ExternalProjectionOutboxRecord>();
+  readonly #projectionForIdempotency = new Map<string, string>();
+
+  async reserve(command: CoordinatorProjectionCommand): Promise<ExternalProjectionReservation> {
+    this.operations.push("projection-reserve");
+    const projectionId = this.#projectionForIdempotency.get(command.projection.idempotencyKey);
+    const existing = projectionId ? this.records.get(projectionId) : undefined;
+    if (existing) {
+      if (existing.state === "delivered") {
+        if (!existing.fact) throw new Error("Delivered projection outbox item is missing its fact.");
+        return { state: "delivered", fact: existing.fact };
+      }
+      return { state: existing.state };
+    }
+    const record: ExternalProjectionOutboxRecord = {
+      command,
+      state: "pending",
+      attempts: 0,
+    };
+    this.records.set(command.projection.projectionId, record);
+    this.#projectionForIdempotency.set(command.projection.idempotencyKey, command.projection.projectionId);
+    return { state: "new" };
+  }
+
+  async claim(projectionId: string): Promise<ExternalProjectionClaim> {
+    this.operations.push("projection-claim");
+    const existing = this.records.get(projectionId);
+    if (!existing) return { state: "not-ready" };
+    if (existing.state === "delivered" && existing.fact) {
+      return { state: "delivered", fact: existing.fact };
+    }
+    if (existing.state !== "pending") return { state: "not-ready" };
+    const { lastErrorCode: _lastErrorCode, ...withoutLastError } = existing;
+    const record: ExternalProjectionOutboxRecord = {
+      ...withoutLastError,
+      state: "processing",
+      attempts: existing.attempts + 1,
+    };
+    this.records.set(projectionId, record);
+    return { state: "claimed", record };
+  }
+
+  async markDelivered(input: {
+    readonly projectionId: string;
+    readonly fact: ExternalProjectionFact;
+    readonly deliveredAt: string;
+  }): Promise<void> {
+    this.operations.push("projection-delivered");
+    const existing = this.requireProcessing(input.projectionId);
+    const { lastErrorCode: _lastErrorCode, ...withoutLastError } = existing;
+    this.records.set(input.projectionId, {
+      ...withoutLastError,
+      state: "delivered",
+      fact: input.fact,
+    });
+  }
+
+  async markRetryable(input: {
+    readonly projectionId: string;
+    readonly errorCode: "external-unavailable" | "protocol-invalid";
+    readonly availableAt: string;
+  }): Promise<void> {
+    this.operations.push(`projection-retryable:${input.errorCode}`);
+    const existing = this.requireProcessing(input.projectionId);
+    this.records.set(input.projectionId, {
+      ...existing,
+      state: "pending",
+      lastErrorCode: input.errorCode,
+    });
+  }
+
+  private requireProcessing(projectionId: string): ExternalProjectionOutboxRecord {
+    const record = this.records.get(projectionId);
+    if (!record || record.state !== "processing") {
+      throw new Error("Projection outbox item is not owned by this delivery attempt.");
+    }
+    return record;
+  }
+}
+
+const projectionFact = (
+  intent: ExternalProjectionIntent,
+  system: "github" | "portfolio",
+): ExternalProjectionFact => ({
+  version: CONTRACT_VERSION,
+  projectionId: intent.projectionId,
+  taskId: intent.taskId,
+  runId: intent.runId,
+  securityDomain: intent.securityDomain,
+  system,
+  externalRef: system === "github"
+    ? "github://fixture/projection/1"
+    : "portfolio://fixture/projection/1",
+  source: { kind: "integration", id: `${system}-projection` },
+  sourceEventId: `${system}-projection-event-001`,
+  occurredAt: "2026-07-30T04:00:00Z",
+  ingestedAt: "2026-07-30T04:00:01Z",
+  metadata: { disposition: "recorded" },
+});
+
+export class RecordingGitHubProjectionGateway {
+  readonly intents: Extract<ExternalProjectionIntent, {
+    readonly kind: "github-draft-pull-request" | "github-ci-evidence";
+  }>[] = [];
+  throwOnDeliver = false;
+  result?: ExternalProjectionFact;
+
+  async deliver(intent: Extract<ExternalProjectionIntent, {
+    readonly kind: "github-draft-pull-request" | "github-ci-evidence";
+  }>): Promise<ExternalProjectionFact> {
+    this.intents.push(intent);
+    if (this.throwOnDeliver) throw new Error("fixture GitHub projection unavailable");
+    return this.result ?? projectionFact(intent, "github");
+  }
+}
+
+export class RecordingPortfolioProjectionGateway {
+  readonly intents: Extract<ExternalProjectionIntent, {
+    readonly kind: "portfolio-transition";
+  }>[] = [];
+  throwOnDeliver = false;
+  result?: ExternalProjectionFact;
+
+  async deliver(intent: Extract<ExternalProjectionIntent, {
+    readonly kind: "portfolio-transition";
+  }>): Promise<ExternalProjectionFact> {
+    this.intents.push(intent);
+    if (this.throwOnDeliver) throw new Error("fixture portfolio projection unavailable");
+    return this.result ?? projectionFact(intent, "portfolio");
   }
 }
 

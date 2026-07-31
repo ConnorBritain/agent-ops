@@ -25,7 +25,7 @@ export const routes = {
   attentionAcceptance: route("verified-draft-delivery", "ACC-ATTENTION-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
   delivery: route("verified-draft-delivery", "ACC-DELIVERY-001", "complete", "pnpm run check:verified-draft-delivery", "planned"),
   secondProvider: route("second-cli-provider", "ACC-PROVIDER-001", "complete", "pnpm run check:provider-conformance"),
-  projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "future projection replay and noise-suppression suite"),
+  projections: route("github-portfolio-projections", "ACC-PROJECTION-001", "planned", "pnpm run check:github-portfolio-projections"),
   skills: route("skills-estimation-finops", "ACC-SKILLS-001", "planned", "future primitive manifest and enforcement suite"),
   finops: route("skills-estimation-finops", "ACC-FINOPS-001", "planned", "future estimation and FinOps lineage suite"),
   release: route("release-recovery", "ACC-RELEASE-001", "planned", "future compatibility, promotion, backup, and replacement suite"),
@@ -124,7 +124,13 @@ const completedRequirementIds = new Set([
   "REQ-TEST-003",
   "REQ-TEST-004",
   "REQ-ROLL-002",
-  "REQ-V1-003"
+  "REQ-V1-003",
+  "REQ-CONTEXT-002",
+  "REQ-CONTEXT-004",
+  "REQ-CONTEXT-006",
+  "REQ-INT-003",
+  "REQ-INT-004",
+  "REQ-INT-006",
 ]);
 
 const prefixRoutes = new Map([

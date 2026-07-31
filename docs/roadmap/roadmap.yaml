@@ -525,7 +525,7 @@ pis:
         prompt: "Complete: one deterministic fixture relays exactly one blocker, persists the answer before resuming the retained run, records an independent verdict, blocks negative gates, and produces one replay-safe draft-only result."
   - id: phase-7-provider-projections
     title: Second CLI provider and external projections
-    status: scheduled
+    status: complete
     deps: [phase-6-attention-delivery]
     summary: Prove provider neutrality with a second CLI adapter and project meaningful delivery state to GitHub and a portfolio tracker through the outbox.
     exit_criteria: Both providers pass the same suite; GitHub and portfolio projections are replayable, idempotent, and limited to meaningful transitions.
@@ -561,13 +561,14 @@ pis:
         prompt: "Complete: Claude Code print-mode JSONL is the second deterministic adapter; lifecycle and artifacts conform without vendor-specific domain contracts, and unsupported steer/pause/resume are explicit."
       - id: github-portfolio-projections
         title: GitHub and portfolio outbox projections
-        status: scheduled
+        status: complete
         invoke: github-portfolio-projections
         what: Implement idempotent draft-PR, CI-evidence, and human-scale portfolio projections with retriable outbox delivery.
-        est_sessions: 2
+        est_sessions: 0
         weight: medium
         deps: [second-cli-provider]
         gate: Projection replay, duplicate suppression, outage recovery, and noise-suppression fixtures
+        completed_on: "2026-07-30"
         touches:
           - packages/adapters/
           - packages/domain/
@@ -577,7 +578,7 @@ pis:
           - docs/specs/SPEC-002-system-context-and-authority.md
           - docs/specs/SPEC-005-commands-events-and-idempotency.md
           - docs/specs/SPEC-011-roadmap-portfolio-github-and-chat-integration.md
-        resume_action: Implement against deterministic fakes before connecting real GitHub or portfolio credentials.
+        resume_action: Deterministic outbox fakes prove Coordinator-only authority, replay, duplicate suppression, provenance, and noise suppression. Keep real GitHub and portfolio bindings separately authorized; proceed to portable skills, estimation, and FinOps lineage.
         priority:
           tier: P1
           weight: 80

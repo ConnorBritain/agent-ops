@@ -4,7 +4,9 @@ import {
   CONTRACT_VERSION,
   assertNoInlineSecrets,
   commandSchema,
+  coordinatorProjectionCommandSchema,
   draftPullRequestIntentSchema,
+  externalProjectionFactSchema,
   normalizedEventSchema,
   providerCapabilityManifestSchema,
   providerInvocationSchema,
@@ -236,6 +238,58 @@ describe("versioned contracts", () => {
         preparation: "not-started",
       },
     }).worktree.preparation, "not-started");
+  });
+
+  it("accepts only Coordinator-issued, provenance-bearing external projections", () => {
+    const projection = {
+      version: CONTRACT_VERSION,
+      commandId: ids.actor,
+      actor: { id: ids.actor, kind: "coordinator", securityDomain: "example-domain" },
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      projection: {
+        version: CONTRACT_VERSION,
+        projectionId: ids.registration,
+        idempotencyKey: "projection-contract-001",
+        taskId: ids.task,
+        runId: ids.run,
+        securityDomain: "example-domain",
+        kind: "portfolio-transition",
+        links: [
+          { kind: "issue", system: "github", externalRef: "github://fixture/issues/1" },
+          { kind: "slice", system: "roadmap", externalRef: "roadmap://fixture/slices/1" },
+          { kind: "pull-request", system: "github", externalRef: "github://fixture/pulls/1" },
+          { kind: "external-session", system: "external", externalRef: "external://fixture/sessions/1" },
+        ],
+        transition: "ready-for-review",
+        summary: "The bounded fixture is ready for review.",
+        requestedAt: "2026-07-30T04:00:00Z",
+      },
+      issuedAt: "2026-07-30T04:00:00Z",
+    };
+    assert.equal(coordinatorProjectionCommandSchema.parse(projection).actor.kind, "coordinator");
+    assert.equal(
+      coordinatorProjectionCommandSchema.safeParse({
+        ...projection,
+        actor: { ...projection.actor, kind: "integration" },
+      }).success,
+      false,
+    );
+    assert.equal(externalProjectionFactSchema.safeParse({
+      version: CONTRACT_VERSION,
+      projectionId: projection.projection.projectionId,
+      taskId: ids.task,
+      runId: ids.run,
+      securityDomain: "example-domain",
+      system: "github",
+      externalRef: "github://fixture/projections/1",
+      source: { kind: "integration", id: "github-projection" },
+      sourceEventId: "github-projection-event-001",
+      occurredAt: "2026-07-30T04:00:00Z",
+      ingestedAt: "2026-07-30T04:00:01Z",
+      metadata: { token: "inline-value" },
+    }).success, false);
   });
 
   it("requires a complete provider lifecycle and secret-safe invocation", () => {

@@ -26,6 +26,7 @@
     "check:coordinator-runtime": "node --test tools/coordinator-runtime.test.mjs && pnpm --filter @agent-ops/coordinator test",
     "check:slack-attention-adapter": "node --test tools/slack-attention-adapter.test.mjs && pnpm --filter @agent-ops/adapters test && pnpm --filter @agent-ops/test-kit test",
     "check:verified-draft-delivery": "node --test tools/verified-draft-delivery.test.mjs && pnpm --filter @agent-ops/contracts test && pnpm --filter @agent-ops/adapters test && pnpm --filter @agent-ops/coordinator test",
+    "check:github-portfolio-projections": "node --test tools/github-portfolio-projections.test.mjs && pnpm --filter @agent-ops/contracts test && pnpm --filter @agent-ops/adapters test && pnpm --filter @agent-ops/test-kit test",
     "check:supabase": "node tools/validate-supabase.mjs",
     "roadmap:validate": "roadmap validate",
     "roadmap:render": "roadmap render",
@@ -34,7 +35,7 @@
     "test:db": "supabase test db supabase/tests --local",
     "db:start:minimal": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "db:lint": "supabase db lint --local --schema agentops,agentops_audit,agentops_private --level warning --fail-on error",
-    "validate": "pnpm run check:specs && pnpm run check:traceability && pnpm run check:governance && pnpm run check:service-packaging && pnpm run check:roadmap-adapter && pnpm run check:print-provider && pnpm run check:codex-app-server-provider-spike && pnpm run check:codex-app-server-provider && pnpm run check:claude-code-provider && pnpm run check:coordinator-runtime && pnpm run check:slack-attention-adapter && pnpm run check:verified-draft-delivery && pnpm run check:supabase && pnpm run typecheck && pnpm run test:unit && pnpm run roadmap:validate",
+    "validate": "pnpm run check:specs && pnpm run check:traceability && pnpm run check:governance && pnpm run check:service-packaging && pnpm run check:roadmap-adapter && pnpm run check:print-provider && pnpm run check:codex-app-server-provider-spike && pnpm run check:codex-app-server-provider && pnpm run check:claude-code-provider && pnpm run check:coordinator-runtime && pnpm run check:slack-attention-adapter && pnpm run check:verified-draft-delivery && pnpm run check:github-portfolio-projections && pnpm run check:supabase && pnpm run typecheck && pnpm run test:unit && pnpm run roadmap:validate",
     "test": "pnpm run test:unit"
   },
   "devDependencies": {

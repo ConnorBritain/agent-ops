@@ -428,6 +428,188 @@ export const draftPullRequestIntentSchema = z.object({
 
 export type DraftPullRequestIntent = z.infer<typeof draftPullRequestIntentSchema>;
 
+/**
+ * External references are opaque, bounded identifiers rather than URLs or
+ * credentials. A concrete adapter resolves an approved reference at its
+ * composition boundary; contracts and durable records never need a host name,
+ * token, or raw provider response.
+ */
+export const externalReferenceSchema = z
+  .string()
+  .regex(/^(?:github|portfolio|roadmap|external):\/\/[A-Za-z0-9._/-]{1,240}$/);
+
+export const projectionLinkSchema = z.object({
+  kind: z.enum(["issue", "slice", "pull-request", "external-session"]),
+  system: z.enum(["github", "portfolio", "roadmap", "external"]),
+  externalRef: externalReferenceSchema,
+}).strict().superRefine((value, context) => {
+  if (!value.externalRef.startsWith(`${value.system}://`)) {
+    context.addIssue({
+      code: "custom",
+      message: "Projection link reference must use the declared external system scheme.",
+    });
+  }
+  if (value.kind === "slice" && value.system !== "roadmap") {
+    context.addIssue({
+      code: "custom",
+      message: "A roadmap slice mapping must use the roadmap external system.",
+    });
+  }
+  if (value.kind === "pull-request" && value.system !== "github") {
+    context.addIssue({
+      code: "custom",
+      message: "A pull-request mapping must use the github external system.",
+    });
+  }
+});
+
+export type ProjectionLink = z.infer<typeof projectionLinkSchema>;
+
+const projectionLinkListSchema = z.array(projectionLinkSchema).min(1).max(100)
+  .superRefine((links, context) => {
+    const seen = new Set<string>();
+    for (const [index, link] of links.entries()) {
+      const identity = `${link.kind}:${link.system}:${link.externalRef}`;
+      if (seen.has(identity)) {
+        context.addIssue({
+          code: "custom",
+          message: `duplicate projection link: ${identity}`,
+          path: [index],
+        });
+      }
+      seen.add(identity);
+    }
+  });
+
+export const portfolioTransitionSchema = z.enum([
+  "created",
+  "ready-for-review",
+  "blocked",
+  "completed",
+  "failed",
+  "running",
+  "provider-observed",
+]);
+
+export type PortfolioTransition = z.infer<typeof portfolioTransitionSchema>;
+
+const projectionIntentBase = {
+  version: contractVersionSchema,
+  projectionId: uuidSchema,
+  idempotencyKey: z.string().min(8).max(200),
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  links: projectionLinkListSchema,
+  requestedAt: rfc3339Schema,
+};
+
+/**
+ * These are the only public projection payloads. They intentionally omit
+ * merge, review, deployment, release, arbitrary issue mutation, and a generic
+ * remote write escape hatch.
+ */
+export const externalProjectionIntentSchema = z.discriminatedUnion("kind", [
+  z.object({
+    ...projectionIntentBase,
+    kind: z.literal("github-draft-pull-request"),
+    repositoryRef: z.string().regex(/^repo:\/\/[A-Za-z0-9._/-]{1,240}$/),
+    title: z.string().min(1).max(240),
+    verificationId: uuidSchema,
+    draft: z.literal(true),
+  }).strict(),
+  z.object({
+    ...projectionIntentBase,
+    kind: z.literal("github-ci-evidence"),
+    pullRequestRef: z.string().regex(/^github:\/\/[A-Za-z0-9._/-]{1,240}$/),
+    evidenceRef: evidenceReferenceSchema,
+    conclusion: verificationVerdictSchema,
+  }).strict(),
+  z.object({
+    ...projectionIntentBase,
+    kind: z.literal("portfolio-transition"),
+    transition: portfolioTransitionSchema,
+    summary: z.string().min(1).max(1_000),
+  }).strict(),
+]).superRefine((value, context) => {
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type ExternalProjectionIntent = z.infer<typeof externalProjectionIntentSchema>;
+
+export const coordinatorProjectionCommandSchema = z.object({
+  version: contractVersionSchema,
+  commandId: uuidSchema,
+  actor: actorRefSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  projection: externalProjectionIntentSchema,
+  issuedAt: rfc3339Schema,
+}).strict().superRefine((value, context) => {
+  if (value.actor.kind !== "coordinator") {
+    context.addIssue({
+      code: "custom",
+      message: "External projection requires a Coordinator-issued command.",
+      path: ["actor", "kind"],
+    });
+  }
+  if (value.actor.securityDomain !== value.securityDomain) {
+    context.addIssue({
+      code: "custom",
+      message: "Projection command actor must share the command security domain.",
+      path: ["actor", "securityDomain"],
+    });
+  }
+  for (const field of ["taskId", "runId", "securityDomain"] as const) {
+    if (value.projection[field] !== value[field]) {
+      context.addIssue({
+        code: "custom",
+        message: `Projection ${field} must match its Coordinator command.`,
+        path: ["projection", field],
+      });
+    }
+  }
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type CoordinatorProjectionCommand = z.infer<typeof coordinatorProjectionCommandSchema>;
+
+export const externalProjectionFactSchema = z.object({
+  version: contractVersionSchema,
+  projectionId: uuidSchema,
+  taskId: uuidSchema,
+  runId: uuidSchema,
+  securityDomain: securityDomainSchema,
+  system: z.enum(["github", "portfolio"]),
+  externalRef: externalReferenceSchema,
+  source: z.object({
+    kind: z.literal("integration"),
+    id: z.string().regex(/^[a-z][a-z0-9-]{1,62}$/),
+  }).strict(),
+  sourceEventId: z.string().min(1).max(200),
+  occurredAt: rfc3339Schema,
+  ingestedAt: rfc3339Schema,
+  metadata: secretSafeObjectSchema,
+}).strict().superRefine((value, context) => {
+  if (!value.externalRef.startsWith(`${value.system}://`)) {
+    context.addIssue({
+      code: "custom",
+      message: "Projection fact reference must use the declared external system scheme.",
+      path: ["externalRef"],
+    });
+  }
+  const finding = findInlineSecret(value);
+  if (!finding) return;
+  context.addIssue({ code: "custom", message: finding.reason, path: [...finding.path] });
+});
+
+export type ExternalProjectionFact = z.infer<typeof externalProjectionFactSchema>;
+
 export const attentionItemSchema = z.object({
   version: contractVersionSchema,
   id: uuidSchema,
